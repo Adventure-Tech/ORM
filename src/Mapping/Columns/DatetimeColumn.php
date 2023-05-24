@@ -22,6 +22,7 @@ class DatetimeColumn implements Column
      */
     public function deserialize(stdClass $item, string $alias): ?CarbonImmutable
     {
+        $this->checkInitialized();
         // TODO: what if this is not set?
         $string = $item->{$alias . $this->name};
 
@@ -34,6 +35,7 @@ class DatetimeColumn implements Column
      */
     public function serialize(object $entity): array
     {
+        $this->checkInitialized();
         // TODO: what if this is not set?
         return [$this->name => $entity->{$this->getPropertyName()}?->toIso8601String()];
     }

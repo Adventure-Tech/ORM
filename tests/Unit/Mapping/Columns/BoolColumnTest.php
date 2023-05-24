@@ -48,7 +48,8 @@ test('bool columns can correctly serialize entities', function () {
     expect($column->serialize($entity))
         ->toBeArray()
         ->toHaveCount(1)
-        ->toHaveKey('custom', true);
+        ->toHaveKey('custom')
+        ->and($column->serialize($entity)['custom'])->toBeTrue();
 });
 
 test('trying to serialize an incomplete entity results in exception', function () {
@@ -61,7 +62,7 @@ test('trying to serialize an incomplete entity results in exception', function (
     expect($column->serialize($entity))
         ->toBeArray()
         ->toHaveCount(1)
-        ->toHaveKey('custom', true);
+        ->toHaveKey('custom');
 })->todo();
 
 test('bool columns can correctly deserialize items', function () {

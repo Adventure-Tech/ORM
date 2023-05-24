@@ -51,7 +51,8 @@ test('string columns can correctly serialize entities', function () {
     expect($column->serialize($entity))
         ->toBeArray()
         ->toHaveCount(1)
-        ->toHaveKey('custom', true);
+        ->toHaveKey('custom')
+        ->and($column->serialize($entity)['custom'])->toBe('value');
 });
 
 test('trying to serialize an incomplete entity results in exception', function () {
@@ -64,7 +65,7 @@ test('trying to serialize an incomplete entity results in exception', function (
     expect($column->serialize($entity))
         ->toBeArray()
         ->toHaveCount(1)
-        ->toHaveKey('custom', true);
+        ->toHaveKey('custom');
 })->todo();
 
 test('string columns can correctly deserialize items', function () {

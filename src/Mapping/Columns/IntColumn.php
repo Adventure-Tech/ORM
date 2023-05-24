@@ -20,6 +20,7 @@ class IntColumn implements Column
      */
     public function deserialize(stdClass $item, string $alias): ?int
     {
+        $this->checkInitialized();
         // TODO: what if this is not set?
         return $item->{$alias . $this->name};
     }
@@ -30,6 +31,7 @@ class IntColumn implements Column
      */
     public function serialize(object $entity): array
     {
+        $this->checkInitialized();
         // TODO: what if this is not set?
         return [$this->name => $entity->{$this->getPropertyName()}];
     }

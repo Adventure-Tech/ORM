@@ -104,7 +104,6 @@ test('bool columns allow checking if entity has initialized value', function () 
     expect($column->isInitialized($entity))->toBeTrue();
 });
 
-
 test('not initialising column throws exception', function () {
     $column = new BoolColumn();
     expect(fn() => $column->isInitialized(new BoolColumnTest()))->toThrow(

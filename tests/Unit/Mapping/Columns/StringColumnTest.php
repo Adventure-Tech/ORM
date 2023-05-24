@@ -76,7 +76,7 @@ test('string columns can correctly deserialize items', function () {
     $item = (object)[
         $alias . 'custom' => 'value',
     ];
-    expect($column->deserialize($item, $alias))->toBeTrue();
+    expect($column->deserialize($item, $alias))->toBe('value');
 });
 
 test('trying to deserialize an incomplete item results in exception', function () {
@@ -88,7 +88,7 @@ test('trying to deserialize an incomplete item results in exception', function (
     $item = (object)[
         $alias . 'not_custom' => 'value',
     ];
-    expect($column->deserialize($item, $alias))->toBeTrue();
+    expect($column->deserialize($item, $alias))->toBe('value');
 })->todo();
 
 test('string columns allow checking if entity has initialized value', function () {
@@ -106,7 +106,6 @@ test('string columns allow checking if entity has initialized value', function (
     $entity->test = '';
     expect($column->isInitialized($entity))->toBeTrue();
 });
-
 
 test('not initialising column throws exception', function () {
     $column = new StringColumn();

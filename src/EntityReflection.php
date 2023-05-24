@@ -73,12 +73,6 @@ class EntityReflection
                 } elseif ($attributeInstance instanceof Relation) {
                     $this->registerRelation($attributeInstance, $property);
                 }
-                //                match($attribute->getName()) {
-                //                    Id::class => $this->setId($property->getName()),
-                //                    Column::class => $this->registerColumn($attribute, $property),
-                //                    Relation::class => $this->registerRelation($attribute, $property),
-                //                    default => null
-                //                };
             }
         }
     }
@@ -148,7 +142,7 @@ class EntityReflection
         }
         if ($alias === '') {
             return array_map(
-                fn (string $column): string => $this->getTableName() . 'Repository' . $column,
+                fn (string $column): string => $this->getTableName() . '.' . $column,
                 $columnNames
             );
         } else {
@@ -174,7 +168,7 @@ class EntityReflection
     public function getSoftDeleteColumn(): ?string
     {
         return !is_null($this->softDeleteColumn) ?
-            $this->getTableName() . 'Repository' . $this->softDeleteColumn
+            $this->getTableName() . '.' . $this->softDeleteColumn
             : null;
     }
 

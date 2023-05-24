@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping;
 
+use AdventureTech\ORM\Exceptions\NotInitializedException;
 use AdventureTech\ORM\Repository\Repository;
 use Attribute;
 use Illuminate\Support\Str;
@@ -13,6 +14,7 @@ use Illuminate\Support\Str;
 final class Entity
 {
     private string $table;
+    private bool $initialized = false;
 
     /**
      * @param  string|null  $table
@@ -29,8 +31,9 @@ final class Entity
      * @param  class-string<T>  $class
      * @return $this
      */
-    public function resolveDefaults(string $class): Entity
+    public function initialize(string $class): Entity
     {
+        $this->initialized = true;
         if (!isset($this->table)) {
             $this->table = Str::snake(Str::plural(Str::afterLast($class, '\\')));
         }
@@ -42,6 +45,7 @@ final class Entity
      */
     public function getTable(): string
     {
+        $this->checkInitialized();
         return $this->table;
     }
 
@@ -50,7 +54,14 @@ final class Entity
      */
     public function getRepository(): ?string
     {
-        // TODO: where should this live?
+        $this->checkInitialized();
         return $this->repository;
+    }
+
+    private function checkInitialized()
+    {
+        if (!$this->initialized) {
+            throw new NotInitializedException(self::class);
+        }
     }
 }

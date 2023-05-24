@@ -37,7 +37,7 @@ jobs:
         node-version: ["18.x"]
         dependency-stability: ["prefer-none"]
 
-    name: P${{ matrix.php-versions }} - L${{ matrix.laravel }} - ${{ matrix.dependency-stability }} - ${{ matrix.operating-system}}
+    name: code quality analysis (P${{ matrix.php-versions }} - ${{ matrix.dependency-stability }} - ${{ matrix.operating-system}})
 
     steps:
       - uses: actions/checkout@v3

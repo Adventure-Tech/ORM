@@ -6,6 +6,9 @@ use AdventureTech\ORM\Repository\Repository;
 use Attribute;
 use Illuminate\Support\Str;
 
+/**
+ * @template T of object
+ */
 #[Attribute(Attribute::TARGET_CLASS)]
 final class Entity
 {
@@ -13,7 +16,7 @@ final class Entity
 
     /**
      * @param  string|null  $table
-     * @param  class-string|null  $repository
+     * @param  class-string<Repository<T>>|null  $repository
      */
     public function __construct(string $table = null, private readonly ?string $repository = null)
     {
@@ -22,6 +25,10 @@ final class Entity
         }
     }
 
+    /**
+     * @param  class-string<T>  $class
+     * @return $this
+     */
     public function resolveDefaults(string $class): Entity
     {
         if (!isset($this->table)) {
@@ -39,11 +46,11 @@ final class Entity
     }
 
     /**
-     * @return class-string
+     * @return class-string<Repository<T>>|null
      */
-    public function getRepository(): string
+    public function getRepository(): ?string
     {
         // TODO: where should this live?
-        return $this->repository ?? Repository::class;
+        return $this->repository;
     }
 }

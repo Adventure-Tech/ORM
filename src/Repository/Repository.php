@@ -32,7 +32,7 @@ class Repository
     public static function new(string $class): Repository
     {
         $entityReflection = new EntityReflection($class);
-        $repository = $entityReflection->getRepository();
+        $repository = $entityReflection->getRepository() ?? self::class;
         return new $repository($entityReflection);
     }
 

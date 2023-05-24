@@ -38,6 +38,9 @@ class EntityReflection
      * @var string
      */
     private string $id;
+    /**
+     * @var Entity<T>
+     */
     private Entity $entityAttribute;
 
     private ?string $softDeleteColumn = null;
@@ -157,9 +160,9 @@ class EntityReflection
     }
 
     /**
-     * @return class-string
+     * @return class-string|null
      */
-    public function getRepository(): string
+    public function getRepository(): ?string
     {
         return $this->entityAttribute->getRepository();
     }

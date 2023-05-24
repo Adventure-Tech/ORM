@@ -51,7 +51,7 @@ class BelongsToMany implements Relation
      * @param  class-string<FROM>  $className
      * @return void
      */
-    public function resolveDefault(
+    public function initialize(
         string $propertyName,
         string $propertyType,
         string $className,

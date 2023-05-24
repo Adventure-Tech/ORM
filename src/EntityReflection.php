@@ -212,7 +212,7 @@ class EntityReflection
             // TODO: custom exception
             throw new RuntimeException('Encountered null in reflection type');
         }
-        $relation->resolveDefault($property->getName(), $type->getName(), $this->class);
+        $relation->initialize($property->getName(), $type->getName(), $this->class);
         $this->relations->put($property->getName(), $relation);
     }
 }

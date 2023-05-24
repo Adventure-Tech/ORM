@@ -30,7 +30,7 @@ class User
     public Collection $posts;
 
     #[HasOne]
-    public Post $post;
+    public PersonalDetails $personalDetails;
 
     #[BelongsToMany(
         targetEntity: User::class,

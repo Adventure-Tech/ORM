@@ -6,6 +6,8 @@ use AdventureTech\ORM\Mapping\Columns\CreatedAtColumn;
 use AdventureTech\ORM\Mapping\Columns\DeletedAtColumn;
 use AdventureTech\ORM\Mapping\Columns\UpdatedAtColumn;
 use AdventureTech\ORM\EntityReflection;
+use AdventureTech\ORM\Mapping\Relations\BelongsTo;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use LogicException;
@@ -34,28 +36,7 @@ abstract class PersistenceManager
     public function insert(object $entity): object
     {
         $this->checkType($entity);
-
-        $entityReflection = new EntityReflection(get_class($entity));
-        $arr = [];
-        foreach ($entityReflection->getColumns() as $property => $column) {
-            // TODO: prevent updating created_at and updated_at
-            if ($column->isInitialized($entity)) {
-                if ($property === $entityReflection->getId()) {
-                    throw new RuntimeException('Must not set ID column for insert');
-                }
-                $arr = array_merge($arr, $column->serialize($entity));
-            } elseif ($column instanceof CreatedAtColumn || $column instanceof UpdatedAtColumn) {
-                $entity->{$property} = now();
-                $arr = array_merge($arr, $column->serialize($entity));
-            } elseif ($property !== $entityReflection->getId()) {
-                throw new RuntimeException('Forgot to set column without default value [' . $property . ']');
-            }
-        }
-
-        // TODO: resolve relations
-
-        $id = DB::table($entityReflection->getTableName())->insertGetId($arr);
-        $entity->{$entityReflection->getId()} = $id;
+        $this->uncheckedInsert($entity);
         return $entity;
     }
 
@@ -89,12 +70,12 @@ abstract class PersistenceManager
             if ($column->isInitialized($entity)) {
                 $arr = array_merge($arr, $column->serialize($entity));
             } elseif ($column instanceof UpdatedAtColumn) {
-                $entity->{$property} = now();
+                $entity->{$property} = CarbonImmutable::now();
                 $arr = array_merge($arr, $column->serialize($entity));
             }
         }
 
-        // TODO: resolve relations
+        // TODO: resolve relations (do we insert? do we even update?)
 
         return DB::table($entityReflection->getTableName())
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
@@ -120,6 +101,7 @@ abstract class PersistenceManager
                 return $query->update($column->serialize($entity));
             }
         }
+        // TODO: what about HasOne/HasMany/BelongsToMany relations?
         return $query->delete();
     }
 
@@ -137,5 +119,38 @@ abstract class PersistenceManager
         if (get_class($entity) !== $this->entity) {
             throw new RuntimeException('Invalid entity type');
         }
+    }
+
+    /**
+     * @param  T  $entity
+     *
+     * @return int
+     */
+    private function uncheckedInsert(object $entity): int
+    {
+        $entityReflection = new EntityReflection(get_class($entity));
+        $arr = [];
+        foreach ($entityReflection->getColumns() as $property => $column) {
+            // TODO: prevent updating created_at and updated_at
+            if ($column->isInitialized($entity)) {
+                if ($property === $entityReflection->getId()) {
+                    throw new RuntimeException('Must not set ID column for insert');
+                }
+                $arr = array_merge($arr, $column->serialize($entity));
+            } elseif ($column instanceof CreatedAtColumn || $column instanceof UpdatedAtColumn) {
+                $entity->{$property} = CarbonImmutable::now();
+                $arr = array_merge($arr, $column->serialize($entity));
+            } elseif ($property !== $entityReflection->getId()) {
+                throw new RuntimeException('Forgot to set column without default value [' . $property . ']');
+            }
+        }
+
+        foreach ($entityReflection->getRelations() as $property => $relation) {
+            if ($relation instanceof BelongsTo) {
+                $arr[$relation->getForeignKey()] = $this->uncheckedInsert($entity->{$property});
+            }
+        }
+
+        return DB::table($entityReflection->getTableName())->insertGetId($arr);
     }
 }

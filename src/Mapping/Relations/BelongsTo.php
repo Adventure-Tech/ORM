@@ -40,7 +40,7 @@ class BelongsTo implements Relation
      * @param  class-string<FROM>  $className
      * @return void
      */
-    public function resolveDefault(
+    public function initialize(
         string $propertyName,
         string $propertyType,
         string $className
@@ -80,5 +80,13 @@ class BelongsTo implements Relation
                 $from . '.' . $this->foreignKey
             )
             ->addSelect($targetEntityReflection->getSelectColumns($to));
+    }
+
+    /**
+     * @return string
+     */
+    public function getForeignKey(): string
+    {
+        return $this->foreignKey;
     }
 }

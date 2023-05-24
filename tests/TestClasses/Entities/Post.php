@@ -14,7 +14,6 @@ use AdventureTech\ORM\Mapping\WithTimestamps;
 class Post
 {
     use WithTimestamps;
-    use WithSoftDeletes;
 
     #[Id]
     #[IntColumn]

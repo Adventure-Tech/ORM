@@ -8,5 +8,5 @@ use Carbon\CarbonImmutable;
 trait WithSoftDeletes
 {
     #[DeletedAtColumn]
-    public ?CarbonImmutable $deletedAt;
+    public ?CarbonImmutable $deletedAt = null;
 }

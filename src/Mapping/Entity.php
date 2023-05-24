@@ -58,7 +58,7 @@ final class Entity
         return $this->repository;
     }
 
-    private function checkInitialized()
+    private function checkInitialized(): void
     {
         if (!$this->initialized) {
             throw new NotInitializedException(self::class);

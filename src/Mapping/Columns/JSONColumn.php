@@ -3,6 +3,7 @@
 namespace AdventureTech\ORM\Mapping\Columns;
 
 use Attribute;
+use JsonException;
 use RuntimeException;
 use stdClass;
 
@@ -33,16 +34,13 @@ class JSONColumn implements Column
     /**
      * @param  object  $entity
      * @return array<string,string|null>
+     * @throws JsonException
      */
     public function serialize(object $entity): array
     {
         $this->checkInitialized();
         // TODO: what if this is not set?
-        $json = json_encode($entity->{$this->getPropertyName()});
-        if ($json === false) {
-            // TODO: custom exception + investigate when this happens
-            throw new RuntimeException('Could not json_encode');
-        }
+        $json = json_encode($entity->{$this->getPropertyName()}, JSON_THROW_ON_ERROR);
         return [$this->name => $json];
     }
 }

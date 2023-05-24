@@ -44,10 +44,12 @@ class DatetimeTZColumn implements Column
         if (!isset($this->tzName)) {
             $this->tzName = $this->name . '_timezone';
         }
+        $this->initialized = true;
     }
 
     public function getColumnNames(): array
     {
+        $this->checkInitialized();
         return [$this->name, $this->tzName];
     }
 
@@ -58,6 +60,7 @@ class DatetimeTZColumn implements Column
      */
     public function deserialize(stdClass $item, string $alias): ?CarbonImmutable
     {
+        $this->checkInitialized();
         // TODO: what if this is not set?
         $string = $item->{$alias . $this->name};
         return is_null($string)
@@ -71,6 +74,7 @@ class DatetimeTZColumn implements Column
      */
     public function serialize(object $entity): array
     {
+        $this->checkInitialized();
         // TODO: what if this is not set?
         /** @var CarbonImmutable|null $datetime */
         $datetime = $entity->{$this->getPropertyName()};

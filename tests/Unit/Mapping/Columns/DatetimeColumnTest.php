@@ -15,7 +15,7 @@ class DatetimeColumnTest
 
 test('datetime columns have single column name based on property name', function () {
     $column = new DatetimeColumn();
-    $property = new ReflectionProperty(CreatedAtColumnTest::class, 'test');
+    $property = new ReflectionProperty(DatetimeColumnTest::class, 'test');
     $column->initialize($property);
     expect($column->getColumnNames())
         ->toBeArray()
@@ -25,7 +25,7 @@ test('datetime columns have single column name based on property name', function
 
 test('datetime columns have single column name that can be customised in the constructor', function () {
     $column = new DatetimeColumn('custom');
-    $property = new ReflectionProperty(CreatedAtColumnTest::class, 'test');
+    $property = new ReflectionProperty(DatetimeColumnTest::class, 'test');
     $column->initialize($property);
     expect($column->getColumnNames())
         ->toBeArray()
@@ -35,7 +35,7 @@ test('datetime columns have single column name that can be customised in the con
 
 test('datetime columns expose their related property name', function () {
     $column = new DatetimeColumn('custom');
-    $property = new ReflectionProperty(CreatedAtColumnTest::class, 'test');
+    $property = new ReflectionProperty(DatetimeColumnTest::class, 'test');
     $column->initialize($property);
     expect($column->getPropertyName())
         ->toBe('test');
@@ -43,10 +43,10 @@ test('datetime columns expose their related property name', function () {
 
 test('datetime columns can correctly serialize entities', function () {
     $column = new DatetimeColumn('custom');
-    $property = new ReflectionProperty(CreatedAtColumnTest::class, 'test');
+    $property = new ReflectionProperty(DatetimeColumnTest::class, 'test');
     $column->initialize($property);
 
-    $entity = new CreatedAtColumnTest();
+    $entity = new DatetimeColumnTest();
     $entity->test = CarbonImmutable::parse('2023-01-01 12:00');
 
     expect($column->serialize($entity))
@@ -58,10 +58,10 @@ test('datetime columns can correctly serialize entities', function () {
 
 test('trying to serialize an incomplete entity results in exception', function () {
     $column = new DatetimeColumn('custom');
-    $property = new ReflectionProperty(CreatedAtColumnTest::class, 'test');
+    $property = new ReflectionProperty(DatetimeColumnTest::class, 'test');
     $column->initialize($property);
 
-    $entity = new CreatedAtColumnTest();
+    $entity = new DatetimeColumnTest();
 
     expect($column->serialize($entity))
         ->toBeArray()
@@ -71,7 +71,7 @@ test('trying to serialize an incomplete entity results in exception', function (
 
 test('datetime columns can correctly deserialize items', function () {
     $column = new DatetimeColumn('custom');
-    $property = new ReflectionProperty(CreatedAtColumnTest::class, 'test');
+    $property = new ReflectionProperty(DatetimeColumnTest::class, 'test');
     $column->initialize($property);
 
     $alias = 'alias_';
@@ -85,7 +85,7 @@ test('datetime columns can correctly deserialize items', function () {
 
 test('trying to deserialize an incomplete item results in exception', function () {
     $column = new DatetimeColumn('custom');
-    $property = new ReflectionProperty(CreatedAtColumnTest::class, 'test');
+    $property = new ReflectionProperty(DatetimeColumnTest::class, 'test');
     $column->initialize($property);
 
     $alias = 'alias_';
@@ -97,10 +97,10 @@ test('trying to deserialize an incomplete item results in exception', function (
 
 test('datetime columns allow checking if entity has initialized value', function () {
     $column = new DatetimeColumn('custom');
-    $property = new ReflectionProperty(CreatedAtColumnTest::class, 'test');
+    $property = new ReflectionProperty(DatetimeColumnTest::class, 'test');
     $column->initialize($property);
 
-    $entity = new CreatedAtColumnTest();
+    $entity = new DatetimeColumnTest();
 
     expect($column->isInitialized($entity))->toBeFalse();
     $entity->test = null;
@@ -111,7 +111,7 @@ test('datetime columns allow checking if entity has initialized value', function
 
 test('not initialising column throws exception', function () {
     $column = new DatetimeColumn();
-    expect(fn() => $column->isInitialized(new CreatedAtColumnTest()))->toThrow(
+    expect(fn() => $column->isInitialized(new DatetimeColumnTest()))->toThrow(
         NotInitializedException::class,
         'Must initialize before using: AdventureTech\ORM\Mapping\Columns\DatetimeColumn'
     )
@@ -123,7 +123,7 @@ test('not initialising column throws exception', function () {
             NotInitializedException::class,
             'Must initialize before using: AdventureTech\ORM\Mapping\Columns\DatetimeColumn'
         )
-        ->and(fn() => $column->serialize(new CreatedAtColumnTest()))->toThrow(
+        ->and(fn() => $column->serialize(new DatetimeColumnTest()))->toThrow(
             NotInitializedException::class,
             'Must initialize before using: AdventureTech\ORM\Mapping\Columns\DatetimeColumn'
         )

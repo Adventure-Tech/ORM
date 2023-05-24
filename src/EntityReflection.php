@@ -58,7 +58,7 @@ class EntityReflection
             throw new LogicException('Repository only works with entities [' . $this->class . ']');
         }
 
-        $this->entityAttribute = $entityAttribute->newInstance()->resolveDefaults($class);
+        $this->entityAttribute = $entityAttribute->newInstance()->initialize($class);
 
         $this->columns = Collection::empty();
         $this->relations = Collection::empty();

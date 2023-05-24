@@ -18,7 +18,7 @@ class BelongsTo implements Relation
     public function __construct(
         string $foreignKey = null
     ) {
-        if($foreignKey) {
+        if ($foreignKey) {
             $this->foreignKey = $foreignKey;
         }
     }

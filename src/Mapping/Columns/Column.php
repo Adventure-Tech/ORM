@@ -12,7 +12,7 @@ interface Column
     public function getPropertyName(): string;
     public function isInitialized(object $instance): bool;
 
-    public function deserialize(stdClass $item, string $alias): mixed ;
+    public function deserialize(stdClass $item, string $alias): mixed;
     // TODO: Entity type hint
     public function serialize($entity): array;
 }

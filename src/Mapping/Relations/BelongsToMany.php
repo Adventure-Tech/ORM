@@ -73,6 +73,4 @@ class BelongsToMany implements Relation
             )
             ->addSelect($targetEntityReflection->getSelectColumns($to));
     }
-
-
 }

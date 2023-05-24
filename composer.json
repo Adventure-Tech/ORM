@@ -23,9 +23,11 @@
   "require-dev": {
     "ext-pdo": "*",
     "jetbrains/phpstorm-attributes": "^1.0",
+    "nunomaduro/larastan": "^2.6",
     "orchestra/testbench": "^8.5",
     "pestphp/pest": "^2.0",
-    "phpunit/phpunit": "^10.0"
+    "phpunit/phpunit": "^10.0",
+    "squizlabs/php_codesniffer": "^3.7"
   },
   "autoload": {
     "psr-4": {

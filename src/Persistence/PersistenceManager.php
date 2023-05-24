@@ -39,7 +39,7 @@ abstract class PersistenceManager
         $arr = [];
         foreach ($entityReflection->getColumns() as $property => $column) {
             // TODO: prevent updating created_at and updated_at
-            if($column->isInitialized($entity)) {
+            if ($column->isInitialized($entity)) {
                 if ($property === $entityReflection->getId()) {
                     throw new RuntimeException('Must not set ID column for insert');
                 }
@@ -115,7 +115,7 @@ abstract class PersistenceManager
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
 
         foreach ($entityReflection->getColumns() as $column) {
-            if($column instanceof DeletedAtColumn) {
+            if ($column instanceof DeletedAtColumn) {
                 return $query->update($column->serialize($entity));
             }
         }

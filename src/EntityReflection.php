@@ -144,7 +144,7 @@ class EntityReflection
         }
         if ($alias === '') {
             return array_map(
-                fn (string $column) => $this->getTableName().'Repository'. $column,
+                fn (string $column) => $this->getTableName() . 'Repository' . $column,
                 $columnNames
             );
         } else {
@@ -170,7 +170,7 @@ class EntityReflection
     public function getSoftDeleteColumn(): ?string
     {
         return !is_null($this->softDeleteColumn) ?
-            $this->getTableName().'Repository'. $this->softDeleteColumn
+            $this->getTableName() . 'Repository' . $this->softDeleteColumn
             : null;
     }
 
@@ -186,7 +186,7 @@ class EntityReflection
     {
         $column->resolveDefault($property);
         $this->columns->put($property->getName(), $column);
-        if($column instanceof DeletedAtColumn) {
+        if ($column instanceof DeletedAtColumn) {
             $columnNames = $column->getColumnNames();
             if (count($columnNames) !== 1) {
                 // TODO: custom exception

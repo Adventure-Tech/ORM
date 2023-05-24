@@ -83,7 +83,7 @@ class Repository
             ->select($this->entityReflection->getSelectColumns());
 
         $softDeleteColumn = $this->entityReflection->getSoftDeleteColumn();
-        if(!is_null($softDeleteColumn)) {
+        if (!is_null($softDeleteColumn)) {
             $query->whereNull($softDeleteColumn);
         }
 
@@ -125,7 +125,7 @@ class Repository
         $repository = self::new($relationInstance->getTargetEntity());
 
         // apply callback to target repository
-        if($callable) {
+        if ($callable) {
             $callable($repository);
         }
 

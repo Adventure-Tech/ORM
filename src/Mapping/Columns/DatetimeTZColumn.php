@@ -35,7 +35,7 @@ class DatetimeTZColumn implements Column
         }
     }
 
-    public function resolveDefault(ReflectionProperty $property): void
+    public function initialize(ReflectionProperty $property): void
     {
         $this->property = $property;
         if (!isset($this->name)) {

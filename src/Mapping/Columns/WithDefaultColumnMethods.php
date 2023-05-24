@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Columns;
 
+use AdventureTech\ORM\Exceptions\NotInitializedException;
 use Illuminate\Support\Str;
 use ReflectionProperty;
 
@@ -12,6 +13,7 @@ trait WithDefaultColumnMethods
      * @var string
      */
     private string $name;
+    private bool $initialized = false;
 
     /**
      * @param  string|null  $name
@@ -28,12 +30,13 @@ trait WithDefaultColumnMethods
      * @param  ReflectionProperty  $property
      * @return void
      */
-    public function resolveDefault(ReflectionProperty $property): void
+    public function initialize(ReflectionProperty $property): void
     {
         $this->property = $property;
         if (!isset($this->name)) {
             $this->name = Str::snake($property->getName());
         }
+        $this->initialized = true;
     }
 
     /**
@@ -41,6 +44,7 @@ trait WithDefaultColumnMethods
      */
     public function getColumnNames(): array
     {
+        $this->checkInitialized();
         return [$this->name];
     }
 
@@ -49,6 +53,7 @@ trait WithDefaultColumnMethods
      */
     public function getPropertyName(): string
     {
+        $this->checkInitialized();
         return $this->property->getName();
     }
 
@@ -59,6 +64,14 @@ trait WithDefaultColumnMethods
      */
     public function isInitialized(object $instance): bool
     {
+        $this->checkInitialized();
         return $this->property->isInitialized($instance);
+    }
+
+    private function checkInitialized(): void
+    {
+        if (!$this->initialized) {
+            throw new NotInitializedException(static::class);
+        }
     }
 }

@@ -14,7 +14,7 @@ interface Column
      * @param  ReflectionProperty  $property
      * @return void
      */
-    public function resolveDefault(ReflectionProperty $property): void;
+    public function initialize(ReflectionProperty $property): void;
 
     /**
      * @return array<int,string>

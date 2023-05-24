@@ -187,7 +187,7 @@ class EntityReflection
      */
     private function registerColumn(Column $column, ReflectionProperty $property): void
     {
-        $column->resolveDefault($property);
+        $column->initialize($property);
         $this->columns->put($property->getName(), $column);
         if ($column instanceof DeletedAtColumn) {
             $columnNames = $column->getColumnNames();

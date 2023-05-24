@@ -13,6 +13,7 @@ use LogicException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
+use RuntimeException;
 
 /**
  * @template T of object
@@ -25,12 +26,12 @@ class EntityReflection
     private ReflectionClass $reflectionClass;
 
     /**
-     * @var Collection<string, Column>
+     * @var Collection<string, Column<mixed>>
      */
     private Collection $columns;
 
     /**
-     * @var Collection<string, Relation>
+     * @var Collection<string, Relation<T,object>>
      */
     private Collection $relations;
     /**
@@ -106,7 +107,7 @@ class EntityReflection
     }
 
     /**
-     * @return Collection<string, Column>
+     * @return Collection<string, Column<mixed>>
      */
     public function getColumns(): Collection
     {
@@ -114,7 +115,7 @@ class EntityReflection
     }
 
     /**
-     * @return Collection<string,Relation>
+     * @return Collection<string,Relation<T,object>>
      */
     public function getRelations(): Collection
     {
@@ -144,19 +145,19 @@ class EntityReflection
         }
         if ($alias === '') {
             return array_map(
-                fn (string $column) => $this->getTableName() . 'Repository' . $column,
+                fn (string $column): string => $this->getTableName() . 'Repository' . $column,
                 $columnNames
             );
         } else {
             return array_map(
-                fn (string $column) => $alias . '.' . $column . ' as ' . $alias . $column,
+                fn (string $column): string => $alias . '.' . $column . ' as ' . $alias . $column,
                 $columnNames
             );
         }
     }
 
     /**
-     * @return string
+     * @return class-string
      */
     public function getRepository(): string
     {
@@ -182,6 +183,11 @@ class EntityReflection
         $this->id = $propertyName;
     }
 
+    /**
+     * @param  Column<mixed>  $column
+     * @param  ReflectionProperty  $property
+     * @return void
+     */
     private function registerColumn(Column $column, ReflectionProperty $property): void
     {
         $column->resolveDefault($property);
@@ -196,9 +202,20 @@ class EntityReflection
         }
     }
 
+    /**
+     * @param  Relation<T,object>  $relation
+     * @param  ReflectionProperty  $property
+     * @return void
+     */
     private function registerRelation(Relation $relation, ReflectionProperty $property): void
     {
-        $relation->resolveDefault($property->getName(), $property->getType(), $this->class);
+        // TODO: check if `$property->getType()?->getName()` is correc
+        $type = $property->getType();
+        if (is_null($type)) {
+            // TODO: custom exception
+            throw new RuntimeException('Encountered null in reflection type');
+        }
+        $relation->resolveDefault($property->getName(), $type->getName(), $this->class);
         $this->relations->put($property->getName(), $relation);
     }
 }

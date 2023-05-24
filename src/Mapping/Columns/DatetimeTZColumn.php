@@ -8,24 +8,40 @@ use Illuminate\Support\Str;
 use ReflectionProperty;
 use stdClass;
 
+/**
+ * @implements Column<CarbonImmutable>
+ */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class DatetimeTZColumn implements Column
 {
     use WithDefaultColumnMethods;
 
+    private string $name;
+    private string $tzName;
+
+    /**
+     * @param  string|null  $name
+     * @param  string|null  $tzName
+     */
     public function __construct(
-        private ?string $name = null,
-        private ?string $tzName = null,
+        string $name = null,
+        string $tzName = null,
     ) {
+        if (!is_null($name)) {
+            $this->name = $name;
+        }
+        if (!is_null($tzName)) {
+            $this->tzName = $tzName;
+        }
     }
 
     public function resolveDefault(ReflectionProperty $property): void
     {
         $this->property = $property;
-        if (is_null($this->name)) {
+        if (!isset($this->name)) {
             $this->name = Str::snake($property->getName());
         }
-        if (is_null($this->tzName)) {
+        if (!isset($this->tzName)) {
             $this->tzName = $this->name . '_timezone';
         }
     }
@@ -35,21 +51,32 @@ class DatetimeTZColumn implements Column
         return [$this->name, $this->tzName];
     }
 
-    public function deserialize(stdClass $item, string $alias): CarbonImmutable
+    /**
+     * @param  stdClass  $item
+     * @param  string  $alias
+     * @return CarbonImmutable|null
+     */
+    public function deserialize(stdClass $item, string $alias): ?CarbonImmutable
     {
         // TODO: what if this is not set?
-        return CarbonImmutable::parse($item->{$alias . $this->name})
-            ->setTimezone($item->{$alias . $this->tzName});
+        $string = $item->{$alias . $this->name};
+        return is_null($string)
+            ? null
+            : CarbonImmutable::parse($string)->setTimezone($item->{$alias . $this->tzName});
     }
 
-    public function serialize($entity): array
+    /**
+     * @param  object  $entity
+     * @return array<string,string|null>
+     */
+    public function serialize(object $entity): array
     {
         // TODO: what if this is not set?
-        /** @var CarbonImmutable $datetime */
+        /** @var CarbonImmutable|null $datetime */
         $datetime = $entity->{$this->getPropertyName()};
         return [
-            $this->name => $datetime->toIso8601String(),
-            $this->tzName => $datetime->tzName,
+            $this->name => $datetime?->toIso8601String(),
+            $this->tzName => $datetime?->tzName,
         ];
     }
 }

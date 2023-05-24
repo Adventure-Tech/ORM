@@ -7,22 +7,39 @@ use Attribute;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Str;
 
+/**
+ * @template FROM of object
+ * @template TO of object
+ * @implements Relation<FROM,TO>
+ */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class BelongsTo implements Relation
 {
     use ToOne;
 
     private string $foreignKey;
+    /**
+     * @var class-string<TO>
+     */
     private string $targetEntity;
 
+    /**
+     * @param  string|null  $foreignKey
+     */
     public function __construct(
         string $foreignKey = null
     ) {
-        if ($foreignKey) {
+        if (!is_null($foreignKey)) {
             $this->foreignKey = $foreignKey;
         }
     }
 
+    /**
+     * @param  string  $propertyName
+     * @param  class-string<TO>  $propertyType
+     * @param  class-string<FROM>  $className
+     * @return void
+     */
     public function resolveDefault(
         string $propertyName,
         string $propertyType,
@@ -35,11 +52,20 @@ class BelongsTo implements Relation
         }
     }
 
+    /**
+     * @return class-string<TO>
+     */
     public function getTargetEntity(): string
     {
         return $this->targetEntity;
     }
 
+    /**
+     * @param  Builder  $query
+     * @param  string  $from
+     * @param  string  $to
+     * @return void
+     */
     public function join(
         Builder $query,
         string $from,

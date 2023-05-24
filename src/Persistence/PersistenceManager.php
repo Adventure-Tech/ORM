@@ -55,14 +55,15 @@ abstract class PersistenceManager
         // TODO: resolve relations
 
         $id = DB::table($entityReflection->getTableName())->insertGetId($arr);
-        $entity->id = $id;
+        $entity->{$entityReflection->getId()} = $id;
         return $entity;
     }
 
     /**
-     * @param  Collection<mixed,T>  $entities
+     * @template key of string|int
+     * @param  Collection<key,T>  $entities
      *
-     * @return T
+     * @return Collection<key,T>
      */
     public function insertMultiple(Collection $entities): Collection
     {
@@ -122,9 +123,9 @@ abstract class PersistenceManager
         return $query->delete();
     }
 
-    public function attach()
-    {
-    }
+//    public function attach()
+//    {
+//    }
 
     /**
      * @param  T  $entity

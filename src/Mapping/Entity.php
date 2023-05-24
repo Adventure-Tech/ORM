@@ -10,9 +10,14 @@ use Illuminate\Support\Str;
 final class Entity
 {
     private string $table;
+
+    /**
+     * @param  string|null  $table
+     * @param  class-string|null  $repository
+     */
     public function __construct(string $table = null, private readonly ?string $repository = null)
     {
-        if ($table) {
+        if (!is_null($table)) {
             $this->table = $table;
         }
     }
@@ -34,15 +39,11 @@ final class Entity
     }
 
     /**
-     * @return string
+     * @return class-string
      */
     public function getRepository(): string
     {
         // TODO: where should this live?
-        if ($this->repository) {
-            return $this->repository;
-        } else {
-            return Repository::class;
-        }
+        return $this->repository ?? Repository::class;
     }
 }

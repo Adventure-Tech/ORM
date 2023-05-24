@@ -3,10 +3,12 @@
 namespace AdventureTech\ORM\Repository;
 
 use AdventureTech\ORM\EntityReflection;
+use AdventureTech\ORM\Mapping\Relations\Relation;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use LogicException;
+use ReflectionException;
 use stdClass;
 
 /**
@@ -22,9 +24,10 @@ class Repository
     }
 
     /**
-     * @param  class-string<T>  $class
+     * @template E of object
+     * @param  class-string<E>  $class
      *
-     * @return Repository<T>
+     * @return Repository<E>
      */
     public static function new(string $class): Repository
     {
@@ -35,6 +38,7 @@ class Repository
 
     /**
      * @return Collection<int,T>
+     * @throws ReflectionException
      */
     public function get(): Collection
     {
@@ -45,6 +49,7 @@ class Repository
      * @param  int  $id
      *
      * @return T|null
+     * @throws ReflectionException
      */
     public function find(int $id)
     {
@@ -93,6 +98,14 @@ class Repository
         return $query;
     }
 
+    /**
+     * @template S of object
+     * @param  Builder  $query
+     * @param  TMP<S,object>  $tmp
+     * @param  string  $from
+     * @param  string  $to
+     * @return void
+     */
     private static function applyJoin(Builder $query, TMP $tmp, string $from, string $to): void
     {
         $tmp->relationInstance->join($query, $from, $to);
@@ -102,7 +115,7 @@ class Repository
     }
 
     /**
-     * @var array<int,TMP>
+     * @var array<int,TMP<T,object>>
      */
     private array $with = [];
 
@@ -119,6 +132,7 @@ class Repository
             throw new LogicException('Invalid relation used in with clause');
         }
 
+        /** @var Relation<T,object> $relationInstance */
         $relationInstance = $this->entityReflection->getRelations()->get($relation);
 
         // if a MorphTo relationship get multiple target entities
@@ -135,9 +149,19 @@ class Repository
     }
 
     private ?int $resolvingId = null;
-    private mixed $resolvingEntity;
+    /**
+     * @var T
+     */
+    private object $resolvingEntity;
 
-    private function resolve(stdClass $item, string $alias = '', bool $reset = false)
+    /**
+     * @param  stdClass  $item
+     * @param  string  $alias
+     * @param  bool  $reset
+     * @return T|null
+     * @throws ReflectionException
+     */
+    private function resolve(stdClass $item, string $alias = '', bool $reset = false): ?object
     {
         $id = $item->{$alias . $this->entityReflection->getId()};
         if ($id !== $this->resolvingId) {
@@ -158,6 +182,11 @@ class Repository
         return $reset && isset($this->resolvingEntity) ? $this->resolvingEntity : null;
     }
 
+    /**
+     * @param  Collection<int|string,stdClass>  $data
+     * @return Collection<int,T>
+     * @throws ReflectionException
+     */
     private function mapToEntities(Collection $data): Collection
     {
         $result = Collection::empty();

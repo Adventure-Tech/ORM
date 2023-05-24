@@ -5,14 +5,43 @@ namespace AdventureTech\ORM\Mapping\Columns;
 use ReflectionProperty;
 use stdClass;
 
+/**
+ * @template T
+ */
 interface Column
 {
+    /**
+     * @param  ReflectionProperty  $property
+     * @return void
+     */
     public function resolveDefault(ReflectionProperty $property): void;
+
+    /**
+     * @return array<int,string>
+     */
     public function getColumnNames(): array;
+
+    /**
+     * @return string
+     */
     public function getPropertyName(): string;
+
+    /**
+     * @param  object  $instance
+     * @return bool
+     */
     public function isInitialized(object $instance): bool;
 
+    /**
+     * @param  stdClass  $item
+     * @param  string  $alias
+     * @return T|null
+     */
     public function deserialize(stdClass $item, string $alias): mixed;
-    // TODO: Entity type hint
-    public function serialize($entity): array;
+
+    /**
+     * @param  object  $entity
+     * @return array<string,string|null>
+     */
+    public function serialize(object $entity): array;
 }

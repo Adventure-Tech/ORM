@@ -3,7 +3,6 @@
 namespace AdventureTech\ORM\Tests\Unit\Mapping\Columns;
 
 use AdventureTech\ORM\Mapping\Columns\CreatedAtColumn;
-use AdventureTech\ORM\Mapping\Columns\DatetimeColumn;
 use Carbon\CarbonImmutable;
 use ReflectionProperty;
 

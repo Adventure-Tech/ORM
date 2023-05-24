@@ -1,5 +1,7 @@
 <?php
 
+namespace AdventureTech\ORM\Tests\Unit\Mapping\Columns;
+
 use AdventureTech\ORM\Exceptions\NotInitializedException;
 use AdventureTech\ORM\Mapping\Columns\BoolColumn;
 

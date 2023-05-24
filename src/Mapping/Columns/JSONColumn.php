@@ -21,6 +21,7 @@ class JSONColumn implements Column
      */
     public function deserialize(stdClass $item, string $alias): array|null
     {
+        $this->checkInitialized();
         // TODO: what if this is not set?
         $json = json_decode($item->{$alias . $this->name}, true);
         if (!is_array($json) && !is_null($json)) {
@@ -35,6 +36,7 @@ class JSONColumn implements Column
      */
     public function serialize(object $entity): array
     {
+        $this->checkInitialized();
         // TODO: what if this is not set?
         $json = json_encode($entity->{$this->getPropertyName()});
         if ($json === false) {

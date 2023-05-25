@@ -2,15 +2,16 @@
 
 namespace AdventureTech\ORM\Mapping;
 
-use AdventureTech\ORM\Mapping\Columns\CreatedAtColumn;
-use AdventureTech\ORM\Mapping\Columns\UpdatedAtColumn;
+use AdventureTech\ORM\Mapping\Columns\DatetimeColumn;
 use Carbon\CarbonImmutable;
 
 trait WithTimestamps
 {
-    #[CreatedAtColumn]
-    public ?CarbonImmutable $createdAt;
+    #[DatetimeColumn]
+    #[CreatedAt]
+    public ?CarbonImmutable $createdAt = null;
 
-    #[UpdatedAtColumn]
-    public ?CarbonImmutable $updatedAt;
+    #[DatetimeColumn]
+    #[UpdatedAt]
+    public ?CarbonImmutable $updatedAt = null;
 }

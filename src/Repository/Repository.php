@@ -87,10 +87,11 @@ class Repository
         $query = DB::table($this->entityReflection->getTableName())
             ->select($this->entityReflection->getSelectColumns());
 
-        $softDeleteColumn = $this->entityReflection->getSoftDeleteColumn();
-        if (!is_null($softDeleteColumn)) {
-            $query->whereNull($softDeleteColumn);
-        }
+        // TODO: implement soft-delete support
+//        $softDeleteColumn = $this->entityReflection->getDeletedAtColumn();
+//        if (!is_null($softDeleteColumn)) {
+//            $query->whereNull($softDeleteColumn);
+//        }
 
         foreach ($this->with as $index => $tmp) {
             self::applyJoin($query, $tmp, $this->entityReflection->getTableName(), self::createAlias($index));
@@ -167,8 +168,8 @@ class Repository
         if ($id !== $this->resolvingId) {
             $this->resolvingId = $id;
             $this->resolvingEntity = $this->entityReflection->newInstance();
-            foreach ($this->entityReflection->getMappers() as $property => $column) {
-                $this->resolvingEntity->{$property} = $column->deserialize($item, $alias);
+            foreach ($this->entityReflection->getMappers() as $property => $mapper) {
+                $this->resolvingEntity->{$property} = $mapper->deserialize($item, $alias);
             }
             $reset = true;
         }

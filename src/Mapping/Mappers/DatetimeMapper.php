@@ -2,17 +2,14 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
-use AdventureTech\ORM\Mapping\Columns\Column;
-use Attribute;
 use Carbon\CarbonImmutable;
 use ReflectionProperty;
 use stdClass;
 
 /**
- * @implements Column<CarbonImmutable>
+ * @implements Mapper<CarbonImmutable>
  */
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
 readonly class DatetimeMapper implements Mapper
 {
     /**
@@ -23,6 +20,14 @@ readonly class DatetimeMapper implements Mapper
         private string $name,
         private ReflectionProperty $property
     ) {
+    }
+
+    /**
+     * @return string
+     */
+    public function getPropertyName(): string
+    {
+        return $this->property->getName();
     }
 
     /**

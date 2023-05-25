@@ -11,6 +11,11 @@ use stdClass;
 interface Mapper
 {
     /**
+     * @return string
+     */
+    public function getPropertyName(): string;
+
+    /**
      * @return array<int,string>
      */
     public function getColumnNames(): array;

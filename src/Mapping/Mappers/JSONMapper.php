@@ -2,18 +2,15 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
-use AdventureTech\ORM\Mapping\Columns\Column;
-use Attribute;
 use JsonException;
 use ReflectionProperty;
 use RuntimeException;
 use stdClass;
 
 /**
- * @implements Column<array>
+ * @implements Mapper<array>
  */
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
 readonly class JSONMapper implements Mapper
 {
     /**
@@ -24,6 +21,14 @@ readonly class JSONMapper implements Mapper
         private string $name,
         private ReflectionProperty $property
     ) {
+    }
+
+    /**
+     * @return string
+     */
+    public function getPropertyName(): string
+    {
+        return $this->property->getName();
     }
 
     /**

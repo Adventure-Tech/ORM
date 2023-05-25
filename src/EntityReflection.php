@@ -3,10 +3,13 @@
 namespace AdventureTech\ORM;
 
 use AdventureTech\ORM\Mapping\Columns\Column;
-use AdventureTech\ORM\Mapping\Mappers\Mapper;
+use AdventureTech\ORM\Mapping\CreatedAt;
+use AdventureTech\ORM\Mapping\DeletedAt;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
+use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Mapping\Relations\Relation;
+use AdventureTech\ORM\Mapping\UpdatedAt;
 use ErrorException;
 use Illuminate\Support\Collection;
 use LogicException;
@@ -35,15 +38,11 @@ class EntityReflection
      */
     private Collection $relations;
     /**
-     * @var string
-     */
-    private string $id;
-    /**
      * @var Entity<T>
      */
     private Entity $entityAttribute;
-
-    private ?string $softDeleteColumn = null;
+    private string $id;
+    private ?string $createdAt = null, $updatedAt = null, $deletedAt = null;
 
     /**
      * @param  class-string<T>  $class
@@ -63,11 +62,19 @@ class EntityReflection
         $this->mappers = Collection::empty();
         $this->relations = Collection::empty();
 
+        // TODO: check that we only set single CreatedAt et
+        // TODO: check that CreatedAt mappers only have single column?
         foreach ($this->reflectionClass->getProperties() as $property) {
             foreach ($property->getAttributes() as $attribute) {
                 $attributeInstance = $attribute->newInstance();
                 if ($attributeInstance instanceof Id) {
                     $this->setId($property->getName());
+                } elseif ($attributeInstance instanceof CreatedAt) {
+                    $this->createdAt = $property->getName();
+                } elseif ($attributeInstance instanceof UpdatedAt) {
+                    $this->updatedAt = $property->getName();
+                } elseif ($attributeInstance instanceof DeletedAt) {
+                    $this->deletedAt = $property->getName();
                 } elseif ($attributeInstance instanceof Column) {
                     $this->registerMapper($attributeInstance, $property);
                 } elseif ($attributeInstance instanceof Relation) {
@@ -104,7 +111,7 @@ class EntityReflection
     }
 
     /**
-     * @return Collection<string, Column<mixed>>
+     * @return Collection<string, Mapper<mixed>>
      */
     public function getMappers(): Collection
     {
@@ -135,8 +142,8 @@ class EntityReflection
     public function getSelectColumns(string $alias = ''): array
     {
         $columnNames = [];
-        foreach ($this->mappers as $column) {
-            foreach ($column->getColumnNames() as $columnName) {
+        foreach ($this->mappers as $mapper) {
+            foreach ($mapper->getColumnNames() as $columnName) {
                 $columnNames[$columnName] = $columnName;
             }
         }
@@ -161,15 +168,28 @@ class EntityReflection
         return $this->entityAttribute->getRepository();
     }
 
+    /**
+     * @return Mapper|null
+     */
+    public function getCreatedAtMapper(): ?Mapper
+    {
+        return $this->mappers->get($this->createdAt);
+    }
 
     /**
-     * @return string|null
+     * @return Mapper|null
      */
-    public function getSoftDeleteColumn(): ?string
+    public function getUpdatedAtMapper(): ?Mapper
     {
-        return !is_null($this->softDeleteColumn) ?
-            $this->getTableName() . '.' . $this->softDeleteColumn
-            : null;
+        return $this->mappers->get($this->updatedAt);
+    }
+
+    /**
+     * @return Mapper|null
+     */
+    public function getDeletedAtMapper(): ?Mapper
+    {
+        return $this->mappers->get($this->deletedAt);
     }
 
     private function setId(string $propertyName): void
@@ -180,6 +200,33 @@ class EntityReflection
         $this->id = $propertyName;
     }
 
+    private function setCreatedAt(string $propertyName): void
+    {
+        $this->createdAt = $this->getManagedDatetimeColumnName($propertyName, 'createdAt');
+    }
+
+    private function setUpdatedAt(string $propertyName): void
+    {
+        $this->updatedAt = $this->getManagedDatetimeColumnName($propertyName, 'updatedAt');
+    }
+
+    private function setDeletedAt(string $propertyName): void
+    {
+        $this->deletedAt = $this->getManagedDatetimeColumnName($propertyName, 'deletedAt');
+    }
+
+    private function getManagedDatetimeColumnName(string $propertyName, string $asd): string
+    {
+//        if (isset($this->{$asd})) {
+//            throw new LogicException('Cannot have multiple ' . $asd . ' columns');
+//        }
+        $columnNames = $this->mappers->get($propertyName)->getColumnNames();
+        if (count($columnNames) !== 1) {
+            throw new LogicException($asd . ' column can only have single associated column');
+        }
+        return $columnNames[0];
+    }
+
     /**
      * @param  Column<mixed>  $column
      * @param  ReflectionProperty  $property
@@ -188,14 +235,6 @@ class EntityReflection
     private function registerMapper(Column $column, ReflectionProperty $property): void
     {
         $this->mappers->put($property->getName(), $column->getMapper($property));
-        if ($column instanceof DeletedAtColumn) {
-            $columnNames = $column->getColumnNames();
-            if (count($columnNames) !== 1) {
-                // TODO: custom exception
-                throw new LogicException('Invalid DeletedAtColumn');
-            }
-            $this->softDeleteColumn = $columnNames[0];
-        }
     }
 
     /**

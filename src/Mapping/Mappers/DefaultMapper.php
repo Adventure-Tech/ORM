@@ -2,16 +2,14 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
-use Attribute;
 use ReflectionProperty;
 use stdClass;
 
 /**
- * @template T of object
+ * @template T
  * @implements Mapper<T>
  */
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
 readonly class DefaultMapper implements Mapper
 {
     /**
@@ -22,6 +20,14 @@ readonly class DefaultMapper implements Mapper
         private string $name,
         private ReflectionProperty $property
     ) {
+    }
+
+    /**
+     * @return string
+     */
+    public function getPropertyName(): string
+    {
+        return $this->property->getName();
     }
 
     /**

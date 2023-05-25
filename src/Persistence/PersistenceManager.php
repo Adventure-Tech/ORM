@@ -48,36 +48,36 @@ abstract class PersistenceManager
         return $entities->map(fn ($entity) => self::insert($entity));
     }
 
-    /**
-     * @param  T  $entity
-     *
-     * @return int
-     */
-    public function update(object $entity): int
-    {
-        $this->checkType($entity);
-
-        $entityReflection = new EntityReflection(get_class($entity));
-        $arr = [];
-        if (!isset($entity->{$entityReflection->getId()})) {
-            throw new RuntimeException('Must set ID column when updating');
-        }
-        foreach ($entityReflection->getMappers() as $property => $column) {
-            // TODO: prevent updating created_at and updated_at
-            if ($column->isInitialized($entity)) {
-                $arr = array_merge($arr, $column->serialize($entity));
-            } elseif ($column instanceof UpdatedAtColumn) {
-                $entity->{$property} = CarbonImmutable::now();
-                $arr = array_merge($arr, $column->serialize($entity));
-            }
-        }
-
-        // TODO: resolve relations (do we insert? do we even update?)
-
-        return DB::table($entityReflection->getTableName())
-            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
-            ->update($arr);
-    }
+//    /**
+//     * @param  T  $entity
+//     *
+//     * @return int
+//     */
+//    public function update(object $entity): int
+//    {
+//        $this->checkType($entity);
+//
+//        $entityReflection = new EntityReflection(get_class($entity));
+//        $arr = [];
+//        if (!isset($entity->{$entityReflection->getId()})) {
+//            throw new RuntimeException('Must set ID column when updating');
+//        }
+//        foreach ($entityReflection->getMappers() as $property => $mapper) {
+//            // TODO: prevent updating created_at and updated_at
+//            if ($column->isInitialized($entity)) {
+//                $arr = array_merge($arr, $column->serialize($entity));
+//            } elseif ($column instanceof UpdatedAtColumn) {
+//                $entity->{$property} = CarbonImmutable::now();
+//                $arr = array_merge($arr, $column->serialize($entity));
+//            }
+//        }
+//
+//        // TODO: resolve relations (do we insert? do we even update?)
+//
+//        return DB::table($entityReflection->getTableName())
+//            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+//            ->update($arr);
+//    }
 
     /**
      * @param  T  $entity
@@ -93,10 +93,13 @@ abstract class PersistenceManager
         $query = DB::table($entityReflection->getTableName())
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
 
-        foreach ($entityReflection->getMappers() as $column) {
-            if ($column instanceof DeletedAtColumn) {
-                return $query->update($column->serialize($entity));
-            }
+        $deletedAtMapper = $entityReflection->getDeletedAtMapper();
+        if (!is_null($deletedAtMapper)) {
+            $now = CarbonImmutable::now();
+            $entity->deletedAt = $now;
+            return $query->update([
+                $deletedAtMapper->getColumnNames()[0] => $now->toIso8601String()
+            ]);
         }
         // TODO: what about HasOne/HasMany/BelongsToMany relations?
         return $query->delete();
@@ -127,17 +130,21 @@ abstract class PersistenceManager
     {
         $entityReflection = new EntityReflection(get_class($entity));
         $arr = [];
-        foreach ($entityReflection->getMappers() as $property => $column) {
+
+        $id = $entityReflection->getId();
+
+        foreach ($entityReflection->getMappers() as $property => $mapper) {
             // TODO: prevent updating created_at and updated_at
-            if ($column->isInitialized($entity)) {
-                if ($property === $entityReflection->getId()) {
+            if ($mapper->isInitialized($entity)) {
+                if ($property === $id) {
                     throw new RuntimeException('Must not set ID column for insert');
+//                    $entityReflection->getCreatedAtColumn() => throw new RuntimeException('Must not set managed CreatedAt column for insert'),
+//                    $entityReflection->getUpdatedAtColumn() => throw new RuntimeException('Must not set managed UpdatedAt column for insert'),
+//                    $entityReflection->getDeletedAtColumn() => throw new RuntimeException('Must not set managed DeletedAt column for insert'),
+//                    default => null
                 }
-                $arr = array_merge($arr, $column->serialize($entity));
-            } elseif ($column instanceof CreatedAtColumn || $column instanceof UpdatedAtColumn) {
-                $entity->{$property} = CarbonImmutable::now();
-                $arr = array_merge($arr, $column->serialize($entity));
-            } elseif ($property !== $entityReflection->getId()) {
+                $arr = array_merge($arr, $mapper->serialize($entity));
+            } elseif ($property !== $id) {
                 throw new RuntimeException('Forgot to set column without default value [' . $property . ']');
             }
         }
@@ -148,6 +155,27 @@ abstract class PersistenceManager
             }
         }
 
-        return DB::table($entityReflection->getTableName())->insertGetId($arr);
+
+        // TODO: if DB insert fails we will have still updated $entity
+        $now = CarbonImmutable::now();
+        $createdAtMapper = $entityReflection->getCreatedAtMapper();
+        if (!is_null($createdAtMapper)) {
+            $arr[$createdAtMapper->getColumnNames()[0]] = $now->toIso8601String();
+            $entity->{$createdAtMapper->getPropertyName()} = $now;
+        }
+        $updatedAtMapper = $entityReflection->getUpdatedAtMapper();
+        if (!is_null($updatedAtMapper)) {
+            $arr[$updatedAtMapper->getColumnNames()[0]] = $now->toIso8601String();
+            $entity->{$updatedAtMapper->getPropertyName()} = $now;
+        }
+        $deletedAtMapper = $entityReflection->getDeletedAtMapper();
+        if (!is_null($deletedAtMapper)) {
+            $arr[$deletedAtMapper->getColumnNames()[0]] = null;
+            $entity->{$deletedAtMapper->getPropertyName()} = null;
+        }
+
+        $id = DB::table($entityReflection->getTableName())->insertGetId($arr);
+        $entity->{$entityReflection->getId()} = $id;
+        return $id;
     }
 }

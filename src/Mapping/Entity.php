@@ -13,40 +13,23 @@ use Illuminate\Support\Str;
 #[Attribute(Attribute::TARGET_CLASS)]
 final class Entity
 {
-    private string $table;
-    private bool $initialized = false;
-
     /**
      * @param  string|null  $table
      * @param  class-string<Repository<T>>|null  $repository
      */
-    public function __construct(string $table = null, private readonly ?string $repository = null)
-    {
-        if (!is_null($table)) {
-            $this->table = $table;
-        }
+    public function __construct(
+        private readonly ?string $table = null,
+        private readonly ?string $repository = null
+    ) {
     }
 
     /**
      * @param  class-string<T>  $class
-     * @return $this
-     */
-    public function initialize(string $class): Entity
-    {
-        $this->initialized = true;
-        if (!isset($this->table)) {
-            $this->table = Str::snake(Str::plural(Str::afterLast($class, '\\')));
-        }
-        return $this;
-    }
-
-    /**
      * @return string
      */
-    public function getTable(): string
+    public function getTable(string $class): string
     {
-        $this->checkInitialized();
-        return $this->table;
+        return $this->table ?? Str::snake(Str::plural(Str::afterLast($class, '\\')));
     }
 
     /**
@@ -54,14 +37,6 @@ final class Entity
      */
     public function getRepository(): ?string
     {
-        $this->checkInitialized();
         return $this->repository;
-    }
-
-    private function checkInitialized(): void
-    {
-        if (!$this->initialized) {
-            throw new NotInitializedException(self::class);
-        }
     }
 }

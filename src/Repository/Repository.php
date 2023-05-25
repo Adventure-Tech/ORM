@@ -167,7 +167,7 @@ class Repository
         if ($id !== $this->resolvingId) {
             $this->resolvingId = $id;
             $this->resolvingEntity = $this->entityReflection->newInstance();
-            foreach ($this->entityReflection->getColumns() as $property => $column) {
+            foreach ($this->entityReflection->getMappers() as $property => $column) {
                 $this->resolvingEntity->{$property} = $column->deserialize($item, $alias);
             }
             $reset = true;

@@ -2,37 +2,37 @@
 
 namespace AdventureTech\ORM\Mapping\Columns;
 
+use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
+use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Attribute;
+use Illuminate\Support\Str;
+use ReflectionProperty;
 use stdClass;
 
 /**
  * @implements Column<bool>
  */
-#[Attribute(Attribute::TARGET_PROPERTY)]
-class BoolColumn implements Column
-{
-    use WithDefaultColumnMethods;
 
+#[Attribute(Attribute::TARGET_PROPERTY)]
+readonly class BoolColumn implements Column
+{
     /**
-     * @param  stdClass  $item
-     * @param  string  $alias
-     * @return bool|null
+     * @param  string|null  $name
      */
-    public function deserialize(stdClass $item, string $alias): ?bool
-    {
-        $this->checkInitialized();
-        // TODO: what if this is not set?
-        return $item->{$alias . $this->name};
+    public function __construct(
+        private ?string $name = null
+    ) {
     }
 
     /**
-     * @param  object  $entity
-     * @return array<string,bool|null>
+     * @param  ReflectionProperty  $property
+     * @return DefaultMapper<bool>
      */
-    public function serialize(object $entity): array
+    public function getMapper(ReflectionProperty $property): DefaultMapper
     {
-        $this->checkInitialized();
-        // TODO: what if this is not set?
-        return [$this->name => $entity->{$this->getPropertyName()}];
+        return new DefaultMapper(
+            $this->name ?? Str::snake($property->getName()),
+            $property
+        );
     }
 }

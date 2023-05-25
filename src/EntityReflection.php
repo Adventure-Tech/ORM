@@ -3,7 +3,7 @@
 namespace AdventureTech\ORM;
 
 use AdventureTech\ORM\Mapping\Columns\Column;
-use AdventureTech\ORM\Mapping\Columns\DeletedAtColumn;
+use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\Relations\Relation;
@@ -26,9 +26,9 @@ class EntityReflection
     private ReflectionClass $reflectionClass;
 
     /**
-     * @var Collection<string, Column<mixed>>
+     * @var Collection<string, Mapper<mixed>>
      */
-    private Collection $columns;
+    private Collection $mappers;
 
     /**
      * @var Collection<string, Relation<T,object>>
@@ -58,9 +58,9 @@ class EntityReflection
             throw new LogicException('Repository only works with entities [' . $this->class . ']');
         }
 
-        $this->entityAttribute = $entityAttribute->newInstance()->initialize($class);
+        $this->entityAttribute = $entityAttribute->newInstance();
 
-        $this->columns = Collection::empty();
+        $this->mappers = Collection::empty();
         $this->relations = Collection::empty();
 
         foreach ($this->reflectionClass->getProperties() as $property) {
@@ -69,7 +69,7 @@ class EntityReflection
                 if ($attributeInstance instanceof Id) {
                     $this->setId($property->getName());
                 } elseif ($attributeInstance instanceof Column) {
-                    $this->registerColumn($attributeInstance, $property);
+                    $this->registerMapper($attributeInstance, $property);
                 } elseif ($attributeInstance instanceof Relation) {
                     $this->registerRelation($attributeInstance, $property);
                 }
@@ -92,7 +92,7 @@ class EntityReflection
      */
     public function getTableName(): string
     {
-        return $this->entityAttribute->getTable();
+        return $this->entityAttribute->getTable($this->class);
     }
 
     /**
@@ -106,9 +106,9 @@ class EntityReflection
     /**
      * @return Collection<string, Column<mixed>>
      */
-    public function getColumns(): Collection
+    public function getMappers(): Collection
     {
-        return $this->columns;
+        return $this->mappers;
     }
 
     /**
@@ -135,7 +135,7 @@ class EntityReflection
     public function getSelectColumns(string $alias = ''): array
     {
         $columnNames = [];
-        foreach ($this->columns as $column) {
+        foreach ($this->mappers as $column) {
             foreach ($column->getColumnNames() as $columnName) {
                 $columnNames[$columnName] = $columnName;
             }
@@ -185,10 +185,9 @@ class EntityReflection
      * @param  ReflectionProperty  $property
      * @return void
      */
-    private function registerColumn(Column $column, ReflectionProperty $property): void
+    private function registerMapper(Column $column, ReflectionProperty $property): void
     {
-        $column->initialize($property);
-        $this->columns->put($property->getName(), $column);
+        $this->mappers->put($property->getName(), $column->getMapper($property));
         if ($column instanceof DeletedAtColumn) {
             $columnNames = $column->getColumnNames();
             if (count($columnNames) !== 1) {

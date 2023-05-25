@@ -2,45 +2,40 @@
 
 namespace AdventureTech\ORM\Mapping\Columns;
 
+use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
+use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
+use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Attribute;
+use Illuminate\Support\Str;
 use JsonException;
+use ReflectionProperty;
 use RuntimeException;
 use stdClass;
 
 /**
  * @implements Column<array>
  */
-#[Attribute(Attribute::TARGET_PROPERTY)]
-class JSONColumn implements Column
-{
-    use WithDefaultColumnMethods;
 
+#[Attribute(Attribute::TARGET_PROPERTY)]
+readonly class JSONColumn implements Column
+{
     /**
-     * @param  stdClass  $item
-     * @param  string  $alias
-     * @return array<mixed,mixed>|null
+     * @param  string|null  $name
      */
-    public function deserialize(stdClass $item, string $alias): array|null
-    {
-        $this->checkInitialized();
-        // TODO: what if this is not set?
-        $json = json_decode($item->{$alias . $this->name}, true);
-        if (!is_array($json) && !is_null($json)) {
-                throw new RuntimeException('Invalid JSON deserialized');
-        }
-        return $json;
+    public function __construct(
+        private ?string $name = null
+    ) {
     }
 
     /**
-     * @param  object  $entity
-     * @return array<string,string|null>
-     * @throws JsonException
+     * @param  ReflectionProperty  $property
+     * @return JSONMapper<int>
      */
-    public function serialize(object $entity): array
+    public function getMapper(ReflectionProperty $property): JSONMapper
     {
-        $this->checkInitialized();
-        // TODO: what if this is not set?
-        $json = json_encode($entity->{$this->getPropertyName()}, JSON_THROW_ON_ERROR);
-        return [$this->name => $json];
+        return new JSONMapper(
+            $this->name ?? Str::snake($property->getName()),
+            $property
+        );
     }
 }

@@ -2,9 +2,6 @@
 
 namespace AdventureTech\ORM\Persistence;
 
-use AdventureTech\ORM\Mapping\Columns\CreatedAtColumn;
-use AdventureTech\ORM\Mapping\Columns\DeletedAtColumn;
-use AdventureTech\ORM\Mapping\Columns\UpdatedAtColumn;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Mapping\Relations\BelongsTo;
 use Carbon\CarbonImmutable;
@@ -65,7 +62,7 @@ abstract class PersistenceManager
         if (!isset($entity->{$entityReflection->getId()})) {
             throw new RuntimeException('Must set ID column when updating');
         }
-        foreach ($entityReflection->getColumns() as $property => $column) {
+        foreach ($entityReflection->getMappers() as $property => $column) {
             // TODO: prevent updating created_at and updated_at
             if ($column->isInitialized($entity)) {
                 $arr = array_merge($arr, $column->serialize($entity));
@@ -96,7 +93,7 @@ abstract class PersistenceManager
         $query = DB::table($entityReflection->getTableName())
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
 
-        foreach ($entityReflection->getColumns() as $column) {
+        foreach ($entityReflection->getMappers() as $column) {
             if ($column instanceof DeletedAtColumn) {
                 return $query->update($column->serialize($entity));
             }
@@ -130,7 +127,7 @@ abstract class PersistenceManager
     {
         $entityReflection = new EntityReflection(get_class($entity));
         $arr = [];
-        foreach ($entityReflection->getColumns() as $property => $column) {
+        foreach ($entityReflection->getMappers() as $property => $column) {
             // TODO: prevent updating created_at and updated_at
             if ($column->isInitialized($entity)) {
                 if ($property === $entityReflection->getId()) {

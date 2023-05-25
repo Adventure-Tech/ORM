@@ -2,41 +2,40 @@
 
 namespace AdventureTech\ORM\Mapping\Columns;
 
+use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
+use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
+use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Attribute;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Str;
+use ReflectionProperty;
 use stdClass;
 
 /**
  * @implements Column<CarbonImmutable>
  */
+
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class DatetimeColumn implements Column
+readonly class DatetimeColumn implements Column
 {
-    use WithDefaultColumnMethods;
-
     /**
-     * @param  stdClass  $item
-     * @param  string  $alias
-     * @return CarbonImmutable|null
+     * @param  string|null  $name
      */
-    public function deserialize(stdClass $item, string $alias): ?CarbonImmutable
-    {
-        $this->checkInitialized();
-        // TODO: what if this is not set?
-        $string = $item->{$alias . $this->name};
-
-        return is_null($string) ? null : CarbonImmutable::parse($string);
+    public function __construct(
+        private ?string $name = null
+    ) {
     }
 
     /**
-     * @param  object  $entity
-     * @return array<string,string|null>
+     * @param  ReflectionProperty  $property
+     * @return DatetimeMapper
      */
-    public function serialize(object $entity): array
+    public function getMapper(ReflectionProperty $property): DatetimeMapper
     {
-        $this->checkInitialized();
-        // TODO: what if this is not set?
-        return [$this->name => $entity->{$this->getPropertyName()}?->toIso8601String()];
+        return new DatetimeMapper(
+            $this->name ?? Str::snake($property->getName()),
+            $property
+        );
     }
 }

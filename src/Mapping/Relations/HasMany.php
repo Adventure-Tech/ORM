@@ -3,86 +3,48 @@
 namespace AdventureTech\ORM\Mapping\Relations;
 
 use AdventureTech\ORM\EntityReflection;
+use AdventureTech\ORM\Mapping\Linkers\HasManyLinker;
+use AdventureTech\ORM\Mapping\Linkers\ToMany;
 use Attribute;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Str;
 
 /**
- * @template FROM of object
- * @template TO of object
- * @implements Relation<FROM,TO>
+ * @template ORIGIN of object
+ * @template TARGET of object
+ * @implements Relation<ORIGIN,TARGET>
  */
+
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class HasMany implements Relation
+readonly class HasMany implements Relation
 {
-    use ToMany;
-
-    private string $foreignKey;
     /**
-     * @var class-string<FROM>
-     */
-    private string $className;
-
-    /**
-     * @param  class-string<TO>  $targetEntity
+     * @param  class-string<TARGET>  $targetEntity
      * @param  string|null  $foreignKey
      */
     public function __construct(
-        private readonly string $targetEntity,
-        string $foreignKey = null
+        private string $targetEntity,
+        private ?string $foreignKey = null
     ) {
-        if (!is_null($foreignKey)) {
-            $this->foreignKey = $foreignKey;
-        }
     }
 
 
     /**
      * @param  string  $propertyName
      * @param  string  $propertyType
-     * @param  class-string<FROM>  $className
-     * @return void
+     * @param  class-string<ORIGIN>  $className
+     * @return HasManyLinker
      */
-    public function initialize(
+    public function getLinker(
         string $propertyName,
         string $propertyType,
         string $className,
-    ): void {
-        $this->className = $className;
-        $this->relation = $propertyName;
-        if (!isset($this->foreignKey)) {
-            $this->foreignKey = Str::snake(Str::afterLast($className, '\\')) . '_id';
-        }
-    }
-
-    /**
-     * @return class-string<TO>
-     */
-    public function getTargetEntity(): string
-    {
-        return $this->targetEntity;
-    }
-
-    /**
-     * @param  Builder  $query
-     * @param  string  $from
-     * @param  string  $to
-     * @return void
-     */
-    public function join(
-        Builder $query,
-        string $from,
-        string $to
-    ): void {
-        $baseEntityReflection = new EntityReflection($this->className);
-        $targetEntityReflection = new EntityReflection($this->targetEntity);
-        $query
-            ->leftJoin(
-                $targetEntityReflection->getTableName() . ' as ' . $to,
-                $to . '.' . $this->foreignKey,
-                '=',
-                $from . '.' . $baseEntityReflection->getId()
-            )
-            ->addSelect($targetEntityReflection->getSelectColumns($to));
+    ): HasManyLinker {
+        return new HasManyLinker(
+            originEntity: $className,
+            targetEntity: $this->targetEntity,
+            relation: $propertyName,
+            foreignKey: $this->foreignKey ?? Str::snake(Str::afterLast($className, '\\')) . '_id'
+        );
     }
 }

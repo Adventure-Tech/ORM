@@ -7,6 +7,7 @@ use AdventureTech\ORM\Mapping\CreatedAt;
 use AdventureTech\ORM\Mapping\DeletedAt;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
+use AdventureTech\ORM\Mapping\Linkers\Linker;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Mapping\Relations\Relation;
 use AdventureTech\ORM\Mapping\UpdatedAt;
@@ -34,9 +35,9 @@ class EntityReflection
     private Collection $mappers;
 
     /**
-     * @var Collection<string, Relation<T,object>>
+     * @var Collection<string, Linker<T,object>>
      */
-    private Collection $relations;
+    private Collection $linkers;
     /**
      * @var Entity<T>
      */
@@ -60,7 +61,7 @@ class EntityReflection
         $this->entityAttribute = $entityAttribute->newInstance();
 
         $this->mappers = Collection::empty();
-        $this->relations = Collection::empty();
+        $this->linkers = Collection::empty();
 
         // TODO: check that we only set single CreatedAt et
         // TODO: check that CreatedAt mappers only have single column?
@@ -78,7 +79,7 @@ class EntityReflection
                 } elseif ($attributeInstance instanceof Column) {
                     $this->registerMapper($attributeInstance, $property);
                 } elseif ($attributeInstance instanceof Relation) {
-                    $this->registerRelation($attributeInstance, $property);
+                    $this->registerLinker($attributeInstance, $property);
                 }
             }
         }
@@ -119,11 +120,11 @@ class EntityReflection
     }
 
     /**
-     * @return Collection<string,Relation<T,object>>
+     * @return Collection<string,Linker<T,object>>
      */
-    public function getRelations(): Collection
+    public function getLinkers(): Collection
     {
-        return $this->relations;
+        return $this->linkers;
     }
 
     /**
@@ -234,7 +235,10 @@ class EntityReflection
      */
     private function registerMapper(Column $column, ReflectionProperty $property): void
     {
-        $this->mappers->put($property->getName(), $column->getMapper($property));
+        $this->mappers->put(
+            $property->getName(),
+            $column->getMapper($property)
+        );
     }
 
     /**
@@ -242,15 +246,17 @@ class EntityReflection
      * @param  ReflectionProperty  $property
      * @return void
      */
-    private function registerRelation(Relation $relation, ReflectionProperty $property): void
+    private function registerLinker(Relation $relation, ReflectionProperty $property): void
     {
-        // TODO: check if `$property->getType()?->getName()` is correc
+        // TODO: check if `$property->getType()?->getName()` is correct
         $type = $property->getType();
         if (is_null($type)) {
             // TODO: custom exception
             throw new RuntimeException('Encountered null in reflection type');
         }
-        $relation->getLinker($property->getName(), $type->getName(), $this->class);
-        $this->relations->put($property->getName(), $relation);
+        $this->linkers->put(
+            $property->getName(),
+            $relation->getLinker($property->getName(), $type->getName(), $this->class)
+        );
     }
 }

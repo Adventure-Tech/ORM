@@ -1,11 +1,9 @@
 <?php
 
-namespace AdventureTech\ORM\Mapping\Relations;
+namespace AdventureTech\ORM\Mapping\Linkers;
 
 trait ToOne
 {
-    private string $relation;
-
     public function link(object $currentEntity, ?object $relatedEntity): void
     {
         if ($relatedEntity) {

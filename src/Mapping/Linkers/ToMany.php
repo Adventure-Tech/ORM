@@ -1,13 +1,11 @@
 <?php
 
-namespace AdventureTech\ORM\Mapping\Relations;
+namespace AdventureTech\ORM\Mapping\Linkers;
 
 use Illuminate\Support\Collection;
 
 trait ToMany
 {
-    private string $relation;
-
     public function link(object $currentEntity, ?object $relatedEntity): void
     {
         if (!isset($currentEntity->{$this->relation})) {

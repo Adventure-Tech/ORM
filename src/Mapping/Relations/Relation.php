@@ -2,43 +2,23 @@
 
 namespace AdventureTech\ORM\Mapping\Relations;
 
-use Illuminate\Database\Query\Builder;
+use AdventureTech\ORM\Mapping\Linkers\Linker;
 
 /**
- * @template FROM of object
- * @template TO of object
+ * @template ORIGIN of object
+ * @template TARGET of object
  */
 interface Relation
 {
     /**
      * @param  string  $propertyName
-     * @param  class-string<TO>  $propertyType
-     * @param  class-string<FROM>  $className
-     * @return void
+     * @param  class-string<TARGET>  $propertyType
+     * @param  class-string<ORIGIN>  $className
+     * @return Linker
      */
-    public function initialize(
+    public function getLinker(
         string $propertyName,
         string $propertyType,
         string $className
-    ): void;
-
-    /**
-     * @param  Builder  $query
-     * @param  string  $from
-     * @param  string  $to
-     * @return void
-     */
-    public function join(Builder $query, string $from, string $to): void;
-
-    /**
-     * @return class-string<TO>
-     */
-    public function getTargetEntity(): string;
-
-    /**
-     * @param  FROM  $currentEntity
-     * @param  TO|null  $relatedEntity
-     * @return void
-     */
-    public function link(object $currentEntity, ?object $relatedEntity): void;
+    ): Linker;
 }

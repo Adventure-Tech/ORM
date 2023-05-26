@@ -3,6 +3,7 @@
 namespace AdventureTech\ORM\Persistence;
 
 use AdventureTech\ORM\EntityReflection;
+use AdventureTech\ORM\Mapping\Linkers\BelongsToLinker;
 use AdventureTech\ORM\Mapping\Relations\BelongsTo;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -149,8 +150,8 @@ abstract class PersistenceManager
             }
         }
 
-        foreach ($entityReflection->getRelations() as $property => $relation) {
-            if ($relation instanceof BelongsTo) {
+        foreach ($entityReflection->getLinkers() as $property => $relation) {
+            if ($relation instanceof BelongsToLinker) {
                 $arr[$relation->getForeignKey()] = $this->uncheckedInsert($entity->{$property});
             }
         }

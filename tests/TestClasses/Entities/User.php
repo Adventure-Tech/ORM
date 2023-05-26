@@ -35,8 +35,8 @@ class User
     #[BelongsToMany(
         targetEntity: User::class,
         pivotTable: 'friends',
-        key1: 'a_id',
-        key2: 'b_id'
+        originForeignKey: 'a_id',
+        targetForeignKey: 'b_id'
     )]
     public Collection $friends;
 }

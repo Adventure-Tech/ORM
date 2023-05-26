@@ -3,7 +3,7 @@
 namespace AdventureTech\ORM\Repository;
 
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Mapping\Relations\Relation;
+use AdventureTech\ORM\Mapping\Linkers\Linker;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -109,7 +109,7 @@ class Repository
      */
     private static function applyJoin(Builder $query, TMP $tmp, string $from, string $to): void
     {
-        $tmp->relationInstance->join($query, $from, $to);
+        $tmp->linker->join($query, $from, $to);
         foreach ($tmp->repository->with as $index => $subTmp) {
             self::applyJoin($query, $subTmp, $to, self::createAlias($index, $to));
         }
@@ -128,23 +128,23 @@ class Repository
      */
     public function with(string $relation, callable $callable = null): static
     {
-        if (!$this->entityReflection->getRelations()->has($relation)) {
+        if (!$this->entityReflection->getLinkers()->has($relation)) {
             dump($this->entityReflection->getClass(), $relation);
             throw new LogicException('Invalid relation used in with clause');
         }
 
-        /** @var Relation<T,object> $relationInstance */
-        $relationInstance = $this->entityReflection->getRelations()->get($relation);
+        /** @var Linker<T,object> $linker */
+        $linker = $this->entityReflection->getLinkers()->get($relation);
 
         // if a MorphTo relationship get multiple target entities
-        $repository = self::new($relationInstance->getTargetEntity());
+        $repository = self::new($linker->getTargetEntity());
 
         // apply callback to target repository
         if ($callable) {
             $callable($repository);
         }
 
-        $this->with[] = new TMP($relationInstance, $repository);
+        $this->with[] = new TMP($linker, $repository);
 
         return $this;
     }
@@ -177,7 +177,7 @@ class Repository
         foreach ($this->with as $index => $tmp) {
             $newAlias = self::createAlias($index, $alias);
             $entity = $tmp->repository->resolve($item, $newAlias, $reset);
-            $tmp->relationInstance->link($this->resolvingEntity, $entity);
+            $tmp->linker->link($this->resolvingEntity, $entity);
         }
 
         return $reset && isset($this->resolvingEntity) ? $this->resolvingEntity : null;

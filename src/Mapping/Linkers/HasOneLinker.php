@@ -48,8 +48,8 @@ readonly class HasOneLinker implements Linker
         string $from,
         string $to
     ): void {
-        $originEntityReflection = new EntityReflection($this->originEntity);
-        $targetEntityReflection = new EntityReflection($this->targetEntity);
+        $originEntityReflection = EntityReflection::new($this->originEntity);
+        $targetEntityReflection = EntityReflection::new($this->targetEntity);
         $query
             ->leftJoin(
                 $targetEntityReflection->getTableName() . ' as ' . $to,

@@ -4,6 +4,7 @@ namespace AdventureTech\ORM;
 
 use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
+use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
 use AdventureTech\ORM\Exceptions\NullReflectionTypeException;
 use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Entity;
@@ -13,9 +14,7 @@ use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDatetime;
 use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDatetimeAnnotation;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Mapping\Relations\Relation;
-use ErrorException;
 use Illuminate\Support\Collection;
-use LogicException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -51,13 +50,24 @@ class EntityReflection
     private Collection $managedDatetimes;
 
     /**
+     * @template A
+     * @param  class-string<A>  $class
+     * @return EntityReflection<A>
+     */
+    public static function new(string $class): EntityReflection
+    {
+        // TODO: cache
+        return new self($class);
+    }
+
+    /**
      * @param  class-string<T>  $class
      */
-    public function __construct(private readonly string $class)
+    private function __construct(private readonly string $class)
     {
         try {
             $this->reflectionClass = new ReflectionClass($class);
-        } catch (ReflectionException | ErrorException) {
+        } catch (ReflectionException) {
             throw new EntityReflectionInstantiationException($class);
         }
         $entityAttributes = $this->reflectionClass->getAttributes(Entity::class);
@@ -192,7 +202,7 @@ class EntityReflection
     private function setId(string $propertyName): void
     {
         if (isset($this->id)) {
-            throw new LogicException('Cannot have multiple ID columns');
+            throw new MultipleIdColumnsException();
         }
         $this->id = $propertyName;
     }

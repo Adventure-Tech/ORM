@@ -2,8 +2,9 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
+use AdventureTech\ORM\Exceptions\JSONDeserializationException;
+use JsonException;
 use ReflectionProperty;
-use RuntimeException;
 use stdClass;
 
 /**
@@ -67,7 +68,7 @@ readonly class JSONMapper implements Mapper
     {
         $json = json_decode($item->{$alias . $this->name}, true);
         if (!is_array($json) && !is_null($json)) {
-            throw new RuntimeException('Invalid JSON deserialized');
+            throw new JSONDeserializationException();
         }
         return $json;
     }

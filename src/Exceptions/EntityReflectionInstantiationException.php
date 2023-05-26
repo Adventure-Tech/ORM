@@ -2,7 +2,9 @@
 
 namespace AdventureTech\ORM\Exceptions;
 
-class EntityReflectionInstantiationException extends \LogicException
+use LogicException;
+
+class EntityReflectionInstantiationException extends LogicException
 {
     public function __construct(string $class = "")
     {

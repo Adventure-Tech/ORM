@@ -3,13 +3,14 @@
 namespace AdventureTech\ORM\Repository;
 
 use AdventureTech\ORM\EntityReflection;
+use AdventureTech\ORM\Exceptions\EntityNotFoundException;
+use AdventureTech\ORM\Exceptions\InvalidRelationException;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
 use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDeletedAt;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\NoReturn;
-use LogicException;
 use ReflectionException;
 use stdClass;
 
@@ -33,7 +34,7 @@ class Repository
      */
     public static function new(string $class): Repository
     {
-        $entityReflection = new EntityReflection($class);
+        $entityReflection = EntityReflection::new($class);
         $repository = $entityReflection->getRepository() ?? self::class;
         return new $repository($entityReflection);
     }
@@ -51,7 +52,6 @@ class Repository
      * @param  int  $id
      *
      * @return T|null
-     * @throws ReflectionException
      */
     public function find(int $id)
     {
@@ -61,6 +61,20 @@ class Repository
             ->limit(1)
             ->get()
         )->first();
+    }
+
+    /**
+     * @param  int  $id
+     *
+     * @return T
+     */
+    public function findOrFail(int $id)
+    {
+        $entity = $this->find($id);
+        if (is_null($entity)) {
+            throw new EntityNotFoundException($this->entityReflection->getClass(), $id);
+        }
+        return $entity;
     }
 
     /**
@@ -135,7 +149,7 @@ class Repository
     {
         if (!$this->entityReflection->getLinkers()->has($relation)) {
             dump($this->entityReflection->getClass(), $relation);
-            throw new LogicException('Invalid relation used in with clause');
+            throw new InvalidRelationException('Invalid relation used in with clause');
         }
 
         /** @var Linker<T,object> $linker */
@@ -165,7 +179,6 @@ class Repository
      * @param  string  $alias
      * @param  bool  $reset
      * @return T|null
-     * @throws ReflectionException
      */
     private function resolve(stdClass $item, string $alias = '', bool $reset = false): ?object
     {
@@ -194,7 +207,6 @@ class Repository
     /**
      * @param  Collection<int|string,stdClass>  $data
      * @return Collection<int,T>
-     * @throws ReflectionException
      */
     private function mapToEntities(Collection $data): Collection
     {

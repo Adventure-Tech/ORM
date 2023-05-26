@@ -2,10 +2,10 @@
 
 namespace AdventureTech\ORM\Tests\Unit\Mapping\Mappers;
 
+use AdventureTech\ORM\Exceptions\JSONDeserializationException;
 use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 use ReflectionProperty;
-use RuntimeException;
 use stdClass;
 
 test('The json mapper exposes the property name', function () {
@@ -135,7 +135,7 @@ test('The json mapper throws an exception if the item cannot be deserialized to 
     $property = new ReflectionProperty(MapperTestClass::class, 'jsonProperty');
     $mapper = new JSONMapper('db_column_name', $property);
     expect(fn() =>$mapper->deserialize($item, ''))->toThrow(
-        RuntimeException::class,
+        JSONDeserializationException::class,
         'Invalid JSON deserialized'
     );
 })->with([

@@ -97,7 +97,7 @@ abstract class PersistenceManager
         $deletedAtMapper = $entityReflection->getDeletedAtMapper();
         if (!is_null($deletedAtMapper)) {
             $now = CarbonImmutable::now();
-            $entity->deletedAt = $now;
+            $entity->{$deletedAtMapper->getPropertyName()} = $now;
             return $query->update([
                 $deletedAtMapper->getColumnNames()[0] => $now->toIso8601String()
             ]);

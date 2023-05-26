@@ -33,7 +33,7 @@ readonly class BelongsToMany implements Relation
      * @param  string  $propertyName
      * @param  string  $propertyType
      * @param  class-string<ORIGIN>  $className
-     * @return BelongsToManyLinker
+     * @return BelongsToManyLinker<ORIGIN,TARGET>
      */
     public function getLinker(
         string $propertyName,
@@ -41,8 +41,8 @@ readonly class BelongsToMany implements Relation
         string $className,
     ): BelongsToManyLinker {
         return new BelongsToManyLinker(
-            targetEntity: $this->targetEntity,
             originEntity: $className,
+            targetEntity: $this->targetEntity,
             relation: $propertyName,
             pivotTable: $this->pivotTable,
             originForeignKey: $this->originForeignKey ?? Str::snake(Str::afterLast($className, '\\')) . '_id',

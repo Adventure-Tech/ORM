@@ -16,6 +16,7 @@ use Illuminate\Support\Collection;
 use LogicException;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionNamedType;
 use ReflectionProperty;
 use RuntimeException;
 
@@ -170,27 +171,30 @@ class EntityReflection
     }
 
     /**
-     * @return Mapper|null
+     * @return Mapper<mixed>|null
      */
     public function getCreatedAtMapper(): ?Mapper
     {
-        return $this->mappers->get($this->createdAt);
+        // TODO: check that we have correct type of mapper (CarbonImmutable)
+        return !is_null($this->createdAt) ? $this->mappers->get($this->createdAt) : null;
     }
 
     /**
-     * @return Mapper|null
+     * @return Mapper<mixed>|null
      */
     public function getUpdatedAtMapper(): ?Mapper
     {
-        return $this->mappers->get($this->updatedAt);
+        // TODO: check that we have correct type of mapper (CarbonImmutable)
+        return !is_null($this->updatedAt) ? $this->mappers->get($this->updatedAt) : null;
     }
 
     /**
-     * @return Mapper|null
+     * @return Mapper<mixed>|null
      */
     public function getDeletedAtMapper(): ?Mapper
     {
-        return $this->mappers->get($this->deletedAt);
+        // TODO: check that we have correct type of mapper (CarbonImmutable)
+        return !is_null($this->deletedAt) ? $this->mappers->get($this->deletedAt) : null;
     }
 
     private function setId(string $propertyName): void
@@ -199,33 +203,6 @@ class EntityReflection
             throw new LogicException('Cannot have multiple ID columns');
         }
         $this->id = $propertyName;
-    }
-
-    private function setCreatedAt(string $propertyName): void
-    {
-        $this->createdAt = $this->getManagedDatetimeColumnName($propertyName, 'createdAt');
-    }
-
-    private function setUpdatedAt(string $propertyName): void
-    {
-        $this->updatedAt = $this->getManagedDatetimeColumnName($propertyName, 'updatedAt');
-    }
-
-    private function setDeletedAt(string $propertyName): void
-    {
-        $this->deletedAt = $this->getManagedDatetimeColumnName($propertyName, 'deletedAt');
-    }
-
-    private function getManagedDatetimeColumnName(string $propertyName, string $asd): string
-    {
-//        if (isset($this->{$asd})) {
-//            throw new LogicException('Cannot have multiple ' . $asd . ' columns');
-//        }
-        $columnNames = $this->mappers->get($propertyName)->getColumnNames();
-        if (count($columnNames) !== 1) {
-            throw new LogicException($asd . ' column can only have single associated column');
-        }
-        return $columnNames[0];
     }
 
     /**
@@ -249,14 +226,17 @@ class EntityReflection
     private function registerLinker(Relation $relation, ReflectionProperty $property): void
     {
         // TODO: check if `$property->getType()?->getName()` is correct
+        /** @var ReflectionNamedType|null $type */
         $type = $property->getType();
         if (is_null($type)) {
             // TODO: custom exception
             throw new RuntimeException('Encountered null in reflection type');
         }
+        /** @var class-string<object> $propertyType */
+        $propertyType = $type->getName();
         $this->linkers->put(
             $property->getName(),
-            $relation->getLinker($property->getName(), $type->getName(), $this->class)
+            $relation->getLinker($property->getName(), $propertyType, $this->class)
         );
     }
 }

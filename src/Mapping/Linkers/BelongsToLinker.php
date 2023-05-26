@@ -3,14 +3,11 @@
 namespace AdventureTech\ORM\Mapping\Linkers;
 
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Mapping\Relations\Relation;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Str;
 
 /**
- * @template ORIGIN of object
  * @template TARGET of object
- * @implements Relation<ORIGIN,TARGET>
+ * @implements Linker<object,TARGET>
  */
 
 readonly class BelongsToLinker implements Linker
@@ -18,7 +15,7 @@ readonly class BelongsToLinker implements Linker
     use ToOne;
 
     /**
-     * @param  string  $targetEntity
+     * @param  class-string<TARGET>  $targetEntity
      * @param  string  $relation
      * @param  string  $foreignKey
      */

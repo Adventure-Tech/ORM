@@ -31,7 +31,7 @@ readonly class HasOne implements Relation
      * @param  string  $propertyName
      * @param  class-string<TARGET>  $propertyType
      * @param  class-string<ORIGIN>  $className
-     * @return HasOneLinker
+     * @return HasOneLinker<ORIGIN,TARGET>
      */
     public function getLinker(
         string $propertyName,

@@ -7,9 +7,8 @@ use Attribute;
 use Illuminate\Support\Str;
 
 /**
- * @template ORIGIN of object
  * @template TARGET of object
- * @implements Relation<ORIGIN,TARGET>
+ * @implements Relation<object,TARGET>
  */
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
@@ -26,8 +25,8 @@ readonly class BelongsTo implements Relation
     /**
      * @param  string  $propertyName
      * @param  class-string<TARGET>  $propertyType
-     * @param  class-string<ORIGIN>  $className
-     * @return BelongsToLinker
+     * @param  string  $className
+     * @return BelongsToLinker<TARGET>
      */
     public function getLinker(
         string $propertyName,

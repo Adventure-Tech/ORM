@@ -14,7 +14,7 @@ interface Relation
      * @param  string  $propertyName
      * @param  class-string<TARGET>  $propertyType
      * @param  class-string<ORIGIN>  $className
-     * @return Linker
+     * @return Linker<ORIGIN,TARGET>
      */
     public function getLinker(
         string $propertyName,

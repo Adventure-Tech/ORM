@@ -3,14 +3,12 @@
 namespace AdventureTech\ORM\Mapping\Linkers;
 
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Mapping\Relations\Relation;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Str;
 
 /**
  * @template ORIGIN of object
  * @template TARGET of object
- * @implements Relation<ORIGIN,TARGET>
+ * @implements Linker<ORIGIN,TARGET>
  */
 
 readonly class BelongsToManyLinker implements Linker
@@ -18,16 +16,16 @@ readonly class BelongsToManyLinker implements Linker
     use ToMany;
 
     /**
+     * @param  class-string<ORIGIN>  $originEntity
      * @param  class-string<TARGET>  $targetEntity
-     * @param  string  $originEntity
      * @param  string  $relation
      * @param  string  $pivotTable
      * @param  string  $originForeignKey
      * @param  string  $targetForeignKey
      */
     public function __construct(
-        private string $targetEntity,
         private string $originEntity,
+        private string $targetEntity,
         private string $relation,
         private string $pivotTable,
         private string $originForeignKey,

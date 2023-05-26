@@ -33,7 +33,7 @@ readonly class HasMany implements Relation
      * @param  string  $propertyName
      * @param  string  $propertyType
      * @param  class-string<ORIGIN>  $className
-     * @return HasManyLinker
+     * @return HasManyLinker<ORIGIN,TARGET>
      */
     public function getLinker(
         string $propertyName,

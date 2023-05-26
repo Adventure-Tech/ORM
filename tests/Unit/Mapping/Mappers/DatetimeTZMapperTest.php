@@ -8,13 +8,13 @@ use Carbon\CarbonImmutable;
 use ReflectionProperty;
 use stdClass;
 
-test('The datetimetz mapper exposes the property name', function () {
+test('The datetimeTz mapper exposes the property name', function () {
     $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeTZMapper('datetime_db_column', 'tz_db_column', $property);
     expect($mapper->getPropertyName())->toBe('datetimeProperty');
 });
 
-test('The datetimetz mapper has a single column', function () {
+test('The datetimeTz mapper has a single column', function () {
     $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeTZMapper('datetime_db_column', 'tz_db_column', $property);
     expect($mapper->getColumnNames())
@@ -22,7 +22,7 @@ test('The datetimetz mapper has a single column', function () {
         ->toEqualCanonicalizing(['datetime_db_column', 'tz_db_column']);
 });
 
-test('The datetimetz mapper can check if its property is set on a given entity instance', function (
+test('The datetimeTz mapper can check if its property is set on a given entity instance', function (
     MapperTestClass $entity,
     bool $isInitialized
 ) {
@@ -48,7 +48,7 @@ test('The datetimetz mapper can check if its property is set on a given entity i
     ],
 ]);
 
-test('The datetimetz mapper can serialize an entity', function (
+test('The datetimeTz mapper can serialize an entity', function (
     MapperTestClass $entity,
     array $expected
 ) {
@@ -77,7 +77,7 @@ test('The datetimetz mapper can serialize an entity', function (
     ],
 ]);
 
-test('The datetimetz mapper can deserialize an item with a null value', function (
+test('The datetimeTz mapper can deserialize an item with a null value', function (
     stdClass $item,
     string $alias,
 ) {
@@ -87,12 +87,10 @@ test('The datetimetz mapper can deserialize an item with a null value', function
 })->with([
     'without alias (both null)' => [(object) ['datetime_db_column' => null, 'tz_db_column' => null], ''],
     'without alias (datetime column null)' => [(object) ['datetime_db_column' => null, 'tz_db_column' => 'Europe/Oslo'], ''],
-    'without alias (timezone null)' => [(object) ['datetime_db_column' => '2023-01-01T12:00:00+01:00', 'tz_db_column' => null], ''],
     'with alias (both null)' => [(object) ['aliasdatetime_db_column' => null, 'aliastz_db_column' => null], 'alias'],
 ]);
-// TODO: decide what happens if only timezone is null
 
-test('The datetimetz mapper can deserialize an item with a non-null value', function (
+test('The datetimeTz mapper can deserialize an item with a non-null value', function (
     stdClass $item,
     string $alias,
     string $iso8601String
@@ -106,4 +104,5 @@ test('The datetimetz mapper can deserialize an item with a non-null value', func
     'without alias' => [(object) ['datetime_db_column' => '2023-01-01T12:00:00+00:00', 'tz_db_column' => 'UTC'], '', '2023-01-01T12:00:00+00:00'],
     'with alias' => [(object) ['aliasdatetime_db_column' => '2023-01-01T12:00:00+01:00', 'aliastz_db_column' => 'UTC'], 'alias', '2023-01-01T11:00:00+00:00'],
     'with non-UTC timezone' => [(object) ['datetime_db_column' => '2023-01-01T12:00:00+00:00', 'tz_db_column' => 'Europe/Oslo'], '', '2023-01-01T13:00:00+01:00'],
+    'with missing timezone' => [(object) ['datetime_db_column' => '2023-01-01T12:00:00+02:00', 'tz_db_column' => null], '', '2023-01-01T10:00:00+00:00'],
 ]);

@@ -31,7 +31,6 @@ readonly class BelongsToManyLinker implements Linker
         private string $originForeignKey,
         private string $targetForeignKey,
     ) {
-        // TODO: think a
     }
 
     /**

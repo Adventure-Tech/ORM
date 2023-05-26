@@ -4,9 +4,11 @@ namespace AdventureTech\ORM\Repository;
 
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
+use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDeletedAt;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use JetBrains\PhpStorm\NoReturn;
 use LogicException;
 use ReflectionException;
 use stdClass;
@@ -64,7 +66,7 @@ class Repository
     /**
      * @return void
      */
-    public function dd(): void
+    #[NoReturn] public function dd(): void
     {
         $this->buildQuery()->dd();
     }
@@ -87,11 +89,14 @@ class Repository
         $query = DB::table($this->entityReflection->getTableName())
             ->select($this->entityReflection->getSelectColumns());
 
-        // TODO: implement soft-delete support
-//        $softDeleteColumn = $this->entityReflection->getDeletedAtColumn();
-//        if (!is_null($softDeleteColumn)) {
-//            $query->whereNull($softDeleteColumn);
-//        }
+        // TODO: add support for soft-deletes
+        // TODO: add support for circumventing soft-deletes
+        foreach ($this->entityReflection->getManagedDatetimes() as $property => $managedDatetime) {
+            dump($property);
+            if ($managedDatetime instanceof ManagedDeletedAt) {
+                $query->whereNull($this->entityReflection->getTableName() . '.' . $managedDatetime->getColumnName());
+            }
+        }
 
         foreach ($this->with as $index => $tmp) {
             self::applyJoin($query, $tmp, $this->entityReflection->getTableName(), self::createAlias($index));
@@ -170,6 +175,9 @@ class Repository
             $this->resolvingEntity = $this->entityReflection->newInstance();
             foreach ($this->entityReflection->getMappers() as $property => $mapper) {
                 $this->resolvingEntity->{$property} = $mapper->deserialize($item, $alias);
+            }
+            foreach ($this->entityReflection->getManagedDatetimes() as $property => $managedDatetime) {
+                $this->resolvingEntity->{$property} = $managedDatetime->deserialize($item, $alias);
             }
             $reset = true;
         }

@@ -6,8 +6,8 @@ use AdventureTech\ORM\Mapping\Columns\IntColumn;
 use AdventureTech\ORM\Mapping\Columns\StringColumn;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
+use AdventureTech\ORM\Mapping\ManagedDatetimes\WithTimestamps;
 use AdventureTech\ORM\Mapping\Relations\BelongsTo;
-use AdventureTech\ORM\Mapping\WithTimestamps;
 
 #[Entity]
 class PersonalDetails

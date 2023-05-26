@@ -1,6 +1,6 @@
 <?php
 
-namespace AdventureTech\ORM\Mapping;
+namespace AdventureTech\ORM\Mapping\ManagedDatetimes;
 
 use AdventureTech\ORM\Mapping\Columns\DatetimeColumn;
 use Carbon\CarbonImmutable;

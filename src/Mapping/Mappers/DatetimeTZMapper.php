@@ -52,7 +52,6 @@ readonly class DatetimeTZMapper implements Mapper
      */
     public function serialize(object $entity): array
     {
-        // TODO: what if this is not set?
         /** @var CarbonImmutable|null $datetime */
         $datetime = $entity->{$this->property->getName()};
         return [
@@ -68,7 +67,6 @@ readonly class DatetimeTZMapper implements Mapper
      */
     public function deserialize(stdClass $item, string $alias): ?CarbonImmutable
     {
-        // TODO: what if this is not set?
         $datetimeString = $item->{$alias . $this->name};
         return is_null($datetimeString)
             ? null

@@ -4,8 +4,7 @@ namespace AdventureTech\ORM\Persistence;
 
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Mapping\Linkers\BelongsToLinker;
-use AdventureTech\ORM\Mapping\Relations\BelongsTo;
-use Carbon\CarbonImmutable;
+use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDeletedAt;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use LogicException;
@@ -49,36 +48,39 @@ abstract class PersistenceManager
         return $entities->map(fn ($entity) => self::insert($entity));
     }
 
-//    /**
-//     * @param  T  $entity
-//     *
-//     * @return int
-//     */
-//    public function update(object $entity): int
-//    {
-//        $this->checkType($entity);
-//
-//        $entityReflection = new EntityReflection(get_class($entity));
-//        $arr = [];
-//        if (!isset($entity->{$entityReflection->getId()})) {
-//            throw new RuntimeException('Must set ID column when updating');
-//        }
-//        foreach ($entityReflection->getMappers() as $property => $mapper) {
-//            // TODO: prevent updating created_at and updated_at
-//            if ($column->isInitialized($entity)) {
-//                $arr = array_merge($arr, $column->serialize($entity));
-//            } elseif ($column instanceof UpdatedAtColumn) {
-//                $entity->{$property} = CarbonImmutable::now();
-//                $arr = array_merge($arr, $column->serialize($entity));
-//            }
-//        }
-//
-//        // TODO: resolve relations (do we insert? do we even update?)
-//
-//        return DB::table($entityReflection->getTableName())
-//            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
-//            ->update($arr);
-//    }
+    /**
+     * @param  T  $entity
+     *
+     * @return int
+     */
+    public function update(object $entity): int
+    {
+        $this->checkType($entity);
+
+        $entityReflection = new EntityReflection(get_class($entity));
+        $arr = [];
+        if (!isset($entity->{$entityReflection->getId()})) {
+            throw new RuntimeException('Must set ID column when updating');
+        }
+        foreach ($entityReflection->getMappers() as $property => $mapper) {
+            if ($mapper->isInitialized($entity)) {
+                $arr = array_merge($arr, $mapper->serialize($entity));
+            }
+        }
+
+        // TODO: should we throw exceptions if these are attempted to be updated
+
+        foreach ($entityReflection->getManagedDatetimes() as $managedDatetime) {
+            // TODO: if DB insert fails we will have still updated $entity
+            $arr = array_merge($arr, $managedDatetime->serializeForUpdate($entity));
+        }
+
+        // TODO: resolve relations (do we insert? do we even update?)
+
+        return DB::table($entityReflection->getTableName())
+            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+            ->update($arr);
+    }
 
     /**
      * @param  T  $entity
@@ -94,15 +96,14 @@ abstract class PersistenceManager
         $query = DB::table($entityReflection->getTableName())
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
 
-        $deletedAtMapper = $entityReflection->getDeletedAtMapper();
-        if (!is_null($deletedAtMapper)) {
-            $now = CarbonImmutable::now();
-            $entity->{$deletedAtMapper->getPropertyName()} = $now;
-            return $query->update([
-                $deletedAtMapper->getColumnNames()[0] => $now->toIso8601String()
-            ]);
+        foreach ($entityReflection->getManagedDatetimes() as $managedDatetime) {
+            if ($managedDatetime instanceof ManagedDeletedAt) {
+                return $query->update($managedDatetime->serializeForDelete($entity));
+            }
         }
+
         // TODO: what about HasOne/HasMany/BelongsToMany relations?
+
         return $query->delete();
     }
 
@@ -135,14 +136,9 @@ abstract class PersistenceManager
         $id = $entityReflection->getId();
 
         foreach ($entityReflection->getMappers() as $property => $mapper) {
-            // TODO: prevent updating created_at and updated_at
             if ($mapper->isInitialized($entity)) {
                 if ($property === $id) {
                     throw new RuntimeException('Must not set ID column for insert');
-//                    $entityReflection->getCreatedAtColumn() => throw new RuntimeException('Must not set managed CreatedAt column for insert'),
-//                    $entityReflection->getUpdatedAtColumn() => throw new RuntimeException('Must not set managed UpdatedAt column for insert'),
-//                    $entityReflection->getDeletedAtColumn() => throw new RuntimeException('Must not set managed DeletedAt column for insert'),
-//                    default => null
                 }
                 $arr = array_merge($arr, $mapper->serialize($entity));
             } elseif ($property !== $id) {
@@ -156,23 +152,9 @@ abstract class PersistenceManager
             }
         }
 
-
-        // TODO: if DB insert fails we will have still updated $entity
-        $now = CarbonImmutable::now();
-        $createdAtMapper = $entityReflection->getCreatedAtMapper();
-        if (!is_null($createdAtMapper)) {
-            $arr[$createdAtMapper->getColumnNames()[0]] = $now->toIso8601String();
-            $entity->{$createdAtMapper->getPropertyName()} = $now;
-        }
-        $updatedAtMapper = $entityReflection->getUpdatedAtMapper();
-        if (!is_null($updatedAtMapper)) {
-            $arr[$updatedAtMapper->getColumnNames()[0]] = $now->toIso8601String();
-            $entity->{$updatedAtMapper->getPropertyName()} = $now;
-        }
-        $deletedAtMapper = $entityReflection->getDeletedAtMapper();
-        if (!is_null($deletedAtMapper)) {
-            $arr[$deletedAtMapper->getColumnNames()[0]] = null;
-            $entity->{$deletedAtMapper->getPropertyName()} = null;
+        foreach ($entityReflection->getManagedDatetimes() as $managedDatetime) {
+            // TODO: if DB insert fails we will have still updated $entity
+            $arr = array_merge($arr, $managedDatetime->serializeForInsert($entity));
         }
 
         $id = DB::table($entityReflection->getTableName())->insertGetId($arr);

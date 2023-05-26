@@ -53,7 +53,6 @@ readonly class DefaultMapper implements Mapper
      */
     public function serialize(object $entity): array
     {
-        // TODO: what if this is not set?
         return [$this->name => $entity->{$this->property->getName()}];
     }
 
@@ -64,7 +63,6 @@ readonly class DefaultMapper implements Mapper
      */
     public function deserialize(stdClass $item, string $alias): mixed
     {
-        // TODO: what if this is not set?
         return $item->{$alias . $this->name};
     }
 }

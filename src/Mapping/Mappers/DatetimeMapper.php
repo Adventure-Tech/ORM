@@ -53,7 +53,6 @@ readonly class DatetimeMapper implements Mapper
      */
     public function serialize(object $entity): array
     {
-        // TODO: what if this is not set?
         return [$this->name => $entity->{$this->property->getName()}?->toIso8601String()];
     }
     /**
@@ -63,9 +62,7 @@ readonly class DatetimeMapper implements Mapper
      */
     public function deserialize(stdClass $item, string $alias): ?CarbonImmutable
     {
-        // TODO: what if this is not set?
         $datetimeString = $item->{$alias . $this->name};
-
         return is_null($datetimeString) ? null : CarbonImmutable::parse($datetimeString);
     }
 }

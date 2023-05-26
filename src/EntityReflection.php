@@ -2,15 +2,17 @@
 
 namespace AdventureTech\ORM;
 
+use AdventureTech\ORM\Exceptions\EntityInstantiationException;
+use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
+use AdventureTech\ORM\Exceptions\NullReflectionTypeException;
 use AdventureTech\ORM\Mapping\Columns\Column;
-use AdventureTech\ORM\Mapping\CreatedAt;
-use AdventureTech\ORM\Mapping\DeletedAt;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
+use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDatetime;
+use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDatetimeAnnotation;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Mapping\Relations\Relation;
-use AdventureTech\ORM\Mapping\UpdatedAt;
 use ErrorException;
 use Illuminate\Support\Collection;
 use LogicException;
@@ -18,7 +20,6 @@ use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
-use RuntimeException;
 
 /**
  * @template T of object
@@ -44,7 +45,10 @@ class EntityReflection
      */
     private Entity $entityAttribute;
     private string $id;
-    private ?string $createdAt = null, $updatedAt = null, $deletedAt = null;
+    /**
+     * @var Collection<string,ManagedDatetime>
+     */
+    private Collection $managedDatetimes;
 
     /**
      * @param  class-string<T>  $class
@@ -53,47 +57,50 @@ class EntityReflection
     {
         try {
             $this->reflectionClass = new ReflectionClass($class);
-            $entityAttribute = $this->reflectionClass->getAttributes(Entity::class)[0];
         } catch (ReflectionException | ErrorException) {
-            // TODO: better checks
-            throw new LogicException('Repository only works with entities [' . $this->class . ']');
+            throw new EntityReflectionInstantiationException($class);
+        }
+        $entityAttributes = $this->reflectionClass->getAttributes(Entity::class);
+        if (count($entityAttributes) !== 1) {
+            throw new EntityReflectionInstantiationException($class);
         }
 
-        $this->entityAttribute = $entityAttribute->newInstance();
-
+        $this->entityAttribute = $entityAttributes[0]->newInstance();
         $this->mappers = Collection::empty();
         $this->linkers = Collection::empty();
+        $this->managedDatetimes = Collection::empty();
 
-        // TODO: check that we only set single CreatedAt et
-        // TODO: check that CreatedAt mappers only have single column?
         foreach ($this->reflectionClass->getProperties() as $property) {
             foreach ($property->getAttributes() as $attribute) {
                 $attributeInstance = $attribute->newInstance();
                 if ($attributeInstance instanceof Id) {
                     $this->setId($property->getName());
-                } elseif ($attributeInstance instanceof CreatedAt) {
-                    $this->createdAt = $property->getName();
-                } elseif ($attributeInstance instanceof UpdatedAt) {
-                    $this->updatedAt = $property->getName();
-                } elseif ($attributeInstance instanceof DeletedAt) {
-                    $this->deletedAt = $property->getName();
                 } elseif ($attributeInstance instanceof Column) {
                     $this->registerMapper($attributeInstance, $property);
+                } elseif ($attributeInstance instanceof ManagedDatetimeAnnotation) {
+                    $this->managedDatetimes->put($property->getName(), $attributeInstance->getManagedDatetime());
                 } elseif ($attributeInstance instanceof Relation) {
                     $this->registerLinker($attributeInstance, $property);
                 }
             }
         }
+
+        foreach ($this->managedDatetimes as $property => $managedDatetime) {
+            $managedDatetime->setMapper($this->mappers->get($property));
+            $this->mappers->forget($property);
+        }
     }
 
     /**
      * @return T
-     * @throws ReflectionException
      */
     public function newInstance()
     {
-        // TODO: handle ReflectionException
-        return $this->reflectionClass->newInstanceWithoutConstructor();
+        try {
+            return $this->reflectionClass->newInstanceWithoutConstructor();
+        } catch (ReflectionException $e) {
+            throw new EntityInstantiationException($this->class, $e);
+        }
     }
 
     /**
@@ -149,6 +156,10 @@ class EntityReflection
                 $columnNames[$columnName] = $columnName;
             }
         }
+        foreach ($this->managedDatetimes as $managedDatetime) {
+            $columnName = $managedDatetime->getColumnName();
+            $columnNames[$columnName] = $columnName;
+        }
         if ($alias === '') {
             return array_map(
                 fn (string $column): string => $this->getTableName() . '.' . $column,
@@ -171,30 +182,11 @@ class EntityReflection
     }
 
     /**
-     * @return Mapper<mixed>|null
+     * @return Collection<string,ManagedDatetime>
      */
-    public function getCreatedAtMapper(): ?Mapper
+    public function getManagedDatetimes(): Collection
     {
-        // TODO: check that we have correct type of mapper (CarbonImmutable)
-        return !is_null($this->createdAt) ? $this->mappers->get($this->createdAt) : null;
-    }
-
-    /**
-     * @return Mapper<mixed>|null
-     */
-    public function getUpdatedAtMapper(): ?Mapper
-    {
-        // TODO: check that we have correct type of mapper (CarbonImmutable)
-        return !is_null($this->updatedAt) ? $this->mappers->get($this->updatedAt) : null;
-    }
-
-    /**
-     * @return Mapper<mixed>|null
-     */
-    public function getDeletedAtMapper(): ?Mapper
-    {
-        // TODO: check that we have correct type of mapper (CarbonImmutable)
-        return !is_null($this->deletedAt) ? $this->mappers->get($this->deletedAt) : null;
+        return $this->managedDatetimes;
     }
 
     private function setId(string $propertyName): void
@@ -225,12 +217,10 @@ class EntityReflection
      */
     private function registerLinker(Relation $relation, ReflectionProperty $property): void
     {
-        // TODO: check if `$property->getType()?->getName()` is correct
         /** @var ReflectionNamedType|null $type */
         $type = $property->getType();
         if (is_null($type)) {
-            // TODO: custom exception
-            throw new RuntimeException('Encountered null in reflection type');
+            throw new NullReflectionTypeException();
         }
         /** @var class-string<object> $propertyType */
         $propertyType = $type->getName();

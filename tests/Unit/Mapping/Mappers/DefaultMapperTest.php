@@ -100,6 +100,3 @@ test('The default mapper can deserialize an item', function (
     'empty string with alias' => [(object) ['aliasdb_column_name' => ''], 'alias', ''],
     'non-empty string with alias' => [(object) ['aliasdb_column_name' => 'value'], 'alias', 'value'],
 ]);
-
-// TODO: column not set in item --> Exception (also other mappers)
-// TODO: call isInitialized on non-compatible entity (also other mappers)

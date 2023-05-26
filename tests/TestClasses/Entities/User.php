@@ -6,11 +6,11 @@ use AdventureTech\ORM\Mapping\Columns\IntColumn;
 use AdventureTech\ORM\Mapping\Columns\StringColumn;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
+use AdventureTech\ORM\Mapping\ManagedDatetimes\WithSoftDeletes;
+use AdventureTech\ORM\Mapping\ManagedDatetimes\WithTimestamps;
 use AdventureTech\ORM\Mapping\Relations\BelongsToMany;
 use AdventureTech\ORM\Mapping\Relations\HasMany;
 use AdventureTech\ORM\Mapping\Relations\HasOne;
-use AdventureTech\ORM\Mapping\WithSoftDeletes;
-use AdventureTech\ORM\Mapping\WithTimestamps;
 use Illuminate\Support\Collection;
 
 #[Entity]

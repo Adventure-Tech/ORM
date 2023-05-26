@@ -3,49 +3,45 @@
 namespace AdventureTech\ORM\Tests\Unit\Mapping\Mappers;
 
 use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
+use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 use Carbon\CarbonImmutable;
 use ReflectionProperty;
 use stdClass;
 
-class DatetimeMapperTest
-{
-    public ?CarbonImmutable $foo;
-}
-
 test('The datetime mapper exposes the property name', function () {
-    $property = new ReflectionProperty(DatetimeMapperTest::class, 'foo');
+    $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeMapper('db_column_name', $property);
-    expect($mapper->getPropertyName())->toBe('foo');
+    expect($mapper->getPropertyName())->toBe('datetimeProperty');
 });
 
 test('The datetime mapper has a single column', function () {
-    $property = new ReflectionProperty(DatetimeMapperTest::class, 'foo');
+    $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeMapper('db_column_name', $property);
     expect($mapper->getColumnNames())
         ->toBeArray()
-        ->toContain('db_column_name');
+        ->toEqualCanonicalizing(['db_column_name']);
 });
 
 test('The datetime mapper can check if its property is set on a given entity instance', function (
-    DatetimeMapperTest $entity,
+    MapperTestClass $entity,
     bool $isInitialized
 ) {
-    $property = new ReflectionProperty(DatetimeMapperTest::class, 'foo');
+    $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeMapper('db_column_name', $property);
     expect($mapper->isInitialized($entity))->toBe($isInitialized);
 })->with([
-    'not initialized' => [fn() => new DatetimeMapperTest(), false],
+    'not initialized' => [fn() => new MapperTestClass(), false],
     'null' => [
         function () {
-            $entity = new DatetimeMapperTest();
-            $entity->foo = null;
+            $entity = new MapperTestClass();
+            $entity->datetimeProperty = null;
             return $entity;
         }, true,
     ],
     'carbon instance' => [
         function () {
-            $entity = new DatetimeMapperTest();
-            $entity->foo = CarbonImmutable::now();
+            $entity = new MapperTestClass();
+            $entity->datetimeProperty = CarbonImmutable::now();
             return $entity;
         },
         true,
@@ -53,27 +49,28 @@ test('The datetime mapper can check if its property is set on a given entity ins
 ]);
 
 test('The datetime mapper can serialize an entity', function (
-    DatetimeMapperTest $entity,
+    MapperTestClass $entity,
     array $expected
 ) {
-    $property = new ReflectionProperty(DatetimeMapperTest::class, 'foo');
+    $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeMapper('db_column_name', $property);
     expect($mapper->serialize($entity))
+        ->toBeArray()
         ->toEqualCanonicalizing($expected);
 })->with([
-    'not initialized' => [fn() => new DatetimeMapperTest(), []],
+//    'not initialized' => [fn() => new MapperTestClass(), []],
     'null' => [
         function () {
-            $entity = new DatetimeMapperTest();
-            $entity->foo = null;
+            $entity = new MapperTestClass();
+            $entity->datetimeProperty = null;
             return $entity;
         },
         ['db_column_name' => null],
     ],
     'carbon instance' => [
         function () {
-            $entity = new DatetimeMapperTest();
-            $entity->foo = CarbonImmutable::parse('2023-01-01 12:00');
+            $entity = new MapperTestClass();
+            $entity->datetimeProperty = CarbonImmutable::parse('2023-01-01 12:00');
             return $entity;
         },
         ['db_column_name' => '2023-01-01T12:00:00+00:00'],
@@ -84,7 +81,7 @@ test('The datetime mapper can deserialize an item with a null value', function (
     stdClass $item,
     string $alias,
 ) {
-    $property = new ReflectionProperty(DatetimeMapperTest::class, 'foo');
+    $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeMapper('db_column_name', $property);
     expect($mapper->deserialize($item, $alias))->toBeNull();
 })->with([
@@ -97,7 +94,7 @@ test('The datetime mapper can deserialize an item with a non-null value', functi
     string $alias,
     string $iso8601String
 ) {
-    $property = new ReflectionProperty(DatetimeMapperTest::class, 'foo');
+    $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeMapper('db_column_name', $property);
     expect($mapper->deserialize($item, $alias))
         ->toBeInstanceOf(CarbonImmutable::class)

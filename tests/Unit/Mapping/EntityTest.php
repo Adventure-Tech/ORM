@@ -1,6 +1,5 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\NotInitializedException;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 

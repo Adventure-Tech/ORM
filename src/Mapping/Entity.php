@@ -2,7 +2,6 @@
 
 namespace AdventureTech\ORM\Mapping;
 
-use AdventureTech\ORM\Exceptions\NotInitializedException;
 use AdventureTech\ORM\Repository\Repository;
 use Attribute;
 use Illuminate\Support\Str;

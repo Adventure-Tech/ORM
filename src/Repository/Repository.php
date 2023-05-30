@@ -18,9 +18,9 @@ use stdClass;
 class Repository
 {
     /**
-     * @var array<int,TMP<T,object>>
+     * @var Collection<int,LinkedRepository<T,object>>
      */
-    private array $with = [];
+    private Collection $with;
 
     private ?int $resolvingId = null;
     /**
@@ -33,6 +33,7 @@ class Repository
      */
     private function __construct(private readonly EntityReflection $entityReflection)
     {
+        $this->with = Collection::empty();
     }
 
     /**
@@ -94,6 +95,7 @@ class Repository
         $this->buildQuery()->dd();
     }
 
+    private int $aliasCounter = 0;
     /**
      * @param  string         $relation
      * @param  callable|null  $callable
@@ -115,7 +117,11 @@ class Repository
             $callable($repository);
         }
 
-        $this->with[] = new TMP($linker, $repository);
+        // TODO: fix aliasing
+        $this->with->put(
+            $relation,
+            new LinkedRepository($linker, $repository, self::createAlias($this->aliasCounter++))
+        );
 
         return $this;
     }
@@ -146,8 +152,8 @@ class Repository
 //            }
 //        }
 
-        foreach ($this->with as $index => $tmp) {
-            self::applyJoin($query, $tmp, $this->entityReflection->getTableName(), self::createAlias($index));
+        foreach ($this->with as $linkedRepo) {
+            self::applyJoin($query, $linkedRepo, $this->entityReflection->getTableName(), $linkedRepo->alias);
         }
         return $query;
     }
@@ -155,16 +161,16 @@ class Repository
     /**
      * @template S of object
      * @param  Builder  $query
-     * @param  TMP<S,object>  $tmp
+     * @param  LinkedRepository<S,object>  $linkedRepository
      * @param  string  $from
      * @param  string  $to
      * @return void
      */
-    private static function applyJoin(Builder $query, TMP $tmp, string $from, string $to): void
+    private static function applyJoin(Builder $query, LinkedRepository $linkedRepository, string $from, string $to): void
     {
-        $tmp->linker->join($query, $from, $to);
-        foreach ($tmp->repository->with as $index => $subTmp) {
-            self::applyJoin($query, $subTmp, $to, self::createAlias($index, $to));
+        $linkedRepository->linker->join($query, $from, $to);
+        foreach ($linkedRepository->repository->with as $subLinkedRepo) {
+            self::applyJoin($query, $subLinkedRepo, $to, $subLinkedRepo->alias . $to);
         }
     }
 
@@ -192,10 +198,10 @@ class Repository
             $reset = true;
         }
 
-        foreach ($this->with as $index => $tmp) {
-            $newAlias = self::createAlias($index, $alias);
-            $entity = $tmp->repository->resolve($item, $newAlias, $reset);
-            $tmp->linker->link($this->resolvingEntity, $entity);
+        foreach ($this->with as $linkedRepo) {
+            $newAlias = $linkedRepo->alias . $alias;
+            $entity = $linkedRepo->repository->resolve($item, $newAlias, $reset);
+            $linkedRepo->linker->link($this->resolvingEntity, $entity);
         }
 
         return $reset && isset($this->resolvingEntity) ? $this->resolvingEntity : null;

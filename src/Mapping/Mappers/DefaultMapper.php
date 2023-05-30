@@ -48,12 +48,12 @@ readonly class DefaultMapper implements Mapper
     }
 
     /**
-     * @param  object  $entity
+     * @param  T|null  $value
      * @return array<string,T|null>
      */
-    public function serialize(object $entity): array
+    public function serialize(mixed $value): array
     {
-        return [$this->name => $entity->{$this->property->getName()}];
+        return [$this->name => $value];
     }
 
     /**

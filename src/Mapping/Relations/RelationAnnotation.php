@@ -8,7 +8,7 @@ use AdventureTech\ORM\Mapping\Linkers\Linker;
  * @template ORIGIN of object
  * @template TARGET of object
  */
-interface Relation
+interface RelationAnnotation
 {
     /**
      * @param  string  $propertyName

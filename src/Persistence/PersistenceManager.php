@@ -10,7 +10,6 @@ use AdventureTech\ORM\Exceptions\MissingBelongsToRelationException;
 use AdventureTech\ORM\Exceptions\MissingIdForUpdateException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Mapping\Linkers\BelongsToLinker;
-use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDeletedAt;
 use Illuminate\Support\Facades\DB;
 
 use function array_merge;
@@ -44,22 +43,26 @@ abstract class PersistenceManager
 
         $id = $entityReflection->getId();
 
+        foreach ($entityReflection->getManagedDatetimes() as $property => $managedDatetime) {
+            $entity->{$property} = $managedDatetime->getInsertDatetime();
+        }
+
+        foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
+            $entity->{$property} = null;
+        }
+
         foreach ($entityReflection->getMappers() as $property => $mapper) {
             if ($mapper->isInitialized($entity)) {
                 if ($property === $id) {
                     throw new IdSetForInsertException();
                 }
-                $arr = array_merge($arr, $mapper->serialize($entity));
+                $arr = array_merge($arr, $mapper->serialize($entity->{$property}));
             } elseif ($property !== $id) {
                 throw new MissingValueForColumnException($property);
             }
         }
 
         $arr = array_merge($arr, $this->resolveBelongsToRelation($entityReflection, $entity));
-
-        foreach ($entityReflection->getManagedDatetimes() as $managedDatetime) {
-            $arr = array_merge($arr, $managedDatetime->serializeForInsert($entity));
-        }
 
         $id = DB::table($entityReflection->getTableName())->insertGetId($arr);
         $entity->{$entityReflection->getId()} = $id;
@@ -88,21 +91,29 @@ abstract class PersistenceManager
 
         $entityReflection = EntityReflection::new(get_class($entity));
         $arr = [];
+
         if (!isset($entity->{$entityReflection->getId()})) {
             throw new MissingIdForUpdateException();
         }
-        foreach ($entityReflection->getMappers() as $property => $mapper) {
-            if ($mapper->isInitialized($entity)) {
-                $arr = array_merge($arr, $mapper->serialize($entity));
-            }
+
+        foreach ($entityReflection->getManagedDatetimes() as $property => $managedDatetime) {
+            $entity->{$property} = $managedDatetime->getUpdateDatetime($entity->{$property} ?? null);
         }
 
-        foreach ($entityReflection->getManagedDatetimes() as $managedDatetime) {
-            $arr = array_merge($arr, $managedDatetime->serializeForUpdate($entity));
+        foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
+            // TODO: throw exception if not already null
+            $entity->{$property} = null;
+        }
+
+        foreach ($entityReflection->getMappers() as $property => $mapper) {
+            if ($mapper->isInitialized($entity)) {
+                $arr = array_merge($arr, $mapper->serialize($entity->{$property}));
+            }
         }
 
         $arr = array_merge($arr, $this->resolveBelongsToRelation($entityReflection, $entity));
 
+        // TODO: filter on soft-delete columns?
         return DB::table($entityReflection->getTableName())
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
             ->update($arr);
@@ -122,10 +133,10 @@ abstract class PersistenceManager
         $query = DB::table($entityReflection->getTableName())
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
 
-        foreach ($entityReflection->getManagedDatetimes() as $managedDatetime) {
-            if ($managedDatetime instanceof ManagedDeletedAt) {
-                return $query->update($managedDatetime->serializeForDelete($entity));
-            }
+        foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
+            $mapper = $entityReflection->getMappers()->get($property);
+            $datetime = $softDelete->getDatetime();
+            return $query->update($mapper->serialize($datetime));
         }
 
         return $query->delete();
@@ -150,16 +161,16 @@ abstract class PersistenceManager
     private function resolveBelongsToRelation(EntityReflection $entityReflection, object $entity): array
     {
         $arr = [];
-        foreach ($entityReflection->getLinkers() as $property => $relation) {
-            if ($relation instanceof BelongsToLinker) {
+        foreach ($entityReflection->getLinkers() as $property => $linker) {
+            if ($linker instanceof BelongsToLinker) {
                 if (!isset($entity->{$property})) {
                     throw new MissingBelongsToRelationException('Must set all BelongsTo relations');
                 }
-                $linkedEntityReflection = EntityReflection::new($relation->getTargetEntity());
+                $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
                 if (!isset($entity->{$property}->{$linkedEntityReflection->getId()})) {
                     throw new MissingBelongsToRelationException('Linked BelongsTo entity must have valid ID set');
                 }
-                $arr[$relation->getForeignKey()] = $entity->{$property}->{$linkedEntityReflection->getId()};
+                $arr[$linker->getForeignKey()] = $entity->{$property}->{$linkedEntityReflection->getId()};
             }
         }
         return $arr;

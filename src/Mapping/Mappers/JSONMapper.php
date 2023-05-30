@@ -49,13 +49,13 @@ readonly class JSONMapper implements Mapper
     }
 
     /**
-     * @param  object  $entity
+     * @param  array<mixed,mixed>|null  $value
      * @return array<string,string|null>
      * @throws JsonException
      */
-    public function serialize(object $entity): array
+    public function serialize(mixed $value): array
     {
-        $json = json_encode($entity->{$this->property->getName()}, JSON_THROW_ON_ERROR);
+        $json = json_encode($value, JSON_THROW_ON_ERROR);
         return [$this->name => $json];
     }
 

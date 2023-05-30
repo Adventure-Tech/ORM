@@ -47,16 +47,14 @@ readonly class DatetimeTZMapper implements Mapper
     }
 
     /**
-     * @param  object  $entity
+     * @param  CarbonImmutable|null  $value
      * @return array<string,string|null>
      */
-    public function serialize(object $entity): array
+    public function serialize(mixed $value): array
     {
-        /** @var CarbonImmutable|null $datetime */
-        $datetime = $entity->{$this->property->getName()};
         return [
-            $this->name => $datetime?->toIso8601String(),
-            $this->tzName => $datetime?->tzName,
+            $this->name => $value?->toIso8601String(),
+            $this->tzName => $value?->tzName,
         ];
     }
 

@@ -10,11 +10,11 @@ use ReflectionProperty;
 use stdClass;
 
 /**
- * @implements Column<int>
+ * @implements ColumnAnnotation<bool>
  */
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-readonly class IntColumn implements Column
+readonly class BoolColumnAnnotation implements ColumnAnnotation
 {
     /**
      * @param  string|null  $name
@@ -26,7 +26,7 @@ readonly class IntColumn implements Column
 
     /**
      * @param  ReflectionProperty  $property
-     * @return DefaultMapper<int>
+     * @return DefaultMapper<bool>
      */
     public function getMapper(ReflectionProperty $property): DefaultMapper
     {

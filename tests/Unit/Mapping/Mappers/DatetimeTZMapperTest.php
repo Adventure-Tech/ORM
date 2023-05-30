@@ -49,30 +49,22 @@ test('The datetimeTz mapper can check if its property is set on a given entity i
 ]);
 
 test('The datetimeTz mapper can serialize an entity', function (
-    MapperTestClass $entity,
+    ?CarbonImmutable $value,
     array $expected
 ) {
     $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeTZMapper('datetime_db_column', 'tz_db_column', $property);
-    expect($mapper->serialize($entity))
+    expect($mapper->serialize($value))
         ->toBeArray()
         ->toEqualCanonicalizing($expected);
 })->with([
 //    'not initialized' => [fn() => new MapperTestClass(), []],
     'null' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->datetimeProperty = null;
-            return $entity;
-        },
+       null,
         ['datetime_db_column' => null, 'tz_db_column' => null],
     ],
     'carbon instance' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->datetimeProperty = CarbonImmutable::parse('2023-01-01 12:00')->setTimezone('Europe/Oslo');
-            return $entity;
-        },
+        CarbonImmutable::parse('2023-01-01 12:00')->setTimezone('Europe/Oslo'),
         ['datetime_db_column' => '2023-01-01T13:00:00+01:00', 'tz_db_column' => 'Europe/Oslo'],
     ],
 ]);

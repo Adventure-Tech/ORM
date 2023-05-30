@@ -3,7 +3,7 @@
 namespace AdventureTech\ORM\Repository;
 
 use AdventureTech\ORM\Mapping\Linkers\Linker;
-use AdventureTech\ORM\Mapping\Relations\Relation;
+use AdventureTech\ORM\Mapping\Relations\RelationAnnotation;
 
 /**
  * @template ORIGIN of object

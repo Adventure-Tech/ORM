@@ -12,11 +12,11 @@ use Illuminate\Support\Str;
 /**
  * @template ORIGIN of object
  * @template TARGET of object
- * @implements Relation<ORIGIN,TARGET>
+ * @implements RelationAnnotation<ORIGIN,TARGET>
  */
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-readonly class HasMany implements Relation
+readonly class HasMany implements RelationAnnotation
 {
     /**
      * @param  class-string<TARGET>  $targetEntity

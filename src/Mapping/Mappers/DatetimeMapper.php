@@ -48,12 +48,12 @@ readonly class DatetimeMapper implements Mapper
     }
 
     /**
-     * @param  object  $entity
+     * @param  CarbonImmutable|null  $value
      * @return array<string,string|null>
      */
-    public function serialize(object $entity): array
+    public function serialize(mixed $value): array
     {
-        return [$this->name => $entity->{$this->property->getName()}?->toIso8601String()];
+        return [$this->name => $value?->toIso8601String()];
     }
     /**
      * @param  stdClass  $item

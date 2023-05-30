@@ -2,22 +2,19 @@
 
 namespace AdventureTech\ORM\Mapping\Columns;
 
-use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
 use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Attribute;
-use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use ReflectionProperty;
 use stdClass;
 
 /**
- * @implements Column<CarbonImmutable>
+ * @implements ColumnAnnotation<int>
  */
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-readonly class DatetimeColumn implements Column
+readonly class IntColumnAnnotation implements ColumnAnnotation
 {
     /**
      * @param  string|null  $name
@@ -29,11 +26,11 @@ readonly class DatetimeColumn implements Column
 
     /**
      * @param  ReflectionProperty  $property
-     * @return DatetimeMapper
+     * @return DefaultMapper<int>
      */
-    public function getMapper(ReflectionProperty $property): DatetimeMapper
+    public function getMapper(ReflectionProperty $property): DefaultMapper
     {
-        return new DatetimeMapper(
+        return new DefaultMapper(
             $this->name ?? Str::snake($property->getName()),
             $property
         );

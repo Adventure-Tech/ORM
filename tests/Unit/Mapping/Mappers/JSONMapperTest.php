@@ -57,48 +57,20 @@ test('The json mapper can check if its property is set on a given entity instanc
 ]);
 
 test('The json mapper can serialize an entity', function (
-    MapperTestClass $entity,
+    ?array $value,
     array $expected
 ) {
     $property = new ReflectionProperty(MapperTestClass::class, 'jsonProperty');
     $mapper = new JSONMapper('db_column_name', $property);
-    expect($mapper->serialize($entity))
+    expect($mapper->serialize($value))
         ->toBeArray()
         ->toEqualCanonicalizing($expected);
 })->with([
 //    'not initialized' => [fn() => new MapperTestClass(), []],
-    'null' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->jsonProperty = null;
-            return $entity;
-        },
-        ['db_column_name' => 'null'],
-    ],
-    'empty array' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->jsonProperty = [];
-            return $entity;
-        },
-        ['db_column_name' => '[]'],
-    ],
-    'associative array' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->jsonProperty = ['x' => true];
-            return $entity;
-        },
-        ['db_column_name' => '{"x":true}'],
-    ],
-    'non-associative array' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->jsonProperty = ['x', 42, true, null];
-            return $entity;
-        },
-        ['db_column_name' => '["x",42,true,null]'],
-    ],
+    'null' => [null, ['db_column_name' => 'null']],
+    'empty array' => [[], ['db_column_name' => '[]']],
+    'associative array' => [['x' => true], ['db_column_name' => '{"x":true}']],
+    'non-associative array' => [ ['x', 42, true, null], ['db_column_name' => '["x",42,true,null]']],
 ]);
 
 test('The json mapper can deserialize an item with a null value', function (

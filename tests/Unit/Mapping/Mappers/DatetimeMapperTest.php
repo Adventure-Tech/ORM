@@ -49,30 +49,22 @@ test('The datetime mapper can check if its property is set on a given entity ins
 ]);
 
 test('The datetime mapper can serialize an entity', function (
-    MapperTestClass $entity,
+    ?CarbonImmutable $value,
     array $expected
 ) {
     $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = new DatetimeMapper('db_column_name', $property);
-    expect($mapper->serialize($entity))
+    expect($mapper->serialize($value))
         ->toBeArray()
         ->toEqualCanonicalizing($expected);
 })->with([
 //    'not initialized' => [fn() => new MapperTestClass(), []],
     'null' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->datetimeProperty = null;
-            return $entity;
-        },
+        null,
         ['db_column_name' => null],
     ],
     'carbon instance' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->datetimeProperty = CarbonImmutable::parse('2023-01-01 12:00');
-            return $entity;
-        },
+        CarbonImmutable::parse('2023-01-01 12:00'),
         ['db_column_name' => '2023-01-01T12:00:00+00:00'],
     ],
 ]);

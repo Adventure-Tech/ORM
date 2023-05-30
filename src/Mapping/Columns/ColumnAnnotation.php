@@ -4,12 +4,11 @@ namespace AdventureTech\ORM\Mapping\Columns;
 
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use ReflectionProperty;
-use stdClass;
 
 /**
  * @template T
  */
-interface Column
+interface ColumnAnnotation
 {
     /**
      * @param  ReflectionProperty  $property

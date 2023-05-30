@@ -3,12 +3,23 @@
 namespace AdventureTech\ORM\Mapping\ManagedDatetimes;
 
 use Attribute;
+use Carbon\CarbonImmutable;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class UpdatedAt implements ManagedDatetimeAnnotation
 {
-    public function getManagedDatetime(): ManagedUpdatedAt
+    public function getInsertDatetime(): CarbonImmutable
     {
-        return new ManagedUpdatedAt();
+        return CarbonImmutable::now();
+    }
+
+    public function getUpdateDatetime(?CarbonImmutable $datetime): CarbonImmutable
+    {
+        return CarbonImmutable::now();
+    }
+
+    public function getDeleteDatetime(): null
+    {
+        return null;
     }
 }

@@ -8,11 +8,11 @@ use Illuminate\Support\Str;
 use ReflectionProperty;
 
 /**
- * @implements Column<array>
+ * @implements ColumnAnnotation<array>
  */
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-readonly class JSONColumn implements Column
+readonly class JSONColumnAnnotation implements ColumnAnnotation
 {
     /**
      * @param  string|null  $name

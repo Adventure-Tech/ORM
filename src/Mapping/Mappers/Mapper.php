@@ -27,10 +27,10 @@ interface Mapper
     public function isInitialized(object $instance): bool;
 
     /**
-     * @param  object  $entity
+     * @param  mixed  $value
      * @return array<string,string|null>
      */
-    public function serialize(object $entity): array;
+    public function serialize(mixed $value): array;
 
     /**
      * @param  stdClass  $item

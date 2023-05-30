@@ -47,7 +47,7 @@ readonly class BelongsToLinker implements Linker
     ): void {
         $targetEntityReflection = EntityReflection::new($this->targetEntity);
         $query
-            ->join(
+            ->leftJoin(
                 $targetEntityReflection->getTableName() . ' as ' . $to,
                 $to . '.' . $targetEntityReflection->getId(),
                 '=',

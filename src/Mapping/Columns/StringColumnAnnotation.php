@@ -8,11 +8,11 @@ use Illuminate\Support\Str;
 use ReflectionProperty;
 
 /**
- * @implements Column<string>
+ * @implements ColumnAnnotation<string>
  */
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-readonly class StringColumn implements Column
+readonly class StringColumnAnnotation implements ColumnAnnotation
 {
     /**
      * @param  string|null  $name

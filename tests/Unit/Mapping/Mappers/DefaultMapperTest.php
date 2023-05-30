@@ -48,40 +48,19 @@ test('The default mapper can check if its property is set on a given entity inst
 ]);
 
 test('The default mapper can serialize an entity', function (
-    MapperTestClass $entity,
+    ?string $value,
     array $expected
 ) {
     $property = new ReflectionProperty(MapperTestClass::class, 'stringProperty');
     $mapper = new DefaultMapper('db_column_name', $property);
-    expect($mapper->serialize($entity))
+    expect($mapper->serialize($value))
         ->toBeArray()
         ->toEqualCanonicalizing($expected);
 })->with([
 //    'not initialized' => [fn() => new MapperTestClass(), []],
-    'null' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->stringProperty = null;
-            return $entity;
-        },
-        ['db_column_name' => null],
-    ],
-    'empty string' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->stringProperty = '';
-            return $entity;
-        },
-        ['db_column_name' => ''],
-    ],
-    'non-empty string' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->stringProperty = 'value';
-            return $entity;
-        },
-        ['db_column_name' => 'value'],
-    ],
+    'null' => [null, ['db_column_name' => null]],
+    'empty string' => ['', ['db_column_name' => '']],
+    'non-empty string' => ['value', ['db_column_name' => 'value']],
 ]);
 
 test('The default mapper can deserialize an item', function (

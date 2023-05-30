@@ -8,11 +8,11 @@ use Illuminate\Support\Str;
 
 /**
  * @template TARGET of object
- * @implements Relation<object,TARGET>
+ * @implements RelationAnnotation<object,TARGET>
  */
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-readonly class BelongsTo implements Relation
+readonly class BelongsTo implements RelationAnnotation
 {
     /**
      * @param  string|null  $foreignKey

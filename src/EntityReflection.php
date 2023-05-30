@@ -6,14 +6,14 @@ use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
 use AdventureTech\ORM\Exceptions\NullReflectionTypeException;
-use AdventureTech\ORM\Mapping\Columns\Column;
+use AdventureTech\ORM\Mapping\Columns\ColumnAnnotation;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
-use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDatetime;
 use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDatetimeAnnotation;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
-use AdventureTech\ORM\Mapping\Relations\Relation;
+use AdventureTech\ORM\Mapping\Relations\RelationAnnotation;
+use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use Illuminate\Support\Collection;
 use ReflectionClass;
 use ReflectionException;
@@ -45,9 +45,13 @@ class EntityReflection
     private Entity $entityAttribute;
     private string $id;
     /**
-     * @var Collection<string,ManagedDatetime>
+     * @var Collection<string,ManagedDatetimeAnnotation>
      */
     private Collection $managedDatetimes;
+    /**
+     * @var Collection<string,SoftDeleteAnnotation>
+     */
+    private Collection $softDeletes;
 
     /**
      * @template A
@@ -79,25 +83,23 @@ class EntityReflection
         $this->mappers = Collection::empty();
         $this->linkers = Collection::empty();
         $this->managedDatetimes = Collection::empty();
+        $this->softDeletes = Collection::empty();
 
         foreach ($this->reflectionClass->getProperties() as $property) {
             foreach ($property->getAttributes() as $attribute) {
                 $attributeInstance = $attribute->newInstance();
                 if ($attributeInstance instanceof Id) {
                     $this->setId($property->getName());
-                } elseif ($attributeInstance instanceof Column) {
+                } elseif ($attributeInstance instanceof ColumnAnnotation) {
                     $this->registerMapper($attributeInstance, $property);
-                } elseif ($attributeInstance instanceof ManagedDatetimeAnnotation) {
-                    $this->managedDatetimes->put($property->getName(), $attributeInstance->getManagedDatetime());
-                } elseif ($attributeInstance instanceof Relation) {
+                } elseif ($attributeInstance instanceof RelationAnnotation) {
                     $this->registerLinker($attributeInstance, $property);
+                } elseif ($attributeInstance instanceof ManagedDatetimeAnnotation) {
+                    $this->managedDatetimes->put($property->getName(), $attributeInstance);
+                } elseif ($attributeInstance instanceof SoftDeleteAnnotation) {
+                    $this->softDeletes->put($property->getName(), $attributeInstance);
                 }
             }
-        }
-
-        foreach ($this->managedDatetimes as $property => $managedDatetime) {
-            $managedDatetime->setMapper($this->mappers->get($property));
-            $this->mappers->forget($property);
         }
     }
 
@@ -166,10 +168,6 @@ class EntityReflection
                 $columnNames[$columnName] = $columnName;
             }
         }
-        foreach ($this->managedDatetimes as $managedDatetime) {
-            $columnName = $managedDatetime->getColumnName();
-            $columnNames[$columnName] = $columnName;
-        }
         if ($alias === '') {
             return array_map(
                 fn (string $column): string => $this->getTableName() . '.' . $column,
@@ -192,11 +190,19 @@ class EntityReflection
     }
 
     /**
-     * @return Collection<string,ManagedDatetime>
+     * @return Collection<string,ManagedDatetimeAnnotation>
      */
     public function getManagedDatetimes(): Collection
     {
         return $this->managedDatetimes;
+    }
+
+    /**
+     * @return Collection<string,SoftDeleteAnnotation>
+     */
+    public function getSoftDeletes(): Collection
+    {
+        return $this->softDeletes;
     }
 
     private function setId(string $propertyName): void
@@ -208,11 +214,11 @@ class EntityReflection
     }
 
     /**
-     * @param  Column<mixed>  $column
+     * @param  ColumnAnnotation<mixed>  $column
      * @param  ReflectionProperty  $property
      * @return void
      */
-    private function registerMapper(Column $column, ReflectionProperty $property): void
+    private function registerMapper(ColumnAnnotation $column, ReflectionProperty $property): void
     {
         $this->mappers->put(
             $property->getName(),
@@ -221,11 +227,11 @@ class EntityReflection
     }
 
     /**
-     * @param  Relation<T,object>  $relation
+     * @param  RelationAnnotation<T,object>  $relationAnnotation
      * @param  ReflectionProperty  $property
      * @return void
      */
-    private function registerLinker(Relation $relation, ReflectionProperty $property): void
+    private function registerLinker(RelationAnnotation $relationAnnotation, ReflectionProperty $property): void
     {
         /** @var ReflectionNamedType|null $type */
         $type = $property->getType();
@@ -236,7 +242,7 @@ class EntityReflection
         $propertyType = $type->getName();
         $this->linkers->put(
             $property->getName(),
-            $relation->getLinker($property->getName(), $propertyType, $this->class)
+            $relationAnnotation->getLinker($property->getName(), $propertyType, $this->class)
         );
     }
 }

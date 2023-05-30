@@ -11,11 +11,11 @@ use ReflectionProperty;
 use stdClass;
 
 /**
- * @implements Column<CarbonImmutable>
+ * @implements ColumnAnnotation<CarbonImmutable>
  */
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-readonly class DatetimeTZColumn implements Column
+readonly class DatetimeTZColumnAnnotation implements ColumnAnnotation
 {
     /**
      * @param  string|null  $name

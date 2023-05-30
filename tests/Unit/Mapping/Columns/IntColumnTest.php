@@ -1,11 +1,11 @@
 <?php
 
-use AdventureTech\ORM\Mapping\Columns\IntColumn;
+use AdventureTech\ORM\Mapping\Columns\IntColumnAnnotation;
 use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 
 test('The int column returns the default mapper', function () {
-    $column = new IntColumn();
+    $column = new IntColumnAnnotation();
     $property = new ReflectionProperty(MapperTestClass::class, 'intProperty');
     $mapper = $column->getMapper($property);
 
@@ -13,7 +13,7 @@ test('The int column returns the default mapper', function () {
 });
 
 test('The int column correctly infers the DB column name from the property name', function () {
-    $column = new IntColumn();
+    $column = new IntColumnAnnotation();
     $property = new ReflectionProperty(MapperTestClass::class, 'intProperty');
     $mapper = $column->getMapper($property);
 
@@ -23,7 +23,7 @@ test('The int column correctly infers the DB column name from the property name'
 });
 
 test('The int column allows the DB column name to be customized', function () {
-    $column = new IntColumn('custom_column_name');
+    $column = new IntColumnAnnotation('custom_column_name');
     $property = new ReflectionProperty(MapperTestClass::class, 'intProperty');
     $mapper = $column->getMapper($property);
 

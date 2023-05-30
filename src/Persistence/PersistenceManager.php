@@ -10,6 +10,7 @@ use AdventureTech\ORM\Exceptions\MissingBelongsToRelationException;
 use AdventureTech\ORM\Exceptions\MissingIdForUpdateException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Mapping\Linkers\BelongsToLinker;
+use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Illuminate\Support\Facades\DB;
 
 use function array_merge;
@@ -134,6 +135,7 @@ abstract class PersistenceManager
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
 
         foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
+            /** @var Mapper<mixed> $mapper */
             $mapper = $entityReflection->getMappers()->get($property);
             $datetime = $softDelete->getDatetime();
             return $query->update($mapper->serialize($datetime));
@@ -158,6 +160,11 @@ abstract class PersistenceManager
         }
     }
 
+    /**
+     * @param  EntityReflection<T>  $entityReflection
+     * @param  T  $entity
+     * @return array<string,mixed>
+     */
     private function resolveBelongsToRelation(EntityReflection $entityReflection, object $entity): array
     {
         $arr = [];

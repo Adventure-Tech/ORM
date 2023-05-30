@@ -7,7 +7,7 @@ use Throwable;
 
 class EntityNotFoundException extends RuntimeException
 {
-    public function __construct(string $class = null, string|int $id = '', int $code = 0, ?Throwable $previous = null)
+    public function __construct(string $class = null, string|int $id = null, int $code = 0, ?Throwable $previous = null)
     {
         $message = 'Entity not found on the DB';
         if (!is_null($class)) {

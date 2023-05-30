@@ -54,7 +54,7 @@ class EntityReflection
     private Collection $softDeletes;
 
     /**
-     * @template A
+     * @template A of object
      * @param  class-string<A>  $class
      * @return EntityReflection<A>
      */
@@ -70,7 +70,8 @@ class EntityReflection
     private function __construct(private readonly string $class)
     {
         try {
-            $this->reflectionClass = new ReflectionClass($class);
+            /** @throws ReflectionException */
+            $this->reflectionClass = new RefLectionClass($class);
         } catch (ReflectionException) {
             throw new EntityReflectionInstantiationException($class);
         }

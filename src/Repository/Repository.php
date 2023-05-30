@@ -18,7 +18,7 @@ use stdClass;
 class Repository
 {
     /**
-     * @var Collection<int,LinkedRepository<T,object>>
+     * @var Collection<string,LinkedRepository<T,object>>
      */
     private Collection $with;
 
@@ -126,7 +126,7 @@ class Repository
         return $this;
     }
 
-//    private array $filter = [];
+//    private Collection $filter = [];
 //
 //    public function filter($column, $operator = null, $value = null, $boolean = 'and'): static
 //    {
@@ -134,9 +134,9 @@ class Repository
 //        return $this;
 //    }
 
-    private static function createAlias(int $index, string $previousAlias = ''): string
+    private static function createAlias(int $index): string
     {
-        return '_' . $index . $previousAlias;
+        return '_' . $index;
     }
 
     private function buildQuery(): Builder
@@ -191,9 +191,6 @@ class Repository
             $this->resolvingEntity = $this->entityReflection->newInstance();
             foreach ($this->entityReflection->getMappers() as $property => $mapper) {
                 $this->resolvingEntity->{$property} = $mapper->deserialize($item, $alias);
-            }
-            foreach ($this->entityReflection->getManagedDatetimes() as $property => $managedDatetime) {
-                $this->resolvingEntity->{$property} = $managedDatetime->deserialize($item, $alias);
             }
             $reset = true;
         }

@@ -2,7 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\SoftDeletes;
 
-use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDatetimeAnnotation;
+use AdventureTech\ORM\Mapping\ManagedColumns\ManagedColumnAnnotation;
 use Attribute;
 use Carbon\CarbonImmutable;
 

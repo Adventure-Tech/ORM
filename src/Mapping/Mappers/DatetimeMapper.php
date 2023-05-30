@@ -65,4 +65,9 @@ readonly class DatetimeMapper implements Mapper
         $datetimeString = $item->{$alias . $this->name};
         return is_null($datetimeString) ? null : CarbonImmutable::parse($datetimeString);
     }
+
+    public function getType(): string
+    {
+        return $this->property->getType()->getName();
+    }
 }

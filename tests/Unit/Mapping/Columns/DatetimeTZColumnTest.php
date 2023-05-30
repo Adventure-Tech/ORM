@@ -1,11 +1,11 @@
 <?php
 
-use AdventureTech\ORM\Mapping\Columns\DatetimeTZColumnAnnotation;
+use AdventureTech\ORM\Mapping\Columns\DatetimeTZColumn;
 use AdventureTech\ORM\Mapping\Mappers\DatetimeTZMapper;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 
 test('The datetimeTZ column returns a datetimeTZ mapper', function () {
-    $column = new DatetimeTZColumnAnnotation();
+    $column = new DatetimeTZColumn();
     $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = $column->getMapper($property);
 
@@ -13,7 +13,7 @@ test('The datetimeTZ column returns a datetimeTZ mapper', function () {
 });
 
 test('The datetimeTZ column handles the DB column names correctly', function (?string $name, ?string $tzName, array $result) {
-    $column = new DatetimeTZColumnAnnotation($name, $tzName);
+    $column = new DatetimeTZColumn($name, $tzName);
     $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
     $mapper = $column->getMapper($property);
 

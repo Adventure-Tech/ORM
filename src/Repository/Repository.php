@@ -6,6 +6,8 @@ use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\EntityNotFoundException;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
+use AdventureTech\ORM\Repository\Filters\Filter;
+use AdventureTech\ORM\Repository\Filters\IsNull;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -27,14 +29,7 @@ class Repository
      * @var T
      */
     private object $resolvingEntity;
-
-    /**
-     * @param  EntityReflection<T>  $entityReflection
-     */
-    private function __construct(private readonly EntityReflection $entityReflection)
-    {
-        $this->with = Collection::empty();
-    }
+    private bool $includeDeleted = false;
 
     /**
      * @template E of object
@@ -47,6 +42,14 @@ class Repository
         $entityReflection = EntityReflection::new($class);
         $repository = $entityReflection->getRepository() ?? self::class;
         return new $repository($entityReflection);
+    }
+
+    /**
+     * @param  EntityReflection<T>  $entityReflection
+     */
+    private function __construct(private readonly EntityReflection $entityReflection)
+    {
+        $this->with = Collection::empty();
     }
 
     /**
@@ -67,7 +70,6 @@ class Repository
         return $this->mapToEntities(
             $this->buildQuery()
             ->where($this->entityReflection->getTableName() . '.' . $this->entityReflection->getId(), $id)
-            ->limit(1)
             ->get()
         )->first();
     }
@@ -93,6 +95,15 @@ class Repository
     #[NoReturn] public function dd(): void
     {
         $this->buildQuery()->dd();
+    }
+
+    /**
+     * @return static
+     */
+    public function dump(): static
+    {
+        $this->buildQuery()->dump();
+        return $this;
     }
 
     private int $aliasCounter = 0;
@@ -126,13 +137,22 @@ class Repository
         return $this;
     }
 
-//    private Collection $filter = [];
-//
-//    public function filter($column, $operator = null, $value = null, $boolean = 'and'): static
-//    {
-//        $this->where[] = fn (Builder $query) => $query->where($column, $operator, $value, $boolean);
-//        return $this;
-//    }
+    /**
+     * @var array<int,Filter>
+     */
+    private array $filters = [];
+
+    public function filter(Filter $filter): static
+    {
+        $this->filters[] = $filter;
+        return $this;
+    }
+
+    public function includeSoftDeleted(): static
+    {
+        $this->includeDeleted = true;
+        return $this;
+    }
 
     private static function createAlias(int $index): string
     {
@@ -146,15 +166,36 @@ class Repository
 
         // TODO: add support for soft-deletes
         // TODO: add support for circumventing soft-deletes
-//        foreach ($this->entityReflection->getManagedDatetimes() as $managedDatetime) {
-//            if ($managedDatetime instanceof ManagedDeletedAt) {
-//                $query->whereNull($this->entityReflection->getTableName() . '.' . $managedDatetime->getColumnName());
-//            }
-//        }
+        if (!$this->includeDeleted) {
+            foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
+                $columnName = $this->entityReflection->getMappers()->get($property)->getColumnNames()[0];
+                $this->filter(new IsNull($columnName));
+            }
+        }
+
+        foreach ($this->filters as $filter) {
+            $relations = $filter->getRelations();
+            if (count($relations) > 0) {
+                $alias = '';
+                $repo = $this;
+                foreach ($relations as $relation) {
+                    if (!$repo->with->has($relation)) {
+                        $repo->with($relation);
+                    }
+                    $var = $repo->with->get($relation);
+                    $repo = $var->repository;
+                    $alias = $var->alias . $alias;
+                }
+            } else {
+                $alias = $this->entityReflection->getTableName();
+            }
+            $filter->applyFilter($query, $alias);
+        }
 
         foreach ($this->with as $linkedRepo) {
             self::applyJoin($query, $linkedRepo, $this->entityReflection->getTableName(), $linkedRepo->alias);
         }
+
         return $query;
     }
 
@@ -168,7 +209,7 @@ class Repository
      */
     private static function applyJoin(Builder $query, LinkedRepository $linkedRepository, string $from, string $to): void
     {
-        $linkedRepository->linker->join($query, $from, $to);
+        $linkedRepository->linker->join($query, $from, $to, $linkedRepository->repository->filters);
         foreach ($linkedRepository->repository->with as $subLinkedRepo) {
             self::applyJoin($query, $subLinkedRepo, $to, $subLinkedRepo->alias . $to);
         }

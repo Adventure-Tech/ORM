@@ -6,14 +6,16 @@ use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
 use AdventureTech\ORM\Exceptions\NullReflectionTypeException;
+use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Mapping\Columns\ColumnAnnotation;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
-use AdventureTech\ORM\Mapping\ManagedDatetimes\ManagedDatetimeAnnotation;
+use AdventureTech\ORM\Mapping\ManagedColumns\ManagedColumnAnnotation;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Mapping\Relations\RelationAnnotation;
 use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
+use AdventureTech\ORM\Repository\Repository;
 use Illuminate\Support\Collection;
 use ReflectionClass;
 use ReflectionException;
@@ -45,9 +47,9 @@ class EntityReflection
     private Entity $entityAttribute;
     private string $id;
     /**
-     * @var Collection<string,ManagedDatetimeAnnotation>
+     * @var Collection<string,ManagedColumnAnnotation>
      */
-    private Collection $managedDatetimes;
+    private Collection $managedColumns;
     /**
      * @var Collection<string,SoftDeleteAnnotation>
      */
@@ -83,7 +85,7 @@ class EntityReflection
         $this->entityAttribute = $entityAttributes[0]->newInstance();
         $this->mappers = Collection::empty();
         $this->linkers = Collection::empty();
-        $this->managedDatetimes = Collection::empty();
+        $this->managedColumns = Collection::empty();
         $this->softDeletes = Collection::empty();
 
         foreach ($this->reflectionClass->getProperties() as $property) {
@@ -95,8 +97,8 @@ class EntityReflection
                     $this->registerMapper($attributeInstance, $property);
                 } elseif ($attributeInstance instanceof RelationAnnotation) {
                     $this->registerLinker($attributeInstance, $property);
-                } elseif ($attributeInstance instanceof ManagedDatetimeAnnotation) {
-                    $this->managedDatetimes->put($property->getName(), $attributeInstance);
+                } elseif ($attributeInstance instanceof ManagedColumnAnnotation) {
+                    $this->managedColumns->put($property->getName(), $attributeInstance);
                 } elseif ($attributeInstance instanceof SoftDeleteAnnotation) {
                     $this->softDeletes->put($property->getName(), $attributeInstance);
                 }
@@ -183,7 +185,7 @@ class EntityReflection
     }
 
     /**
-     * @return class-string|null
+     * @return class-string<Repository<object>>|null
      */
     public function getRepository(): ?string
     {
@@ -191,11 +193,19 @@ class EntityReflection
     }
 
     /**
-     * @return Collection<string,ManagedDatetimeAnnotation>
+     * @return class-string<Factory<object>>|null
      */
-    public function getManagedDatetimes(): Collection
+    public function getFactory(): ?string
     {
-        return $this->managedDatetimes;
+        return $this->entityAttribute->getFactory();
+    }
+
+    /**
+     * @return Collection<string,ManagedColumnAnnotation>
+     */
+    public function getManagedColumns(): Collection
+    {
+        return $this->managedColumns;
     }
 
     /**

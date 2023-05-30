@@ -65,4 +65,9 @@ readonly class DefaultMapper implements Mapper
     {
         return $item->{$alias . $this->name};
     }
+
+    public function getType(): string
+    {
+        return $this->property->getType()->getName();
+    }
 }

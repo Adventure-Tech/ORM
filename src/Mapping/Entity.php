@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping;
 
+use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Repository\Repository;
 use Attribute;
 use Illuminate\Support\Str;
@@ -18,7 +19,8 @@ final class Entity
      */
     public function __construct(
         private readonly ?string $table = null,
-        private readonly ?string $repository = null
+        private readonly ?string $repository = null,
+        private readonly ?string $factory = null
     ) {
     }
 
@@ -37,5 +39,13 @@ final class Entity
     public function getRepository(): ?string
     {
         return $this->repository;
+    }
+
+    /**
+     * @return class-string<Factory<T>>|null
+     */
+    public function getFactory(): ?string
+    {
+        return $this->factory;
     }
 }

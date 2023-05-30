@@ -2,7 +2,6 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
-use ReflectionProperty;
 use stdClass;
 
 /**
@@ -38,4 +37,6 @@ interface Mapper
      * @return T|null
      */
     public function deserialize(stdClass $item, string $alias): mixed;
+
+    public function getType(): string;
 }

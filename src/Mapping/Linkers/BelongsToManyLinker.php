@@ -3,7 +3,9 @@
 namespace AdventureTech\ORM\Mapping\Linkers;
 
 use AdventureTech\ORM\EntityReflection;
+use AdventureTech\ORM\Repository\Filters\Filter;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\JoinClause;
 
 /**
  * @template ORIGIN of object
@@ -45,12 +47,14 @@ readonly class BelongsToManyLinker implements Linker
      * @param  Builder  $query
      * @param  string  $from
      * @param  string  $to
+     * @param  array<int,Filter>  $filters
      * @return void
      */
     public function join(
         Builder $query,
         string $from,
-        string $to
+        string $to,
+        array $filters
     ): void {
         $originEntityReflection = EntityReflection::new($this->originEntity);
         $targetEntityReflection = EntityReflection::new($this->targetEntity);
@@ -64,9 +68,12 @@ readonly class BelongsToManyLinker implements Linker
             )
             ->leftJoin(
                 $targetEntityReflection->getTableName() . ' as ' . $to,
-                $to . '.' . $targetEntityReflection->getId(),
-                '=',
-                $pivotTo . '.' . $this->targetForeignKey
+                function (JoinClause $join) use ($filters, $pivotTo, $targetEntityReflection, $to) {
+                    $join->on($to . '.' . $targetEntityReflection->getId(), $pivotTo . '.' . $this->targetForeignKey);
+                    foreach ($filters as $filter) {
+                        $filter->applyFilter($join, $to);
+                    }
+                }
             )
             ->addSelect($targetEntityReflection->getSelectColumns($to));
     }

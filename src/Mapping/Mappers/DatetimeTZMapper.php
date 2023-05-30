@@ -70,4 +70,9 @@ readonly class DatetimeTZMapper implements Mapper
             ? null
             : CarbonImmutable::parse($datetimeString)->setTimezone($item->{$alias . $this->tzName});
     }
+
+    public function getType(): string
+    {
+        return $this->property->getType()->getName();
+    }
 }

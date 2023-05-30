@@ -2,26 +2,26 @@
 
 namespace AdventureTech\ORM\Tests\TestClasses\Entities;
 
-use AdventureTech\ORM\Mapping\Columns\IntColumnAnnotation;
-use AdventureTech\ORM\Mapping\Columns\StringColumnAnnotation;
+use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
-use AdventureTech\ORM\Mapping\ManagedDatetimes\WithTimestamps;
+use AdventureTech\ORM\Mapping\ManagedColumns\WithTimestamps;
 use AdventureTech\ORM\Mapping\Relations\BelongsTo;
+use AdventureTech\ORM\Tests\TestClasses\Factories\PostFactory;
 
-#[Entity]
+#[Entity(factory: PostFactory::class)]
 class Post
 {
     use WithTimestamps;
 
     #[Id]
-    #[IntColumnAnnotation]
+    #[Column]
     public int $id;
 
-    #[StringColumnAnnotation]
+    #[Column]
     public string $title;
 
-    #[StringColumnAnnotation]
+    #[Column]
     public string $content;
 
     #[BelongsTo(foreignKey: 'author')]

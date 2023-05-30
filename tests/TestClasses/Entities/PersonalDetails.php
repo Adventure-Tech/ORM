@@ -2,11 +2,10 @@
 
 namespace AdventureTech\ORM\Tests\TestClasses\Entities;
 
-use AdventureTech\ORM\Mapping\Columns\IntColumnAnnotation;
-use AdventureTech\ORM\Mapping\Columns\StringColumnAnnotation;
+use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
-use AdventureTech\ORM\Mapping\ManagedDatetimes\WithTimestamps;
+use AdventureTech\ORM\Mapping\ManagedColumns\WithTimestamps;
 use AdventureTech\ORM\Mapping\Relations\BelongsTo;
 
 #[Entity]
@@ -15,22 +14,22 @@ class PersonalDetails
     use WithTimestamps;
 
     #[Id]
-    #[IntColumnAnnotation]
+    #[Column]
     public int $id;
 
-    #[StringColumnAnnotation]
+    #[Column]
     public ?string $phone;
 
-    #[StringColumnAnnotation]
+    #[Column]
     public string $email;
 
-    #[StringColumnAnnotation]
+    #[Column]
     public ?string $address;
 
-    #[StringColumnAnnotation]
+    #[Column]
     public ?string $zip;
 
-    #[StringColumnAnnotation]
+    #[Column]
     public string $country = 'NOR';
 
     #[BelongsTo]

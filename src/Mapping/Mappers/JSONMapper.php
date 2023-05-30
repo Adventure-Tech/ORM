@@ -72,4 +72,9 @@ readonly class JSONMapper implements Mapper
         }
         return $json;
     }
+
+    public function getType(): string
+    {
+        return $this->property->getType()->getName();
+    }
 }

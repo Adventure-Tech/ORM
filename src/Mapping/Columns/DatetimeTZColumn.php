@@ -2,20 +2,18 @@
 
 namespace AdventureTech\ORM\Mapping\Columns;
 
-use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
 use AdventureTech\ORM\Mapping\Mappers\DatetimeTZMapper;
 use Attribute;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 use ReflectionProperty;
-use stdClass;
 
 /**
  * @implements ColumnAnnotation<CarbonImmutable>
  */
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-readonly class DatetimeTZColumnAnnotation implements ColumnAnnotation
+readonly class DatetimeTZColumn implements ColumnAnnotation
 {
     /**
      * @param  string|null  $name

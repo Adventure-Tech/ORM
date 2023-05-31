@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
+use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
 use stdClass;
 
 /**
@@ -33,10 +34,10 @@ interface Mapper
 
     /**
      * @param  stdClass  $item
-     * @param  string  $alias
+     * @param  LocalAliasingManager  $aliasingManager
      * @return T|null
      */
-    public function deserialize(stdClass $item, string $alias): mixed;
+    public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): mixed;
 
     public function getType(): string;
 }

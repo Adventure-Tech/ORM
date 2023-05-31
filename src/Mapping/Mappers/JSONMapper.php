@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
+use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
 use AdventureTech\ORM\Exceptions\JSONDeserializationException;
 use JsonException;
 use ReflectionProperty;
@@ -61,12 +62,12 @@ readonly class JSONMapper implements Mapper
 
     /**
      * @param  stdClass  $item
-     * @param  string  $alias
+     * @param  LocalAliasingManager  $aliasingManager
      * @return array<mixed,mixed>|null
      */
-    public function deserialize(stdClass $item, string $alias): array|null
+    public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): array|null
     {
-        $json = json_decode($item->{$alias . $this->name}, true);
+        $json = json_decode($item->{$aliasingManager->getSelectedColumnName($this->name)}, true);
         if (!is_array($json) && !is_null($json)) {
             throw new JSONDeserializationException();
         }

@@ -3,7 +3,6 @@
 namespace AdventureTech\ORM\Persistence;
 
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingBelongsToRelationException;
@@ -21,15 +20,17 @@ use function get_class;
  */
 abstract class BasePersistenceManager
 {
-    protected string $entity;
     //protected array $rules = [];
+    /**
+     * @var EntityReflection<T>
+     */
     protected EntityReflection $entityReflection;
 
-    public function __construct()
+    /**
+     * @param  class-string<T>  $entity
+     */
+    protected function __construct(protected string $entity)
     {
-        if (!isset($this->entity)) {
-            throw new BadlyConfiguredPersistenceManagerException();
-        }
         $this->entityReflection = EntityReflection::new($this->entity);
     }
 
@@ -85,8 +86,8 @@ abstract class BasePersistenceManager
             throw new MissingIdForUpdateException();
         }
 
-        foreach ($this->entityReflection->getManagedColumns() as $property => $managedDatetime) {
-            $entity->{$property} = $managedDatetime->getUpdateValue($entity->{$property} ?? null);
+        foreach ($this->entityReflection->getManagedColumns() as $property => $managedColumn) {
+            $entity->{$property} = $managedColumn->getUpdateValue($entity->{$property} ?? null);
         }
 
         foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
@@ -116,7 +117,6 @@ abstract class BasePersistenceManager
     protected function delete(object $entity): int
     {
         $this->checkType($entity);
-
         $query = DB::table($this->entityReflection->getTableName())
             ->where($this->entityReflection->getId(), '=', $entity->{$this->entityReflection->getId()});
 
@@ -134,20 +134,9 @@ abstract class BasePersistenceManager
 //    {
 //    }
 
-    /**
-     * @param  T  $entity
-     *
-     * @return void
-     */
-    private function checkType(object $entity): void
-    {
-        if (get_class($entity) !== $this->entity) {
-            throw new InvalidEntityTypeException('Invalid entity type used in persistence manager');
-        }
-    }
 
     /**
-     * @param  T  $entity
+     * @param  object  $entity
      * @return array<string,mixed>
      */
     private function resolveBelongsToRelation(object $entity): array
@@ -166,5 +155,17 @@ abstract class BasePersistenceManager
             }
         }
         return $arr;
+    }
+
+    /**
+     * @param  T  $entity
+     *
+     * @return void
+     */
+    private function checkType(object $entity): void
+    {
+        if (get_class($entity) !== $this->entity) {
+            throw new InvalidEntityTypeException('Invalid entity type used in persistence manager');
+        }
     }
 }

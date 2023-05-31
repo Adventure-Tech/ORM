@@ -12,6 +12,8 @@ return new class () extends Migration {
             $table->id();
             $table->string('title');
             $table->text('content');
+            $table->timestamp('published_at')->nullable();
+            $table->string('published_tz')->nullable();
             $table->foreignId('author')->constrained('users');
             $table->timestamps();
         });

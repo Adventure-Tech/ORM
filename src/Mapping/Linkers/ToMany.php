@@ -11,6 +11,7 @@ trait ToMany
         if (!isset($currentEntity->{$this->relation})) {
             $currentEntity->{$this->relation} = Collection::empty();
         }
+        // TODO: this surely breaks
         if ($relatedEntity) {
             $currentEntity->{$this->relation}[] = $relatedEntity;
         }

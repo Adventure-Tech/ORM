@@ -10,6 +10,7 @@ use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Mapping\Columns\ColumnAnnotation;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
+use AdventureTech\ORM\Mapping\Linkers\BelongsToLinker;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
 use AdventureTech\ORM\Mapping\ManagedColumns\ManagedColumnAnnotation;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
@@ -159,11 +160,9 @@ class EntityReflection
     }
 
     /**
-     * @param  string  $alias
-     *
      * @return array<string, string>
      */
-    public function getSelectColumns(string $alias = ''): array
+    public function getSelectColumns(): array
     {
         $columnNames = [];
         foreach ($this->mappers as $mapper) {
@@ -171,17 +170,12 @@ class EntityReflection
                 $columnNames[$columnName] = $columnName;
             }
         }
-        if ($alias === '') {
-            return array_map(
-                fn (string $column): string => $this->getTableName() . '.' . $column,
-                $columnNames
-            );
-        } else {
-            return array_map(
-                fn (string $column): string => $alias . '.' . $column . ' as ' . $alias . $column,
-                $columnNames
-            );
+        foreach ($this->linkers as $linker) {
+            if ($linker instanceof BelongsToLinker) {
+                $columnNames[$linker->getForeignKey()] = $linker->getForeignKey();
+            }
         }
+        return $columnNames;
     }
 
     /**

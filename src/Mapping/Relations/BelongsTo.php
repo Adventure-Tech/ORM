@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Relations;
 
+use AdventureTech\ORM\DefaultNamingService;
 use AdventureTech\ORM\Mapping\Linkers\BelongsToLinker;
 use Attribute;
 use Illuminate\Support\Str;
@@ -36,7 +37,7 @@ readonly class BelongsTo implements RelationAnnotation
         return new BelongsToLinker(
             targetEntity: $propertyType,
             relation: $propertyName,
-            foreignKey: $this->foreignKey ?? Str::snake($propertyName) . '_id'
+            foreignKey: $this->foreignKey ?? DefaultNamingService::foreignKeyFromProperty($propertyName) . '_id'
         );
     }
 }

@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Linkers;
 
+use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Repository\Filters\Filter;
 use Illuminate\Database\Query\Builder;
@@ -38,29 +39,28 @@ readonly class BelongsToLinker implements Linker
 
     /**
      * @param  Builder  $query
-     * @param  string  $from
-     * @param  string  $to
+     * @param  LocalAliasingManager  $origin
+     * @param  LocalAliasingManager  $target
      * @param  array<int,Filter>  $filters
      * @return void
      */
     public function join(
         Builder $query,
-        string $from,
-        string $to,
+        LocalAliasingManager $origin,
+        LocalAliasingManager $target,
         array $filters
     ): void {
         $targetEntityReflection = EntityReflection::new($this->targetEntity);
         $query
             ->leftJoin(
-                $targetEntityReflection->getTableName() . ' as ' . $to,
-                function (JoinClause $join) use ($filters, $from, $targetEntityReflection, $to) {
-                    $join->on($to . '.' . $targetEntityReflection->getId(), $from . '.' . $this->foreignKey);
+                $targetEntityReflection->getTableName() . ' as ' . $target->getAliasedTableName(),
+                function (JoinClause $join) use ($origin, $target, $filters, $targetEntityReflection) {
+                    $join->on($target->getQualifiedColumnName($targetEntityReflection->getId()), $origin->getQualifiedColumnName($this->foreignKey));
                     foreach ($filters as $filter) {
-                        $filter->applyFilter($join, $to);
+                        $filter->applyFilter($join, $target);
                     }
                 }
-            )
-            ->addSelect($targetEntityReflection->getSelectColumns($to));
+            );
     }
 
     /**

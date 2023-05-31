@@ -2,10 +2,12 @@
 
 namespace AdventureTech\ORM\Persistence;
 
+use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use Illuminate\Support\Collection;
 
 /**
  * @template T of object
+ * @extends BasePersistenceManager<T>
  */
 abstract class PersistenceManager extends BasePersistenceManager
 {

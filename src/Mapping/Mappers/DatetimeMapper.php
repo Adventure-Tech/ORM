@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
+use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
 use Carbon\CarbonImmutable;
 use ReflectionProperty;
 use stdClass;
@@ -55,14 +56,15 @@ readonly class DatetimeMapper implements Mapper
     {
         return [$this->name => $value?->toIso8601String()];
     }
+
     /**
      * @param  stdClass  $item
-     * @param  string  $alias
+     * @param  LocalAliasingManager  $aliasingManager
      * @return CarbonImmutable|null
      */
-    public function deserialize(stdClass $item, string $alias): ?CarbonImmutable
+    public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): ?CarbonImmutable
     {
-        $datetimeString = $item->{$alias . $this->name};
+        $datetimeString = $item->{$aliasingManager->getSelectedColumnName($this->name)};
         return is_null($datetimeString) ? null : CarbonImmutable::parse($datetimeString);
     }
 

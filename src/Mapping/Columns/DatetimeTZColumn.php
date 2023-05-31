@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Columns;
 
+use AdventureTech\ORM\DefaultNamingService;
 use AdventureTech\ORM\Mapping\Mappers\DatetimeTZMapper;
 use Attribute;
 use Carbon\CarbonImmutable;
@@ -31,7 +32,7 @@ readonly class DatetimeTZColumn implements ColumnAnnotation
      */
     public function getMapper(ReflectionProperty $property): DatetimeTZMapper
     {
-        $name = $this->name ?? Str::snake($property->getName());
+        $name = $this->name ?? DefaultNamingService::columnFromProperty($property->getName());
         $tzName = $this->tzName ?? $name . '_timezone';
         return new DatetimeTZMapper($name, $tzName, $property);
     }

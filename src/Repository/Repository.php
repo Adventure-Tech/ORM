@@ -2,12 +2,15 @@
 
 namespace AdventureTech\ORM\Repository;
 
+use AdventureTech\ORM\ColumnAliasing\AliasingManager;
+use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\EntityNotFoundException;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
+use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Repository\Filters\Filter;
-use AdventureTech\ORM\Repository\Filters\IsNull;
+use AdventureTech\ORM\Repository\Filters\WhereNull;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +33,7 @@ class Repository
      */
     private object $resolvingEntity;
     private bool $includeDeleted = false;
+    private AliasingManager $aliasingManager;
 
     /**
      * @template E of object
@@ -50,6 +54,12 @@ class Repository
     private function __construct(private readonly EntityReflection $entityReflection)
     {
         $this->with = Collection::empty();
+        $this->aliasingManager = new AliasingManager(
+            $this->entityReflection->getTableName(),
+            $this->entityReflection->getSelectColumns()
+        );
+        $this->localRoot = $this->entityReflection->getTableName();
+        $this->localAliasingManager = new LocalAliasingManager($this->aliasingManager, $this->localRoot);
     }
 
     /**
@@ -107,6 +117,8 @@ class Repository
     }
 
     private int $aliasCounter = 0;
+    private string $localRoot;
+    private LocalAliasingManager $localAliasingManager;
     /**
      * @param  string         $relation
      * @param  callable|null  $callable
@@ -123,6 +135,13 @@ class Repository
         $linker = $this->entityReflection->getLinkers()->get($relation);
 
         $repository = self::new($linker->getTargetEntity());
+        $repository->localRoot = $this->localRoot . '/' . $relation;
+        $repository->localAliasingManager = new LocalAliasingManager($this->aliasingManager, $repository->localRoot);
+        $repository->aliasingManager = $this->aliasingManager;
+        $this->aliasingManager->addRelation(
+            $this->localRoot . '/' . $relation,
+            $repository->entityReflection->getSelectColumns()
+        );
 
         if ($callable) {
             $callable($repository);
@@ -131,7 +150,7 @@ class Repository
         // TODO: fix aliasing
         $this->with->put(
             $relation,
-            new LinkedRepository($linker, $repository, self::createAlias($this->aliasCounter++))
+            new LinkedRepository($linker, $repository)
         );
 
         return $this;
@@ -154,46 +173,27 @@ class Repository
         return $this;
     }
 
-    private static function createAlias(int $index): string
-    {
-        return '_' . $index;
-    }
-
     private function buildQuery(): Builder
     {
         $query = DB::table($this->entityReflection->getTableName())
-            ->select($this->entityReflection->getSelectColumns());
+            ->select($this->aliasingManager->getSelectColumns());
 
-        // TODO: add support for soft-deletes
-        // TODO: add support for circumventing soft-deletes
+        // TODO: add support in loaded relationships
         if (!$this->includeDeleted) {
             foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
-                $columnName = $this->entityReflection->getMappers()->get($property)->getColumnNames()[0];
-                $this->filter(new IsNull($columnName));
+                /** @var Mapper<mixed> $mapper */
+                $mapper = $this->entityReflection->getMappers()->get($property);
+                $columnName = $mapper->getColumnNames()[0];
+                $this->filter(new WhereNull($columnName));
             }
         }
 
         foreach ($this->filters as $filter) {
-            $relations = $filter->getRelations();
-            if (count($relations) > 0) {
-                $alias = '';
-                $repo = $this;
-                foreach ($relations as $relation) {
-                    if (!$repo->with->has($relation)) {
-                        $repo->with($relation);
-                    }
-                    $var = $repo->with->get($relation);
-                    $repo = $var->repository;
-                    $alias = $var->alias . $alias;
-                }
-            } else {
-                $alias = $this->entityReflection->getTableName();
-            }
-            $filter->applyFilter($query, $alias);
+            $filter->applyFilter($query, $this->localAliasingManager);
         }
 
         foreach ($this->with as $linkedRepo) {
-            self::applyJoin($query, $linkedRepo, $this->entityReflection->getTableName(), $linkedRepo->alias);
+            $this->applyJoin($query, $linkedRepo);
         }
 
         return $query;
@@ -203,42 +203,45 @@ class Repository
      * @template S of object
      * @param  Builder  $query
      * @param  LinkedRepository<S,object>  $linkedRepository
-     * @param  string  $from
-     * @param  string  $to
      * @return void
      */
-    private static function applyJoin(Builder $query, LinkedRepository $linkedRepository, string $from, string $to): void
+    private function applyJoin(Builder $query, LinkedRepository $linkedRepository): void
     {
-        $linkedRepository->linker->join($query, $from, $to, $linkedRepository->repository->filters);
+        $linkedRepository->linker->join(
+            $query,
+            $this->localAliasingManager,
+            $linkedRepository->repository->localAliasingManager,
+            $linkedRepository->repository->filters
+        );
         foreach ($linkedRepository->repository->with as $subLinkedRepo) {
-            self::applyJoin($query, $subLinkedRepo, $to, $subLinkedRepo->alias . $to);
+            // TODO: call ->with() if required by filter [also soft-deletes!]
+            $subLinkedRepo->repository->applyJoin($query, $subLinkedRepo);
         }
     }
 
-
-
-
     /**
      * @param  stdClass  $item
-     * @param  string  $alias
      * @param  bool  $reset
      * @return T|null
      */
-    private function resolve(stdClass $item, string $alias = '', bool $reset = false): ?object
+    private function resolve(stdClass $item, bool $reset = false): ?object
     {
-        $id = $item->{$alias . $this->entityReflection->getId()};
+        $id = $item->{$this->aliasingManager->getSelectedColumnName($this->entityReflection->getId(), $this->localRoot)};
+        if (is_null($id)) {
+            // TODO: when does this occur?
+            return null;
+        }
         if ($id !== $this->resolvingId) {
             $this->resolvingId = $id;
             $this->resolvingEntity = $this->entityReflection->newInstance();
             foreach ($this->entityReflection->getMappers() as $property => $mapper) {
-                $this->resolvingEntity->{$property} = $mapper->deserialize($item, $alias);
+                $this->resolvingEntity->{$property} = $mapper->deserialize($item, $this->localAliasingManager);
             }
             $reset = true;
         }
 
         foreach ($this->with as $linkedRepo) {
-            $newAlias = $linkedRepo->alias . $alias;
-            $entity = $linkedRepo->repository->resolve($item, $newAlias, $reset);
+            $entity = $linkedRepo->repository->resolve($item, $reset);
             $linkedRepo->linker->link($this->resolvingEntity, $entity);
         }
 

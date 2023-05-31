@@ -10,7 +10,6 @@ use Faker\Generator;
 
 class Factory extends BasePersistenceManager
 {
-    protected string $entity;
     protected Generator $faker;
     /**
      * @template E of object
@@ -27,9 +26,8 @@ class Factory extends BasePersistenceManager
 
     private function __construct(string $class)
     {
-        $this->entity = $class;
         $this->faker = \Faker\Factory::create();
-        parent::__construct();
+        parent::__construct($class);
     }
 
 

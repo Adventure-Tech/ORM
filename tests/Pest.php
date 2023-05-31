@@ -3,4 +3,4 @@
 use AdventureTech\ORM\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(TestCase::class)->in('Unit', 'Feature');
+uses(TestCase::class)->in('Unit', 'Feature', 'Architecture');

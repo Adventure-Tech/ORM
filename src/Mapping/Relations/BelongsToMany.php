@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Relations;
 
+use AdventureTech\ORM\DefaultNamingService;
 use AdventureTech\ORM\Mapping\Linkers\BelongsToManyLinker;
 use Attribute;
 use Illuminate\Support\Str;
@@ -45,8 +46,8 @@ readonly class BelongsToMany implements RelationAnnotation
             targetEntity: $this->targetEntity,
             relation: $propertyName,
             pivotTable: $this->pivotTable,
-            originForeignKey: $this->originForeignKey ?? Str::snake(Str::afterLast($className, '\\')) . '_id',
-            targetForeignKey: $this->targetForeignKey ?? Str::snake(Str::afterLast($this->targetEntity, '\\')) . '_id'
+            originForeignKey: $this->originForeignKey ?? DefaultNamingService::foreignKeyFromClass($className),
+            targetForeignKey: $this->targetForeignKey ?? DefaultNamingService::foreignKeyFromClass($className)
         );
     }
 }

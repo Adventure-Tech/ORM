@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Relations;
 
+use AdventureTech\ORM\DefaultNamingService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Mapping\Linkers\HasOneLinker;
 use AdventureTech\ORM\Mapping\Linkers\ToOne;
@@ -42,7 +43,7 @@ readonly class HasOne implements RelationAnnotation
             originEntity: $className,
             targetEntity: $propertyType,
             relation: $propertyName,
-            foreignKey: $this->foreignKey ?? Str::snake(Str::afterLast($className, '\\')) . '_id'
+            foreignKey: $this->foreignKey ?? DefaultNamingService::foreignKeyFromClass($className)
         );
     }
 }

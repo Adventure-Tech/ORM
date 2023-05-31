@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Columns;
 
+use AdventureTech\ORM\DefaultNamingService;
 use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
 use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
 use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
@@ -33,7 +34,7 @@ readonly class Column implements ColumnAnnotation
      */
     public function getMapper(ReflectionProperty $property): Mapper
     {
-        $name = $this->name ?? Str::snake($property->getName());
+        $name = $this->name ?? DefaultNamingService::columnFromProperty($property->getName());
         return match ($property->getType()->getName()) {
             CarbonImmutable::class => new DatetimeMapper($name, $property),
             'array' => new JSONMapper($name, $property),

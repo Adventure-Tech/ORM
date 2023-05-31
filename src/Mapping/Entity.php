@@ -2,10 +2,10 @@
 
 namespace AdventureTech\ORM\Mapping;
 
+use AdventureTech\ORM\DefaultNamingService;
 use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Repository\Repository;
 use Attribute;
-use Illuminate\Support\Str;
 
 /**
  * @template T of object
@@ -30,7 +30,7 @@ final class Entity
      */
     public function getTable(string $class): string
     {
-        return $this->table ?? Str::snake(Str::plural(Str::afterLast($class, '\\')));
+        return $this->table ?? DefaultNamingService::tableFromClass($class);
     }
 
     /**

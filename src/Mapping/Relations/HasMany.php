@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Relations;
 
+use AdventureTech\ORM\DefaultNamingService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Mapping\Linkers\HasManyLinker;
 use AdventureTech\ORM\Mapping\Linkers\ToMany;
@@ -44,7 +45,7 @@ readonly class HasMany implements RelationAnnotation
             originEntity: $className,
             targetEntity: $this->targetEntity,
             relation: $propertyName,
-            foreignKey: $this->foreignKey ?? Str::snake(Str::afterLast($className, '\\')) . '_id'
+            foreignKey: $this->foreignKey ?? DefaultNamingService::foreignKeyFromClass($className)
         );
     }
 }

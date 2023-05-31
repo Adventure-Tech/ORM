@@ -12,8 +12,8 @@ trait WithDefaultMapperMethods
      * @param  ReflectionProperty  $property
      */
     public function __construct(
-        private string $name,
-        private ReflectionProperty $property
+        private readonly string $name,
+        private readonly ReflectionProperty $property
     ) {
     }
 

@@ -2,8 +2,8 @@
 
 namespace AdventureTech\ORM\Repository;
 
-use AdventureTech\ORM\ColumnAliasing\AliasingManager;
-use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
+use AdventureTech\ORM\AliasingManagement\AliasingManager;
+use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\EntityNotFoundException;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;

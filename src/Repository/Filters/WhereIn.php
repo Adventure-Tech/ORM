@@ -2,7 +2,7 @@
 
 namespace AdventureTech\ORM\Repository\Filters;
 
-use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
+use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
 

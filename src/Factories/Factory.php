@@ -8,6 +8,10 @@ use AdventureTech\ORM\Persistence\BasePersistenceManager;
 use Carbon\CarbonImmutable;
 use Faker\Generator;
 
+/**
+ * @template T of object
+ * @extends BasePersistenceManager<T>
+ */
 class Factory extends BasePersistenceManager
 {
     protected Generator $faker;
@@ -24,6 +28,9 @@ class Factory extends BasePersistenceManager
         return new $factory($class);
     }
 
+    /**
+     * @param  class-string<T>  $class
+     */
     private function __construct(string $class)
     {
         $this->faker = \Faker\Factory::create();
@@ -31,7 +38,11 @@ class Factory extends BasePersistenceManager
     }
 
 
-    public function create(array $state = [])
+    /**
+     * @param  array<string,mixed>  $state
+     * @return T
+     */
+    public function create(array $state = []): object
     {
         $entity = $this->entityReflection->newInstance();
 
@@ -48,7 +59,7 @@ class Factory extends BasePersistenceManager
             if (key_exists($property, $state)) {
                 $entity->{$property} = $state[$property];
             } elseif ($property !== $this->entityReflection->getId()) {
-                $entity->{$property} = $this->defaults($mapper->getType());
+                $entity->{$property} = $this->defaults($mapper->getPropertyType());
             }
         }
         $this->insert($entity);
@@ -66,6 +77,9 @@ class Factory extends BasePersistenceManager
         };
     }
 
+    /**
+     * @return array<string,mixed>
+     */
     protected function define(): array
     {
         return [];

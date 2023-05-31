@@ -10,6 +10,7 @@ use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Attribute;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
+use ReflectionNamedType;
 use ReflectionProperty;
 
 /**
@@ -30,12 +31,14 @@ readonly class Column implements ColumnAnnotation
 
     /**
      * @param  ReflectionProperty  $property
-     * @return Mapper<T>
+     * @return DefaultMapper<T>|JSONMapper|DatetimeMapper
      */
     public function getMapper(ReflectionProperty $property): Mapper
     {
         $name = $this->name ?? DefaultNamingService::columnFromProperty($property->getName());
-        return match ($property->getType()->getName()) {
+        /** @var ReflectionNamedType $reflectionNamedType */
+        $reflectionNamedType = $property->getType();
+        return match ($reflectionNamedType->getName()) {
             CarbonImmutable::class => new DatetimeMapper($name, $property),
             'array' => new JSONMapper($name, $property),
             default => new DefaultMapper($name, $property)

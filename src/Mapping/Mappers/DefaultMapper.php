@@ -2,7 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
-use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
+use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use ReflectionProperty;
 use stdClass;
 
@@ -13,40 +13,7 @@ use stdClass;
 
 readonly class DefaultMapper implements Mapper
 {
-    /**
-     * @param  string  $name
-     * @param  ReflectionProperty  $property
-     */
-    public function __construct(
-        private string $name,
-        private ReflectionProperty $property
-    ) {
-    }
-
-    /**
-     * @return string
-     */
-    public function getPropertyName(): string
-    {
-        return $this->property->getName();
-    }
-
-    /**
-     * @return array<int,string>
-     */
-    public function getColumnNames(): array
-    {
-        return [$this->name];
-    }
-
-    /**
-     * @param  object  $instance
-     * @return bool
-     */
-    public function isInitialized(object $instance): bool
-    {
-        return $this->property->isInitialized($instance);
-    }
+    use WithDefaultMapperMethods;
 
     /**
      * @param  T|null  $value
@@ -65,10 +32,5 @@ readonly class DefaultMapper implements Mapper
     public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): mixed
     {
         return $item->{$aliasingManager->getSelectedColumnName($this->name)};
-    }
-
-    public function getType(): string
-    {
-        return $this->property->getType()->getName();
     }
 }

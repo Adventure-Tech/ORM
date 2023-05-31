@@ -1,12 +1,22 @@
 <?php
 
-namespace AdventureTech\ORM\ColumnAliasing;
+namespace AdventureTech\ORM\AliasingManagement;
 
-class ColumnExpression
+class TableAliasingDTO
 {
+    /**
+     * @var array<string,TableAliasingDTO>
+     */
     public array $children = [];
+    /**
+     * @var array<string,string>
+     */
     public readonly array $columns;
 
+    /**
+     * @param  string  $alias
+     * @param  array<int|string,string>  $columns
+     */
     public function __construct(public readonly string $alias, array $columns)
     {
         $arr = [];
@@ -15,7 +25,7 @@ class ColumnExpression
         }
         $this->columns = $arr;
     }
-    public function addChild(string $key, ColumnExpression $child): void
+    public function addChild(string $key, TableAliasingDTO $child): void
     {
         $this->children[$key] = $child;
     }

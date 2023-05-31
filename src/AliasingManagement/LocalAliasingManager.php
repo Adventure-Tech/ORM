@@ -1,6 +1,6 @@
 <?php
 
-namespace AdventureTech\ORM\ColumnAliasing;
+namespace AdventureTech\ORM\AliasingManagement;
 
 readonly class LocalAliasingManager
 {

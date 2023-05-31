@@ -1,23 +1,32 @@
 <?php
 
-namespace AdventureTech\ORM\ColumnAliasing;
+namespace AdventureTech\ORM\AliasingManagement;
 
 class AliasingManager
 {
     const SEPARATOR = '/';
     const PARENT_SIGNIFIER = '..';
 
-    private ColumnExpression $columnExpression;
+    private TableAliasingDTO $columnExpression;
     private int $aliasCounter = 0;
 
+    /**
+     * @param  string  $rootTableName
+     * @param  array<int|string,string>  $columns
+     */
     public function __construct(string $rootTableName, array $columns)
     {
-        $this->columnExpression = new ColumnExpression($rootTableName, $columns);
+        $this->columnExpression = new TableAliasingDTO($rootTableName, $columns);
     }
 
+    /**
+     * @param  string  $newRoot
+     * @param  array<int|string,string>  $columns
+     * @return void
+     */
     public function addRelation(string $newRoot, array $columns): void
     {
-        $newObject = new ColumnExpression('_' . $this->aliasCounter++ . '_', $columns);
+        $newObject = new TableAliasingDTO('_' . $this->aliasCounter++ . '_', $columns);
 
         $keys = explode(self::SEPARATOR, $newRoot);
         $newKey = array_pop($keys);
@@ -25,11 +34,19 @@ class AliasingManager
         $this->resolvePath($keys)->addChild($newKey, $newObject);
     }
 
+    /**
+     * @return array<int,string>
+     */
     public function getSelectColumns(): array
     {
         return $this->extractColumnNames($this->columnExpression);
     }
-    private function extractColumnNames(ColumnExpression $columnExpression): array
+
+    /**
+     * @param  TableAliasingDTO  $columnExpression
+     * @return array<int,string>
+     */
+    private function extractColumnNames(TableAliasingDTO $columnExpression): array
     {
         $columns = [];
         foreach ($columnExpression->columns as $column) {
@@ -58,7 +75,11 @@ class AliasingManager
     }
 
 
-    private function resolvePath(array $keys): ColumnExpression
+    /**
+     * @param  array<int,string>  $keys
+     * @return TableAliasingDTO
+     */
+    private function resolvePath(array $keys): TableAliasingDTO
     {
         $columnExpression = $this->columnExpression;
         array_shift($keys);

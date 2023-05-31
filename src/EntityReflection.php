@@ -48,7 +48,7 @@ class EntityReflection
     private Entity $entityAttribute;
     private string $id;
     /**
-     * @var Collection<string,ManagedColumnAnnotation>
+     * @var Collection<string,ManagedColumnAnnotation<mixed>>
      */
     private Collection $managedColumns;
     /**
@@ -195,7 +195,7 @@ class EntityReflection
     }
 
     /**
-     * @return Collection<string,ManagedColumnAnnotation>
+     * @return Collection<string,ManagedColumnAnnotation<mixed>>
      */
     public function getManagedColumns(): Collection
     {

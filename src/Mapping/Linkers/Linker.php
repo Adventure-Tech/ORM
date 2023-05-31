@@ -2,7 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Linkers;
 
-use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
+use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\Repository\Filters\Filter;
 use Illuminate\Database\Query\Builder;
 

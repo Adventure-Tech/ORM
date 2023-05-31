@@ -2,7 +2,7 @@
 
 namespace AdventureTech\ORM\Mapping\Mappers;
 
-use AdventureTech\ORM\ColumnAliasing\LocalAliasingManager;
+use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use Carbon\CarbonImmutable;
 use ReflectionProperty;
 use stdClass;
@@ -13,6 +13,8 @@ use stdClass;
 
 readonly class DatetimeTZMapper implements Mapper
 {
+    use WithDefaultMapperMethods;
+
     /**
      * @param  string  $name
      * @param  string  $tzName
@@ -23,28 +25,6 @@ readonly class DatetimeTZMapper implements Mapper
         private string $tzName,
         private ReflectionProperty $property
     ) {
-    }
-
-    /**
-     * @return string
-     */
-    public function getPropertyName(): string
-    {
-        return $this->property->getName();
-    }
-
-    public function getColumnNames(): array
-    {
-        return [$this->name, $this->tzName];
-    }
-
-    /**
-     * @param  object  $instance
-     * @return bool
-     */
-    public function isInitialized(object $instance): bool
-    {
-        return $this->property->isInitialized($instance);
     }
 
     /**
@@ -70,10 +50,5 @@ readonly class DatetimeTZMapper implements Mapper
         return is_null($datetimeString)
             ? null
             : CarbonImmutable::parse($datetimeString)->setTimezone($item->{$aliasingManager->getSelectedColumnName($this->tzName)});
-    }
-
-    public function getType(): string
-    {
-        return $this->property->getType()->getName();
     }
 }

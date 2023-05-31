@@ -11,16 +11,17 @@ use Attribute;
  * @template T of object
  */
 #[Attribute(Attribute::TARGET_CLASS)]
-final class Entity
+final readonly class Entity
 {
     /**
      * @param  string|null  $table
      * @param  class-string<Repository<T>>|null  $repository
+     * @param  class-string<Factory<T>>|null  $factory
      */
     public function __construct(
-        private readonly ?string $table = null,
-        private readonly ?string $repository = null,
-        private readonly ?string $factory = null
+        private ?string $table = null,
+        private ?string $repository = null,
+        private ?string $factory = null
     ) {
     }
 

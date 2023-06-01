@@ -1,0 +1,49 @@
+# GitHub Actions Workflow generated with Ghygen
+# Original configuration: https://ghygen.hi-folks.dev?code=ab0b435cad6eaeec42bf39b0bb35957c
+name: Code Analysis
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  code-analysis:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        php-versions: ["8.2"]
+        node-version: ["18.x"]
+        dependency-stability: ["prefer-none"]
+
+    name: code quality analysis (P${{ matrix.php-versions }} - ${{ matrix.dependency-stability }} - ${{ matrix.operating-system}})
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install PHP versions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+      - name: Install Dependencies
+        run: |
+          composer config "http-basic.nova.laravel.com" "${{ secrets.NOVA_USERNAME }}" "${{ secrets.NOVA_PASSWORD }}"
+          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+      - name: Update Dependencies with latest stable
+        if: matrix.dependency-stability == 'prefer-stable'
+        run: composer update --prefer-stable
+      - name: Update Dependencies with lowest stable
+        if: matrix.dependency-stability == 'prefer-lowest'
+        run: composer update --prefer-stable --prefer-lowest
+
+      - name: Show dir
+        run: pwd
+      - name: PHP Version
+        run: php --version
+
+      - name: Execute Code Sniffer via phpcs
+        run: vendor/bin/phpcs --standard=PSR12 --warning-severity=0 src
+
+      - name: Execute Code Static Analysis (PHP Stan + Larastan)
+        run: vendor/bin/phpstan analyse src -v -l 9

@@ -44,7 +44,7 @@ class Repository
     private LocalAliasingManager $localAliasingManager;
 
     /**
-     * @var array<int|string,Filter>
+     * @var array<int,Filter>
      */
     private array $filters = [];
 

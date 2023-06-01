@@ -32,6 +32,14 @@ readonly class DatetimeTZMapper implements Mapper
     }
 
     /**
+     * @return array<int,string>
+     */
+    public function getColumnNames(): array
+    {
+        return [$this->name, $this->tzName];
+    }
+
+    /**
      * @param  CarbonImmutable|null  $value
      * @return array<string,string|null>
      */

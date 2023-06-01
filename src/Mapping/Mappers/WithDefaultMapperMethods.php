@@ -34,14 +34,6 @@ trait WithDefaultMapperMethods
         return $this->property->isInitialized($instance);
     }
 
-    /**
-     * @return string
-     */
-    public function getPropertyName(): string
-    {
-        return $this->property->getName();
-    }
-
     public function getPropertyType(): string
     {
         /** @var ReflectionNamedType $reflectionNamedType */

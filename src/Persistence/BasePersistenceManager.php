@@ -91,7 +91,6 @@ abstract class BasePersistenceManager
         }
 
         foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
-            // TODO: throw exception if not already null
             $entity->{$property} = null;
         }
 

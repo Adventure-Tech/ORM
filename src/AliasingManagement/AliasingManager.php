@@ -2,6 +2,8 @@
 
 namespace AdventureTech\ORM\AliasingManagement;
 
+use AdventureTech\ORM\Exceptions\InvalidColumnExpressionException;
+
 class AliasingManager
 {
     public const SEPARATOR = '/';
@@ -42,22 +44,6 @@ class AliasingManager
         return $this->extractColumnNames($this->columnExpression);
     }
 
-    /**
-     * @param  TableAliasingDTO  $columnExpression
-     * @return array<int,string>
-     */
-    private function extractColumnNames(TableAliasingDTO $columnExpression): array
-    {
-        $columns = [];
-        foreach ($columnExpression->columns as $column) {
-            $columns[] = $columnExpression->alias . '.' . $column . ' as ' . $columnExpression->alias . $column;
-        }
-        foreach ($columnExpression->children as $item) {
-            $columns = array_merge($columns, $this->extractColumnNames($item));
-        }
-        return $columns;
-    }
-
     public function getAliasedTableName(string $localRoot): string
     {
         $keys = explode(self::SEPARATOR, $localRoot);
@@ -74,6 +60,21 @@ class AliasingManager
         return $this->resolveColumnExpression($localRoot, $columnExpression, '.');
     }
 
+    /**
+     * @param  TableAliasingDTO  $columnExpression
+     * @return array<int,string>
+     */
+    private function extractColumnNames(TableAliasingDTO $columnExpression): array
+    {
+        $columns = [];
+        foreach ($columnExpression->columns as $column) {
+            $columns[] = $columnExpression->alias . '.' . $column . ' as ' . $columnExpression->alias . $column;
+        }
+        foreach ($columnExpression->children as $item) {
+            $columns = array_merge($columns, $this->extractColumnNames($item));
+        }
+        return $columns;
+    }
 
     /**
      * @param  array<int,string>  $keys
@@ -84,6 +85,9 @@ class AliasingManager
         $columnExpression = $this->columnExpression;
         array_shift($keys);
         foreach ($keys as $key) {
+            if (!isset($columnExpression->children[$key])) {
+                throw new  InvalidColumnExpressionException('Tried to access relation which was not added');
+            }
             $columnExpression = $columnExpression->children[$key];
         }
         return $columnExpression;

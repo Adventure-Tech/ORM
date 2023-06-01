@@ -39,6 +39,15 @@ class Repository
     private bool $includeDeleted = false;
     private AliasingManager $aliasingManager;
 
+    private string $localRoot;
+
+    private LocalAliasingManager $localAliasingManager;
+
+    /**
+     * @var array<int|string,Filter>
+     */
+    private array $filters = [];
+
     /**
      * @template E of object
      * @param  class-string<E>  $class
@@ -120,9 +129,6 @@ class Repository
         return $this;
     }
 
-    private int $aliasCounter = 0;
-    private string $localRoot;
-    private LocalAliasingManager $localAliasingManager;
     /**
      * @param  string         $relation
      * @param  callable|null  $callable
@@ -146,12 +152,11 @@ class Repository
             $this->localRoot . '/' . $relation,
             $repository->entityReflection->getSelectColumns()
         );
-
         if ($callable) {
             $callable($repository);
         }
+        $repository->applySoftDeleteFilters();
 
-        // TODO: fix aliasing
         $this->with->put(
             $relation,
             new LinkedRepository($linker, $repository)
@@ -160,10 +165,6 @@ class Repository
         return $this;
     }
 
-    /**
-     * @var array<int,Filter>
-     */
-    private array $filters = [];
 
     public function filter(Filter $filter): static
     {
@@ -182,16 +183,7 @@ class Repository
         $query = DB::table($this->entityReflection->getTableName())
             ->select($this->aliasingManager->getSelectColumns());
 
-        // TODO: add support in loaded relationships
-        if (!$this->includeDeleted) {
-            foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
-                /** @var Mapper<mixed> $mapper */
-                $mapper = $this->entityReflection->getMappers()->get($property);
-                // TODO: remove this from mapper
-                $columnName = $mapper->getColumnNames()[0];
-                $this->filter(new WhereNull($columnName));
-            }
-        }
+        $this->applySoftDeleteFilters();
 
         foreach ($this->filters as $filter) {
             $filter->applyFilter($query, $this->localAliasingManager);
@@ -219,7 +211,6 @@ class Repository
             $linkedRepository->repository->filters
         );
         foreach ($linkedRepository->repository->with as $subLinkedRepo) {
-            // TODO: call ->with() if required by filter [also soft-deletes!]
             $subLinkedRepo->repository->applyJoin($query, $subLinkedRepo);
         }
     }
@@ -266,5 +257,18 @@ class Repository
             }
         }
         return $result;
+    }
+
+    private function applySoftDeleteFilters(): void
+    {
+        if (!$this->includeDeleted) {
+            foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
+                /** @var Mapper<mixed> $mapper */
+                $mapper = $this->entityReflection->getMappers()->get($property);
+                // TODO: remove this from mapper
+                $columnName = $mapper->getColumnNames()[0];
+                $this->filter(new WhereNull($columnName));
+            }
+        }
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 use AdventureTech\ORM\Factories\Factory;
-use AdventureTech\ORM\Repository\Filters\Operator;
+use AdventureTech\ORM\Repository\Filters\IS;
 use AdventureTech\ORM\Repository\Filters\Where;
 use AdventureTech\ORM\Repository\Filters\WhereColumn;
 use AdventureTech\ORM\Repository\Repository;

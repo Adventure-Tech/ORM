@@ -1,7 +1,7 @@
 <?php
 
 use AdventureTech\ORM\Factories\Factory;
-use AdventureTech\ORM\Repository\Filters\Operator;
+use AdventureTech\ORM\Repository\Filters\IS;
 use AdventureTech\ORM\Repository\Filters\Where;
 use AdventureTech\ORM\Repository\Filters\WhereColumn;
 use AdventureTech\ORM\Repository\Repository;
@@ -13,7 +13,7 @@ test('basic value filtering', function () {
     Factory::new(Post::class)->create(['title' => 'NOT TEST']);
 
     $posts = Repository::new(Post::class)
-        ->filter(new Where('title', Operator::EQUAL, 'TEST'))
+        ->filter(new Where('title', IS::EQUAL, 'TEST'))
         ->get();
 
     expect($posts)->toHaveCount(1)
@@ -26,7 +26,7 @@ test('basic column filtering', function () {
 
     $posts = Repository::new(Post::class)
 
-        ->filter(new WhereColumn('title', Operator::EQUAL, 'content'))
+        ->filter(new WhereColumn('title', IS::EQUAL, 'content'))
         ->get();
 
     expect($posts)->toHaveCount(1)
@@ -43,7 +43,7 @@ test('column filtering via relations', function () {
 
     $users = Repository::new(User::class)
         ->with('posts')
-        ->filter(new WhereColumn('posts/title', Operator::EQUAL, 'posts/content'))
+        ->filter(new WhereColumn('posts/title', IS::EQUAL, 'posts/content'))
         ->get();
 
     expect($users)->toHaveCount(1)
@@ -61,7 +61,7 @@ test('filtering in sub-repositories', function () {
 
     $user = Repository::new(User::class)
         ->with('posts', function (Repository $repository) {
-            $repository->filter(new Where('title', Operator::EQUAL, 'C'));
+            $repository->filter(new Where('title', IS::EQUAL, 'C'));
         })
         ->find($user->id);
     expect($user->posts)->toHaveCount(1)
@@ -69,7 +69,7 @@ test('filtering in sub-repositories', function () {
 
     $user = Repository::new(User::class)
         ->with('posts', function (Repository $repository) {
-            $repository->filter(new Where('title', Operator::EQUAL, 'D'));
+            $repository->filter(new Where('title', IS::EQUAL, 'D'));
         })
         ->find($user->id);
     expect($user)->toBeInstanceOf(User::class)
@@ -86,7 +86,7 @@ test('filtering via relations', function () {
 
     $posts = Repository::new(Post::class)
         ->with('author')
-        ->filter(new Where('author/name', Operator::EQUAL, 'Bob'))
+        ->filter(new Where('author/name', IS::EQUAL, 'Bob'))
         ->get();
 
     expect($posts)->toHaveCount(1)

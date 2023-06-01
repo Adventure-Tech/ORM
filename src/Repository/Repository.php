@@ -1,5 +1,9 @@
 <?php
 
+/**
+ *
+ */
+
 namespace AdventureTech\ORM\Repository;
 
 use AdventureTech\ORM\AliasingManagement\AliasingManager;
@@ -183,6 +187,7 @@ class Repository
             foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
                 /** @var Mapper<mixed> $mapper */
                 $mapper = $this->entityReflection->getMappers()->get($property);
+                // TODO: remove this from mapper
                 $columnName = $mapper->getColumnNames()[0];
                 $this->filter(new WhereNull($columnName));
             }
@@ -226,7 +231,7 @@ class Repository
      */
     private function resolve(stdClass $item, bool $reset = false): ?object
     {
-        $id = $item->{$this->aliasingManager->getSelectedColumnName($this->entityReflection->getId(), $this->localRoot)};
+        $id = $item->{$this->localAliasingManager->getSelectedColumnName($this->entityReflection->getId())};
         if (is_null($id)) {
             // TODO: when does this occur?
             return null;

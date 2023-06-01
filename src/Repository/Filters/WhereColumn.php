@@ -10,10 +10,10 @@ readonly class WhereColumn implements Filter
 {
     /**
      * @param  string  $column
-     * @param  Operator  $operator
+     * @param  IS  $operator
      * @param  string  $otherColumn
      */
-    public function __construct(private string $column, private Operator $operator, private string $otherColumn)
+    public function __construct(private string $column, private IS $operator, private string $otherColumn)
     {
     }
 

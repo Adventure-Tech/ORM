@@ -20,7 +20,12 @@ interface Linker
      * @return void
      */
     //public function join(Builder $query, string $from, string $to, array $filters): void;
-    public function join(Builder $query, LocalAliasingManager $origin, LocalAliasingManager $target, array $filters): void;
+    public function join(
+        Builder $query,
+        LocalAliasingManager $origin,
+        LocalAliasingManager $target,
+        array $filters
+    ): void;
 
     /**
      * @return class-string<TARGET>

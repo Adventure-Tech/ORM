@@ -2,7 +2,7 @@
 
 namespace AdventureTech\ORM\Repository\Filters;
 
-enum Operator: string
+enum IS: string
 {
     case LIKE = 'like';
     case EQUAL = '=';

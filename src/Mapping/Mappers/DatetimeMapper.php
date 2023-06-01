@@ -1,5 +1,9 @@
 <?php
 
+/**
+ *
+ */
+
 namespace AdventureTech\ORM\Mapping\Mappers;
 
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;

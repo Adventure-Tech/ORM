@@ -10,10 +10,10 @@ readonly class Where implements Filter
 {
     /**
      * @param  string  $column
-     * @param  Operator  $operator
+     * @param  IS  $operator
      * @param  mixed  $value
      */
-    public function __construct(private string $column, private Operator $operator, private mixed $value)
+    public function __construct(private string $column, private IS $operator, private mixed $value)
     {
     }
 

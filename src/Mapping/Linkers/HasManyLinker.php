@@ -1,5 +1,9 @@
 <?php
 
+/**
+ *
+ */
+
 namespace AdventureTech\ORM\Mapping\Linkers;
 
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
@@ -59,7 +63,10 @@ readonly class HasManyLinker implements Linker
             ->leftJoin(
                 $targetEntityReflection->getTableName() . ' as ' . $target->getAliasedTableName(),
                 function (JoinClause $join) use ($filters, $originEntityReflection, $origin, $target) {
-                    $join->on($target->getQualifiedColumnName($this->foreignKey), $origin->getQualifiedColumnName($originEntityReflection->getId()));
+                    $join->on(
+                        $target->getQualifiedColumnName($this->foreignKey),
+                        $origin->getQualifiedColumnName($originEntityReflection->getId())
+                    );
                     foreach ($filters as $filter) {
                         $filter->applyFilter($join, $target);
                     }

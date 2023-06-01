@@ -1,5 +1,9 @@
 <?php
 
+/**
+ *
+ */
+
 namespace AdventureTech\ORM\Mapping\Columns;
 
 use AdventureTech\ORM\DefaultNamingService;

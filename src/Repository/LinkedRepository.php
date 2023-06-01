@@ -1,5 +1,9 @@
 <?php
 
+/**
+ *
+ */
+
 namespace AdventureTech\ORM\Repository;
 
 use AdventureTech\ORM\Mapping\Linkers\Linker;
@@ -8,7 +12,6 @@ use AdventureTech\ORM\Mapping\Linkers\Linker;
  * @template ORIGIN of object
  * @template TARGET of object
  */
-
 readonly class LinkedRepository
 {
     /**

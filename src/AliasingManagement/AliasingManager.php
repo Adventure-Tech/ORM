@@ -4,8 +4,8 @@ namespace AdventureTech\ORM\AliasingManagement;
 
 class AliasingManager
 {
-    const SEPARATOR = '/';
-    const PARENT_SIGNIFIER = '..';
+    public const SEPARATOR = '/';
+    public const PARENT_SIGNIFIER = '..';
 
     private TableAliasingDTO $columnExpression;
     private int $aliasCounter = 0;

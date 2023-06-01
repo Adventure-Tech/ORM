@@ -1,5 +1,9 @@
 <?php
 
+/**
+ *
+ */
+
 namespace AdventureTech\ORM\Mapping\Mappers;
 
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
@@ -47,8 +51,9 @@ readonly class DatetimeTZMapper implements Mapper
     public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): ?CarbonImmutable
     {
         $datetimeString = $item->{$aliasingManager->getSelectedColumnName($this->name)};
+        $tz = $item->{$aliasingManager->getSelectedColumnName($this->tzName)};
         return is_null($datetimeString)
             ? null
-            : CarbonImmutable::parse($datetimeString)->setTimezone($item->{$aliasingManager->getSelectedColumnName($this->tzName)});
+            : CarbonImmutable::parse($datetimeString)->setTimezone($tz);
     }
 }

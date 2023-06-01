@@ -7,8 +7,11 @@ use Throwable;
 
 class IdSetForInsertException extends RuntimeException
 {
-    public function __construct(string $message = 'Must not set ID column for insert', int $code = 0, ?Throwable $previous = null)
-    {
+    public function __construct(
+        string $message = 'Must not set ID column for insert',
+        int $code = 0,
+        ?Throwable $previous = null
+    ) {
         parent::__construct($message, $code, $previous);
     }
 }

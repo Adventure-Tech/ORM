@@ -41,7 +41,7 @@ readonly class BelongsTo implements RelationAnnotation
         return new BelongsToLinker(
             targetEntity: $propertyType,
             relation: $propertyName,
-            foreignKey: $this->foreignKey ?? DefaultNamingService::foreignKeyFromProperty($propertyName) . '_id'
+            foreignKey: $this->foreignKey ?? DefaultNamingService::foreignKeyFromClass($propertyType)
         );
     }
 }

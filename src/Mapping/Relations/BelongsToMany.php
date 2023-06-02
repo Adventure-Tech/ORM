@@ -51,7 +51,7 @@ readonly class BelongsToMany implements RelationAnnotation
             relation: $propertyName,
             pivotTable: $this->pivotTable,
             originForeignKey: $this->originForeignKey ?? DefaultNamingService::foreignKeyFromClass($className),
-            targetForeignKey: $this->targetForeignKey ?? DefaultNamingService::foreignKeyFromClass($className)
+            targetForeignKey: $this->targetForeignKey ?? DefaultNamingService::foreignKeyFromClass($this->targetEntity)
         );
     }
 }

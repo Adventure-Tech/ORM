@@ -19,6 +19,7 @@ use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use AdventureTech\ORM\Repository\Repository;
 use Illuminate\Support\Collection;
 use Mockery;
+use Mockery\Mock;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -66,14 +67,22 @@ class EntityReflection
     {
         // TODO: cache
         if (isset(self::$fake)) {
-            return self::$fake;
+            /** @var EntityReflection<A> $mock */
+            $mock = self::$fake;
+            return $mock;
         }
         return new self($class);
     }
 
-    private static EntityReflection $fake;
+    /**
+     * @var Mock | EntityReflection<object>
+     */
+    private static Mock|EntityReflection $fake;
 
-    public static function fake(): Mockery\Mock | EntityReflection
+    /**
+     * @return Mock|EntityReflection<object>
+     */
+    public static function fake(): Mock | EntityReflection
     {
         self::$fake = Mockery::mock(self::class)->makePartial();
         return self::$fake;

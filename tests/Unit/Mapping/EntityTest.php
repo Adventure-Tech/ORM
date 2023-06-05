@@ -22,3 +22,13 @@ test('The repository can be set in constructor', function () {
     $entity = new Entity(null, 'Repository');
     expect($entity->getRepository())->toBe('Repository');
 });
+
+test('The factory class string is null if not set in constructor', function () {
+    $entity = new Entity();
+    expect($entity->getFactory())->toBeNull();
+});
+
+test('The factory can be set in constructor', function () {
+    $entity = new Entity(null, null, 'Factory');
+    expect($entity->getFactory())->toBe('Factory');
+});

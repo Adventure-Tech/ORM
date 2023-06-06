@@ -26,27 +26,21 @@ use stdClass;
  */
 class Repository
 {
-    /**
-     * @var Collection<string,LinkedRepository<T,object>>
-     */
-    private Collection $with;
-
     private ?int $resolvingId = null;
     /**
      * @var T
      */
     private object $resolvingEntity;
     private bool $includeDeleted = false;
-    private AliasingManager $aliasingManager;
-
-    private string $localRoot;
-
-    private LocalAliasingManager $localAliasingManager;
-
+    private readonly LocalAliasingManager $localAliasingManager;
     /**
      * @var array<int,Filter>
      */
     private array $filters = [];
+    /**
+     * @var array<string,LinkedRepository<T,object>>
+     */
+    private array $with = [];
 
     /**
      * @template E of object
@@ -56,22 +50,42 @@ class Repository
      */
     public static function new(string $class): Repository
     {
+        return self::internalNew($class);
+    }
+
+    /**
+     * @template E of object
+     * @param  class-string<E>  $class
+     * @param  AliasingManager|null  $aliasingManager
+     * @param  string|null  $localRoot
+     * @return Repository<E>
+     */
+    private static function internalNew(string $class, AliasingManager $aliasingManager = null, string $localRoot = null): Repository
+    {
         $entityReflection = EntityReflection::new($class);
         $repository = $entityReflection->getRepository() ?? self::class;
-        return new $repository($entityReflection);
+        if (is_null($aliasingManager)) {
+            $aliasingManager = new AliasingManager(
+                $entityReflection->getTableName(),
+                $entityReflection->getSelectColumns()
+            );
+        }
+        if (is_null($localRoot)) {
+            $localRoot = $entityReflection->getTableName();
+        }
+        return new $repository($entityReflection, $aliasingManager, $localRoot);
     }
 
     /**
      * @param  EntityReflection<T>  $entityReflection
+     * @param  AliasingManager  $aliasingManager
+     * @param  string  $localRoot
      */
-    private function __construct(private readonly EntityReflection $entityReflection)
-    {
-        $this->with = Collection::empty();
-        $this->aliasingManager = new AliasingManager(
-            $this->entityReflection->getTableName(),
-            $this->entityReflection->getSelectColumns()
-        );
-        $this->localRoot = $this->entityReflection->getTableName();
+    private function __construct(
+        private readonly EntityReflection $entityReflection,
+        private readonly AliasingManager $aliasingManager,
+        private readonly string $localRoot
+    ) {
         $this->localAliasingManager = new LocalAliasingManager($this->aliasingManager, $this->localRoot);
     }
 
@@ -90,10 +104,11 @@ class Repository
      */
     public function find(int $id)
     {
+        $data = $this->buildQuery()
+            ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId()), $id)
+            ->get();
         return $this->mapToEntities(
-            $this->buildQuery()
-            ->where($this->entityReflection->getTableName() . '.' . $this->entityReflection->getId(), $id)
-            ->get()
+            $data
         )->first();
     }
 
@@ -138,16 +153,17 @@ class Repository
     public function with(string $relation, callable $callable = null): static
     {
         if (!$this->entityReflection->getLinkers()->has($relation)) {
-            throw new InvalidRelationException('Invalid relation used in with clause');
+            throw new InvalidRelationException($relation);
         }
 
         /** @var Linker<T,object> $linker */
         $linker = $this->entityReflection->getLinkers()->get($relation);
 
-        $repository = self::new($linker->getTargetEntity());
-        $repository->localRoot = $this->localRoot . '/' . $relation;
-        $repository->localAliasingManager = new LocalAliasingManager($this->aliasingManager, $repository->localRoot);
-        $repository->aliasingManager = $this->aliasingManager;
+        $repository = self::internalNew(
+            $linker->getTargetEntity(),
+            $this->aliasingManager,
+            $this->localRoot . '/' . $relation,
+        );
         $this->aliasingManager->addRelation(
             $this->localRoot . '/' . $relation,
             $repository->entityReflection->getSelectColumns()
@@ -157,14 +173,10 @@ class Repository
         }
         $repository->applySoftDeleteFilters();
 
-        $this->with->put(
-            $relation,
-            new LinkedRepository($linker, $repository)
-        );
+        $this->with[$relation] = new LinkedRepository($linker, $repository);
 
         return $this;
     }
-
 
     public function filter(Filter $filter): static
     {
@@ -211,8 +223,24 @@ class Repository
             $linkedRepository->repository->filters
         );
         foreach ($linkedRepository->repository->with as $subLinkedRepo) {
-            $subLinkedRepo->repository->applyJoin($query, $subLinkedRepo);
+            $linkedRepository->repository->applyJoin($query, $subLinkedRepo);
         }
+    }
+
+    /**
+     * @param  Collection<int|string,stdClass>  $data
+     * @return Collection<int,T>
+     */
+    private function mapToEntities(Collection $data): Collection
+    {
+        $result = Collection::empty();
+        foreach ($data as $item) {
+            if ($entity = $this->resolve($item)) {
+                $result[] = $entity;
+            }
+        }
+        $this->resetResolver();
+        return $result;
     }
 
     /**
@@ -224,7 +252,7 @@ class Repository
     {
         $id = $item->{$this->localAliasingManager->getSelectedColumnName($this->entityReflection->getId())};
         if (is_null($id)) {
-            // TODO: when does this occur?
+            // occurs when filtering out of relation (../../)
             return null;
         }
         if ($id !== $this->resolvingId) {
@@ -244,19 +272,13 @@ class Repository
         return $reset && isset($this->resolvingEntity) ? $this->resolvingEntity : null;
     }
 
-    /**
-     * @param  Collection<int|string,stdClass>  $data
-     * @return Collection<int,T>
-     */
-    private function mapToEntities(Collection $data): Collection
+    private function resetResolver(): void
     {
-        $result = Collection::empty();
-        foreach ($data as $item) {
-            if ($entity = $this->resolve($item)) {
-                $result[] = $entity;
-            }
+        $this->resolvingId = null;
+        unset($this->resolvingEntity);
+        foreach ($this->with as $linkedRepository) {
+            $linkedRepository->repository->resetResolver();
         }
-        return $result;
     }
 
     private function applySoftDeleteFilters(): void
@@ -267,7 +289,7 @@ class Repository
                 $mapper = $this->entityReflection->getMappers()->get($property);
                 // TODO: remove this from mapper
                 $columnName = $mapper->getColumnNames()[0];
-                $this->filter(new WhereNull($columnName));
+                $this->filters[] = new WhereNull($columnName);
             }
         }
     }

@@ -8,6 +8,7 @@ use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\ManagedColumns\WithTimestamps;
 use AdventureTech\ORM\Mapping\Relations\BelongsTo;
+use AdventureTech\ORM\Mapping\SoftDeletes\WithSoftDeletes;
 use AdventureTech\ORM\Tests\TestClasses\Factories\PostFactory;
 use AdventureTech\ORM\Tests\TestClasses\PostRepository;
 use Carbon\CarbonImmutable;
@@ -16,6 +17,7 @@ use Carbon\CarbonImmutable;
 class Post
 {
     use WithTimestamps;
+    use WithSoftDeletes;
 
 //    use WithSoftDeletes;
 

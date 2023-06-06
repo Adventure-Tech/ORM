@@ -55,7 +55,7 @@ readonly class BelongsToLinker implements Linker, OwningLinker
         array $filters
     ): void {
         $targetEntityReflection = EntityReflection::new($this->targetEntity);
-        $query
+            $query
             ->leftJoin(
                 $targetEntityReflection->getTableName() . ' as ' . $target->getAliasedTableName(),
                 function (JoinClause $join) use ($origin, $target, $filters, $targetEntityReflection) {

@@ -2,15 +2,45 @@
 
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\MissingIdForUpdateException;
+use AdventureTech\ORM\Repository\Repository;
+use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
+use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Illuminate\Support\Facades\DB;
+
+test('asd', function () {
+    $user = new User();
+    $user->name = 'Jane Doe';
+    $user->friends = collect([new User(), new User()]);
+//    $user->id = 1;
+    $persistenceManager = new UserPersistence();
+    $persistenceManager->insert($user);
+    unset($user);
+    ////
+
+    $persistenceManager = new PostPersistence();
+
+    $post = new Post();
+    $post->title = 'title';
+    $post->content = 'content';
+    $user = Repository::new(User::class)->findOrFail(2);
+//    $user = new User();
+//    $user->id = 2;
+    $post->author = $user;
+
+    $persistenceManager->insert($post);
+
+    DB::table('users')->get()->dump();
+    DB::table('posts')->get()->dump();
+});
 
 test('Basic insert works with managed datetimes', function () {
     $user = new User();
     $user->name = 'Jane Doe';
 
-    $returnedUser = (new UserPersistence())->insert($user);
+    $persistence = new UserPersistence();
+    $returnedUser = $persistence->insert($user);
 
     $dbUsers = DB::table('users')->get();
 

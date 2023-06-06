@@ -9,8 +9,8 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::create(self::TABLE_NAME, function (Blueprint $table) {
-            $table->string('a_id');
-            $table->string('b_id');
+            $table->foreignId('a_id')->constrained('users');
+            $table->foreignId('b_id')->constrained('users');
             $table->primary(['a_id', 'b_id']);
         });
     }

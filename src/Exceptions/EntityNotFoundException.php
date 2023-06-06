@@ -11,7 +11,7 @@ class EntityNotFoundException extends RuntimeException
     {
         $message = 'Entity not found on the DB';
         if (!is_null($class)) {
-            $message .= ' [class: "' . $class . '", id: "' . $id . '"]';
+            $message .= ' [class: "' . $class . '"';
             if (!is_null($id)) {
                 $message .=  '", id: "' . $id;
             }

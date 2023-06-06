@@ -17,7 +17,7 @@ use Illuminate\Database\Query\JoinClause;
  * @implements Linker<object,TARGET>
  */
 
-readonly class BelongsToLinker implements Linker
+readonly class BelongsToLinker implements Linker, OwningLinker
 {
     use ToOne;
 

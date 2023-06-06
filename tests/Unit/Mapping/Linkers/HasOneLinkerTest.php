@@ -10,11 +10,15 @@ use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-uses()->beforeAll(function () {
-    $mock = EntityReflection::fake();
-    $mock->shouldReceive('getTableName')->andReturn('table_name');
-    $mock->shouldReceive('getId')->andReturn('id_column');
-});
+uses()
+    ->beforeAll(function () {
+        $mock = EntityReflection::fake();
+        $mock->shouldReceive('getTableName')->andReturn('table_name');
+        $mock->shouldReceive('getId')->andReturn('id_column');
+    })
+    ->afterAll(function () {
+        EntityReflection::resetFake();
+    });
 
 
 test('Linker exposes the target entity', function () {

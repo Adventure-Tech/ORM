@@ -6,7 +6,7 @@ use AdventureTech\ORM\Repository\Filters\IS;
 use AdventureTech\ORM\Repository\Filters\WhereColumn;
 use Illuminate\Support\Facades\DB;
 
-test('', function () {
+test('Filter gets applied correctly', function () {
     $mock = Mockery::mock(AliasingManager::class);
     $mock->shouldReceive('getQualifiedColumnName')
         ->with('column', 'root')

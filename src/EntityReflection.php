@@ -10,14 +10,17 @@ use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Mapping\Columns\ColumnAnnotation;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
-use AdventureTech\ORM\Mapping\Linkers\BelongsToLinker;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
+use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Mapping\ManagedColumns\ManagedColumnAnnotation;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Mapping\Relations\RelationAnnotation;
 use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use AdventureTech\ORM\Repository\Repository;
+use ArgumentCountError;
 use Illuminate\Support\Collection;
+use Mockery;
+use Mockery\Mock;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -64,7 +67,31 @@ class EntityReflection
     public static function new(string $class): EntityReflection
     {
         // TODO: cache
+        if (isset(self::$fake)) {
+            /** @var EntityReflection<A> $mock */
+            $mock = self::$fake;
+            return $mock;
+        }
         return new self($class);
+    }
+
+    /**
+     * @var Mock|EntityReflection<object>|null
+     */
+    private static Mock|EntityReflection|null $fake;
+
+    /**
+     * @return Mock|EntityReflection<object>
+     */
+    public static function fake(): Mock | EntityReflection
+    {
+        self::$fake = Mockery::mock(self::class)->makePartial();
+        return self::$fake;
+    }
+
+    public static function resetFake(): void
+    {
+        self::$fake = null;
     }
 
     /**
@@ -113,8 +140,8 @@ class EntityReflection
     public function newInstance()
     {
         try {
-            return $this->reflectionClass->newInstanceWithoutConstructor();
-        } catch (ReflectionException $e) {
+            return $this->reflectionClass->newInstance();
+        } catch (ReflectionException | ArgumentCountError $e) {
             throw new EntityInstantiationException($this->class, $e);
         }
     }
@@ -171,7 +198,7 @@ class EntityReflection
             }
         }
         foreach ($this->linkers as $linker) {
-            if ($linker instanceof BelongsToLinker) {
+            if ($linker instanceof OwningLinker) {
                 $columnNames[$linker->getForeignKey()] = $linker->getForeignKey();
             }
         }
@@ -216,6 +243,7 @@ class EntityReflection
             throw new MultipleIdColumnsException();
         }
         $this->id = $propertyName;
+        // TODO: what if ID column has no column annotation?
     }
 
     /**

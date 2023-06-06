@@ -16,10 +16,6 @@ class DefaultNamingService
         return Str::snake(Str::plural(Str::afterLast($class, '\\')));
     }
 
-    public static function foreignKeyFromProperty(string $property): string
-    {
-        return self::columnFromProperty($property) . '_id';
-    }
     public static function foreignKeyFromClass(string $class): string
     {
         return Str::snake(Str::afterLast($class, '\\')) . '_id';

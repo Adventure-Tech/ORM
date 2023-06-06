@@ -2,9 +2,9 @@
 
 namespace AdventureTech\ORM\Mapping\ManagedColumns;
 
+use AdventureTech\ORM\Exceptions\InvalidTypeException;
 use Attribute;
 use Carbon\CarbonImmutable;
-use LogicException;
 
 /**
  * @implements ManagedColumnAnnotation<CarbonImmutable>
@@ -19,9 +19,8 @@ class CreatedAt implements ManagedColumnAnnotation
 
     public function getUpdateValue(mixed $value): ?CarbonImmutable
     {
-        if (!is_null($value) && !($value instanceof CarbonImmutable)) {
-            // TODO: custom exception
-            throw new LogicException('Wrong type passed to managed column');
+        if (!($value instanceof CarbonImmutable)) {
+            throw new InvalidTypeException('Wrong type passed to managed column');
         }
         return $value;
     }

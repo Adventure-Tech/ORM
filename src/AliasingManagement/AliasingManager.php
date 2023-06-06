@@ -9,7 +9,7 @@ class AliasingManager
     public const SEPARATOR = '/';
     public const PARENT_SIGNIFIER = '..';
 
-    private TableAliasingDTO $columnExpression;
+    private TableAliasingDTO $dto;
     private int $aliasCounter = 0;
 
     /**
@@ -18,7 +18,7 @@ class AliasingManager
      */
     public function __construct(string $rootTableName, array $columns)
     {
-        $this->columnExpression = new TableAliasingDTO($rootTableName, $columns);
+        $this->dto = new TableAliasingDTO($rootTableName, $columns);
     }
 
     /**
@@ -28,12 +28,12 @@ class AliasingManager
      */
     public function addRelation(string $newRoot, array $columns): void
     {
-        $newObject = new TableAliasingDTO('_' . $this->aliasCounter++ . '_', $columns);
+        $newDto = new TableAliasingDTO('_' . $this->aliasCounter++ . '_', $columns);
 
-        $keys = explode(self::SEPARATOR, $newRoot);
-        $newKey = array_pop($keys);
+        $path = explode(self::SEPARATOR, $newRoot);
+        $newRelation = array_pop($path);
 
-        $this->resolvePath($keys)->addChild($newKey, $newObject);
+        $this->resolvePath($path)->addChild($newRelation, $newDto);
     }
 
     /**
@@ -41,13 +41,13 @@ class AliasingManager
      */
     public function getSelectColumns(): array
     {
-        return $this->extractColumnNames($this->columnExpression);
+        return $this->extractColumnNames($this->dto);
     }
 
     public function getAliasedTableName(string $localRoot): string
     {
-        $keys = explode(self::SEPARATOR, $localRoot);
-        return $this->resolvePath($keys)->alias;
+        $path = explode(self::SEPARATOR, $localRoot);
+        return $this->resolvePath($path)->alias;
     }
 
     public function getSelectedColumnName(string $columnExpression, string $localRoot): string
@@ -61,51 +61,51 @@ class AliasingManager
     }
 
     /**
-     * @param  TableAliasingDTO  $columnExpression
+     * @param  TableAliasingDTO  $dto
      * @return array<int,string>
      */
-    private function extractColumnNames(TableAliasingDTO $columnExpression): array
+    private function extractColumnNames(TableAliasingDTO $dto): array
     {
         $columns = [];
-        foreach ($columnExpression->columns as $column) {
-            $columns[] = $columnExpression->alias . '.' . $column . ' as ' . $columnExpression->alias . $column;
+        foreach ($dto->columns as $column) {
+            $columns[] = $dto->alias . '.' . $column . ' as ' . $dto->alias . $column;
         }
-        foreach ($columnExpression->children as $item) {
+        foreach ($dto->children as $item) {
             $columns = array_merge($columns, $this->extractColumnNames($item));
         }
         return $columns;
     }
 
     /**
-     * @param  array<int,string>  $keys
+     * @param  array<int,string>  $path
      * @return TableAliasingDTO
      */
-    private function resolvePath(array $keys): TableAliasingDTO
+    private function resolvePath(array $path): TableAliasingDTO
     {
-        $columnExpression = $this->columnExpression;
-        array_shift($keys);
-        foreach ($keys as $key) {
-            if (!isset($columnExpression->children[$key])) {
+        $dto = $this->dto;
+        array_shift($path);
+        foreach ($path as $key) {
+            if (!isset($dto->children[$key])) {
                 throw new  InvalidColumnExpressionException('Tried to access relation which was not added');
             }
-            $columnExpression = $columnExpression->children[$key];
+            $dto = $dto->children[$key];
         }
-        return $columnExpression;
+        return $dto;
     }
 
     private function resolveColumnExpression(string $localRoot, string $columnExpression, string $separator): string
     {
-        $keys = explode(self::SEPARATOR, $localRoot);
-        $explode = explode(self::SEPARATOR, $columnExpression);
-        $column = array_pop($explode);
-        foreach ($explode as $key) {
+        $localRootPath = explode(self::SEPARATOR, $localRoot);
+        $relativePath = explode(self::SEPARATOR, $columnExpression);
+        $column = array_pop($relativePath);
+        foreach ($relativePath as $key) {
             if ($key === self::PARENT_SIGNIFIER) {
-                array_pop($keys);
+                array_pop($localRootPath);
             } else {
-                $keys[] = $key;
+                $localRootPath[] = $key;
             }
         }
-        $columnExpression = $this->resolvePath($keys);
-        return $columnExpression->alias . $separator . $columnExpression->columns[$column];
+        $dto = $this->resolvePath($localRootPath);
+        return $dto->alias . $separator . $dto->columns[$column];
     }
 }

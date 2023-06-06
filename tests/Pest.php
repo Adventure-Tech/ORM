@@ -1,6 +1,10 @@
 <?php
 
 use AdventureTech\ORM\Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(TestCase::class)->in('Unit', 'Feature', 'Architecture');
+function getProperty(object $object, string $property)
+{
+    return (new RefLectionClass($object))->getProperty($property)->getValue($object);
+}
+
+uses(TestCase::class)->in('Unit', 'Feature');

@@ -132,6 +132,13 @@ test('Can load relations', function () {
         ->first()->id->toBe($postId);
 });
 
+test('Not loaded relations are not set in the entity', function () {
+    $authorId = DB::table('users')->insertGetId(['name' => 'Name']);
+    DB::table('posts')->insertGetId(['title' => 'Title', 'content' => 'Content', 'author' => $authorId]);
+    $user = Repository::new(User::class)->find($authorId);
+    expect(fn() =>$user->posts)->toThrow(Error::class);
+});
+
 test('Can filter within loaded relations', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'Name']);
     DB::table('posts')->insert([

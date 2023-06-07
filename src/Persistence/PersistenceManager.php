@@ -6,8 +6,8 @@ use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingIdForUpdateException;
+use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
@@ -20,17 +20,12 @@ use RuntimeException;
 /**
  * @template T of object
  */
-abstract class PersistenceManager
+class PersistenceManager
 {
     /**
      * @var class-string<T>
      */
     protected static string $entity;
-
-    /**
-     * @var EntityReflection<T>
-     */
-    protected EntityReflection $entityReflection;
 
     private function __construct()
     {
@@ -58,7 +53,7 @@ abstract class PersistenceManager
         }
 
         foreach ($entityReflection->getMappers() as $property => $mapper) {
-            if ($mapper->isInitialized($entity)) {
+            if ($entityReflection->checkPropertyInitialized($property, $entity)) {
                 if ($property === $id) {
                     throw new IdSetForInsertException();
                 }
@@ -98,7 +93,7 @@ abstract class PersistenceManager
         }
 
         foreach ($entityReflection->getMappers() as $property => $mapper) {
-            if ($mapper->isInitialized($entity)) {
+            if ($entityReflection->checkPropertyInitialized($property, $entity)) {
                 $arr = array_merge($arr, $mapper->serialize($entity->{$property}));
             }
         }
@@ -185,15 +180,19 @@ abstract class PersistenceManager
         $arr = [];
         foreach ($entityReflection->getLinkers() as $property => $linker) {
             if ($linker instanceof OwningLinker) {
-                // TODO: replace with proper isset check to allow for nullable relations
-                if (!isset($entity->{$property})) {
+                if (!$entityReflection->checkPropertyInitialized($property, $entity)) {
                     throw new MissingOwningRelationException('Must set all non-nullable owning relations');
                 }
                 $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
-                if (!isset($entity->{$property}->{$linkedEntityReflection->getId()})) {
+                $linkedEntity = $entity->{$property};
+                $linkedEntityId = $linkedEntityReflection->getId();
+                $initialized = $linkedEntityReflection->checkPropertyInitialized($linkedEntityId, $linkedEntity);
+                if (!$initialized && !is_null($linkedEntity)) {
                     throw new MissingOwningRelationException('Owned linked entity must have valid ID set');
                 }
-                $arr[$linker->getForeignKey()] = $entity->{$property}->{$linkedEntityReflection->getId()};
+                if (!is_null($linkedEntity)) {
+                    $arr[$linker->getForeignKey()] = $entity->{$property}->{$linkedEntityId};
+                }
             }
         }
         return $arr;

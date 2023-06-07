@@ -25,15 +25,6 @@ trait WithDefaultMapperMethods
         return [$this->name];
     }
 
-    /**
-     * @param  object  $instance
-     * @return bool
-     */
-    public function isInitialized(object $instance): bool
-    {
-        return $this->property->isInitialized($instance);
-    }
-
     public function getPropertyType(): string
     {
         /** @var ReflectionNamedType $reflectionNamedType */

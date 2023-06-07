@@ -34,4 +34,7 @@ class Post
 
     #[BelongsTo(foreignKey: 'author')]
     public User $author;
+
+    #[BelongsTo(foreignKey: 'editor')]
+    public ?User $editor = null;
 }

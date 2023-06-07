@@ -3,14 +3,16 @@
 namespace AdventureTech\ORM\Persistence;
 
 use AdventureTech\ORM\EntityReflection;
+use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\MissingBelongsToRelationException;
+use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingIdForUpdateException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use LogicException;
 use RuntimeException;
@@ -144,7 +146,7 @@ abstract class PersistenceManager
             ->delete();
     }
 
-    public static function attach(object $entity, string $relation): int
+    public static function attach(object $entity, Collection $linkedEntities, string $relation): int
     {
         $entityReflection = self::getEntityReflection($entity);
         $linker = $entityReflection->getLinkers()->get($relation);
@@ -153,7 +155,7 @@ abstract class PersistenceManager
             throw new LogicException('Can only attach many to many relations');
         }
         $targetEntityReflection = EntityReflection::new($linker->getTargetEntity());
-        $data = $entity->{$relation}->map(function ($linkedEntity) use ($entityReflection, $entity, $linker, $targetEntityReflection) {
+        $data = $linkedEntities->map(function ($linkedEntity) use ($entityReflection, $entity, $linker, $targetEntityReflection) {
             if ($linkedEntity::class !== $targetEntityReflection->getClass()) {
                 // TODO: custom exception
                 throw new RuntimeException('All entities in collection must be of correct type');
@@ -164,6 +166,9 @@ abstract class PersistenceManager
                 $linker->getTargetForeignKey() => $linkedEntity->{$targetEntityReflection->getId()},
             ];
         })->toArray();
+
+        $entity->{$relation} = $linkedEntities;
+
         return DB::table($linker->getPivotTable())->upsert(
             $data,
             [$linker->getOriginForeignKey(), $linker->getTargetForeignKey()]
@@ -182,11 +187,11 @@ abstract class PersistenceManager
             if ($linker instanceof OwningLinker) {
                 // TODO: replace with proper isset check to allow for nullable relations
                 if (!isset($entity->{$property})) {
-                    throw new MissingBelongsToRelationException('Must set all BelongsTo relations');
+                    throw new MissingOwningRelationException('Must set all non-nullable owning relations');
                 }
                 $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
                 if (!isset($entity->{$property}->{$linkedEntityReflection->getId()})) {
-                    throw new MissingBelongsToRelationException('Linked BelongsTo entity must have valid ID set');
+                    throw new MissingOwningRelationException('Owned linked entity must have valid ID set');
                 }
                 $arr[$linker->getForeignKey()] = $entity->{$property}->{$linkedEntityReflection->getId()};
             }
@@ -202,7 +207,7 @@ abstract class PersistenceManager
     private static function getEntityReflection(object $entity): EntityReflection
     {
         if (!isset(static::$entity)) {
-            throw new LogicException('Must set static $entity property');
+            throw new BadlyConfiguredPersistenceManagerException();
         }
         if (get_class($entity) !== static::$entity) {
             throw new InvalidEntityTypeException('Invalid entity type used in persistence manager');

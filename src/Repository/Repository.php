@@ -190,6 +190,25 @@ class Repository
         return $this;
     }
 
+    /**
+     * @var array<string,Direction>
+     */
+    private array $orderBys = [];
+
+    public function orderBy(string $column): static
+    {
+        $column = $this->localAliasingManager->getQualifiedColumnName($column);
+        $this->orderBys[$column] = Direction::ASCENDING;
+        return $this;
+    }
+
+    public function orderByDesc(string $column): static
+    {
+        $column = $this->localAliasingManager->getQualifiedColumnName($column);
+        $this->orderBys[$column] = Direction::DESCENDING;
+        return $this;
+    }
+
     private function buildQuery(): Builder
     {
         $query = DB::table($this->entityReflection->getTableName())
@@ -203,6 +222,10 @@ class Repository
 
         foreach ($this->with as $linkedRepo) {
             $this->applyJoin($query, $linkedRepo);
+        }
+
+        foreach ($this->getOrderBys() as $column => $direction) {
+            $query->orderBy($column, $direction->value);
         }
 
         return $query;
@@ -292,5 +315,17 @@ class Repository
                 $this->filters[] = new WhereNull($columnName);
             }
         }
+    }
+
+    /**
+     * @return array<string,Direction>
+     */
+    private function getOrderBys(): array
+    {
+        $orderBys = $this->orderBys;
+        foreach ($this->with as $linkedRepository) {
+            $orderBys = array_merge($orderBys, $linkedRepository->repository->getOrderBys());
+        }
+        return $orderBys;
     }
 }

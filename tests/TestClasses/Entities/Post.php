@@ -19,8 +19,6 @@ class Post
     use WithTimestamps;
     use WithSoftDeletes;
 
-//    use WithSoftDeletes;
-
     #[Id]
     #[Column]
     public int $id;

@@ -15,7 +15,7 @@ return new class () extends Migration {
             $table->string('address')->nullable();
             $table->string('zip')->nullable();
             $table->string('country')->default('NOR');
-            $table->foreignId('user_id')->constrained();
+            $table->foreignId('user_id')->nullable()->constrained();
             $table->timestamps();
         });
     }

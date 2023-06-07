@@ -59,7 +59,7 @@ class Factory
         };
         // TODO: handle reflection exceptions
         $refProperty = (new ReflectionClass($persistenceManager))->getProperty('entity');
-        $refProperty->setValue($this->persistenceManager, $class);
+        $refProperty->setValue($persistenceManager, $class);
         return $persistenceManager;
     }
 

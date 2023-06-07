@@ -3,10 +3,12 @@
 namespace AdventureTech\ORM\Persistence;
 
 use AdventureTech\ORM\EntityReflection;
+use AdventureTech\ORM\Exceptions\AttachingInconsistentEntitiesException;
+use AdventureTech\ORM\Exceptions\AttachingToInvalidRelationException;
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\MissingIdForUpdateException;
+use AdventureTech\ORM\Exceptions\MissingIdException;
 use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
@@ -14,8 +16,6 @@ use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use LogicException;
-use RuntimeException;
 
 /**
  * @template T of object
@@ -81,7 +81,7 @@ class PersistenceManager
         $arr = [];
 
         if (!isset($entity->{$entityReflection->getId()})) {
-            throw new MissingIdForUpdateException();
+            throw new MissingIdException('Must set ID column when updating');
         }
 
         foreach ($entityReflection->getManagedColumns() as $property => $managedColumn) {
@@ -146,19 +146,23 @@ class PersistenceManager
         $entityReflection = self::getEntityReflection($entity);
         $linker = $entityReflection->getLinkers()->get($relation);
         if (!($linker instanceof PivotLinker)) {
-            // TODO: custom exception and custom interface instead of BelongsToManyLinker
-            throw new LogicException('Can only attach many to many relations');
+            throw new AttachingToInvalidRelationException();
         }
-        $targetEntityReflection = EntityReflection::new($linker->getTargetEntity());
-        $data = $linkedEntities->map(function ($linkedEntity) use ($entityReflection, $entity, $linker, $targetEntityReflection) {
-            if ($linkedEntity::class !== $targetEntityReflection->getClass()) {
-                // TODO: custom exception
-                throw new RuntimeException('All entities in collection must be of correct type');
+        if (!$entityReflection->checkPropertyInitialized($entityReflection->getId(), $entity)) {
+            throw new MissingIdException('Must set ID column on base entity when attaching');
+        }
+        $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
+        $data = $linkedEntities->map(function ($linkedEntity) use ($entityReflection, $entity, $linker, $linkedEntityReflection) {
+            if ($linkedEntity::class !== $linkedEntityReflection->getClass()) {
+                throw new AttachingInconsistentEntitiesException();
+            }
+            if (!$linkedEntityReflection->checkPropertyInitialized($linkedEntityReflection->getId(), $linkedEntity)) {
+                throw new MissingIdException('Must set ID columns of all entities when attaching');
             }
             // TODO: ensure that ids are set!
             return [
                 $linker->getOriginForeignKey() => $entity->{$entityReflection->getId()},
-                $linker->getTargetForeignKey() => $linkedEntity->{$targetEntityReflection->getId()},
+                $linker->getTargetForeignKey() => $linkedEntity->{$linkedEntityReflection->getId()},
             ];
         })->toArray();
 

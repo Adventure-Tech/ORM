@@ -25,6 +25,9 @@ class User
     #[Column]
     public string $name;
 
+    #[Column]
+    public ?string $favouriteColor = null;
+
     #[HasMany(targetEntity: Post::class, foreignKey: 'author')]
     public Collection $posts;
 

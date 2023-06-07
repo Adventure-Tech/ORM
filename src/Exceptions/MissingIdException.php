@@ -5,10 +5,10 @@ namespace AdventureTech\ORM\Exceptions;
 use RuntimeException;
 use Throwable;
 
-class MissingIdForUpdateException extends RuntimeException
+class MissingIdException extends RuntimeException
 {
     public function __construct(
-        string $message = 'Must set ID column when updating',
+        string $message = 'Must set ID column',
         int $code = 0,
         ?Throwable $previous = null
     ) {

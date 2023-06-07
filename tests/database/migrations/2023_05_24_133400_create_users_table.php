@@ -11,6 +11,7 @@ return new class () extends Migration {
         Schema::create(self::TABLE_NAME, function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('favourite_color')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

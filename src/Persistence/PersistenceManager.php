@@ -21,6 +21,9 @@ use function get_class;
  */
 abstract class PersistenceManager
 {
+    /**
+     * @var class-string<T>
+     */
     protected static string $entity;
 
     /**
@@ -135,7 +138,7 @@ abstract class PersistenceManager
 
     /**
      * @param  object  $entity
-     * @param  EntityReflection  $entityReflection
+     * @param  EntityReflection<T>  $entityReflection
      * @return array<string,mixed>
      */
     private static function resolveOwningRelations(object $entity, EntityReflection $entityReflection): array
@@ -160,7 +163,7 @@ abstract class PersistenceManager
     /**
      * @param  T  $entity
      *
-     * @return EntityReflection
+     * @return EntityReflection<T>
      */
     private static function getEntityReflection(object $entity): EntityReflection
     {

@@ -11,11 +11,13 @@ use ReflectionClass;
 
 /**
  * @template T of object
- * @extends PersistenceManager<T>
  */
 class Factory
 {
     private readonly Generator $faker;
+    /**
+     * @var PersistenceManager<T>
+     */
     private readonly PersistenceManager $persistenceManager;
 
     /**
@@ -32,7 +34,7 @@ class Factory
     }
 
     /**
-     * @param  string  $class
+     * @param  class-string<T>  $class
      * @param  EntityReflection<T>  $entityReflection
      */
     private function __construct(string $class, private readonly EntityReflection $entityReflection)
@@ -41,14 +43,21 @@ class Factory
         $this->persistenceManager = $this->getPersistenceManager($class);
     }
 
+    /**
+     * @template F of object
+     * @param  class-string<F>  $class
+     * @return PersistenceManager<F>
+     */
     private function getPersistenceManager(string $class): PersistenceManager
     {
         // some reflection dark magic, but it's okay as factories are for test only
+        /** @var PersistenceManager<F> $persistenceManager */
         $persistenceManager = new class extends PersistenceManager {
             public function __construct()
             {
             }
         };
+        // TODO: handle reflection exceptions
         $refProperty = (new ReflectionClass($persistenceManager))->getProperty('entity');
         $refProperty->setValue($this->persistenceManager, $class);
         return $persistenceManager;

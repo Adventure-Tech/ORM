@@ -3,18 +3,21 @@
 namespace AdventureTech\ORM\Factories;
 
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Mapping\Linkers\BelongsToLinker;
-use AdventureTech\ORM\Persistence\BasePersistenceManager;
+use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
+use AdventureTech\ORM\Persistence\PersistenceManager;
 use Carbon\CarbonImmutable;
 use Faker\Generator;
+use ReflectionClass;
 
 /**
  * @template T of object
- * @extends BasePersistenceManager<T>
+ * @extends PersistenceManager<T>
  */
-class Factory extends BasePersistenceManager
+class Factory
 {
-    protected Generator $faker;
+    private readonly Generator $faker;
+    private readonly PersistenceManager $persistenceManager;
+
     /**
      * @template E of object
      * @param  class-string<E>  $class
@@ -25,16 +28,30 @@ class Factory extends BasePersistenceManager
     {
         $entityReflection = EntityReflection::new($class);
         $factory = $entityReflection->getFactory() ?? self::class;
-        return new $factory($class);
+        return new $factory($class, $entityReflection);
     }
 
     /**
-     * @param  class-string<T>  $class
+     * @param  string  $class
+     * @param  EntityReflection<T>  $entityReflection
      */
-    private function __construct(string $class)
+    private function __construct(string $class, private readonly EntityReflection $entityReflection)
     {
         $this->faker = \Faker\Factory::create();
-        parent::__construct($class);
+        $this->persistenceManager = $this->getPersistenceManager($class);
+    }
+
+    private function getPersistenceManager(string $class): PersistenceManager
+    {
+        // some reflection dark magic, but it's okay as factories are for test only
+        $persistenceManager = new class extends PersistenceManager {
+            public function __construct()
+            {
+            }
+        };
+        $refProperty = (new ReflectionClass($persistenceManager))->getProperty('entity');
+        $refProperty->setValue($this->persistenceManager, $class);
+        return $persistenceManager;
     }
 
 
@@ -51,8 +68,8 @@ class Factory extends BasePersistenceManager
         foreach ($this->entityReflection->getLinkers() as $property => $linker) {
             if (key_exists($property, $state)) {
                 $entity->{$property} = $state[$property];
-            } elseif ($linker instanceof BelongsToLinker) {
-                $entity->{$property} = (new Factory($linker->getTargetEntity()))->create();
+            } elseif ($linker instanceof OwningLinker) {
+                $entity->{$property} = Factory::new($linker->getTargetEntity())->create();
             }
         }
         foreach ($this->entityReflection->getMappers() as $property => $mapper) {
@@ -62,14 +79,15 @@ class Factory extends BasePersistenceManager
                 $entity->{$property} = $this->defaults($mapper->getPropertyType());
             }
         }
-        $this->insert($entity);
+        $this->persistenceManager::insert($entity);
         return $entity;
     }
 
     protected function defaults(string $type): mixed
     {
         return match ($type) {
-            'int' => $this->faker->numberBetween(),
+            'int' => $this->faker->randomNumber(),
+            'float' => $this->faker->randomFloat(),
             'string' => $this->faker->word(),
             CarbonImmutable::class => CarbonImmutable::parse($this->faker->dateTime()),
             'array' => [],

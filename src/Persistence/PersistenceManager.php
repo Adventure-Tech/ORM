@@ -9,12 +9,11 @@ use AdventureTech\ORM\Exceptions\MissingBelongsToRelationException;
 use AdventureTech\ORM\Exceptions\MissingIdForUpdateException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
+use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Illuminate\Support\Facades\DB;
 use LogicException;
-
-use function array_merge;
-use function get_class;
+use RuntimeException;
 
 /**
  * @template T of object
@@ -145,9 +144,31 @@ abstract class PersistenceManager
             ->delete();
     }
 
-//    public function attach()
-//    {
-//    }
+    public static function attach(object $entity, string $relation): int
+    {
+        $entityReflection = self::getEntityReflection($entity);
+        $linker = $entityReflection->getLinkers()->get($relation);
+        if (!($linker instanceof PivotLinker)) {
+            // TODO: custom exception and custom interface instead of BelongsToManyLinker
+            throw new LogicException('Can only attach many to many relations');
+        }
+        $targetEntityReflection = EntityReflection::new($linker->getTargetEntity());
+        $data = $entity->{$relation}->map(function ($linkedEntity) use ($entityReflection, $entity, $linker, $targetEntityReflection) {
+            if ($linkedEntity::class !== $targetEntityReflection->getClass()) {
+                // TODO: custom exception
+                throw new RuntimeException('All entities in collection must be of correct type');
+            }
+            // TODO: ensure that ids are set!
+            return [
+                $linker->getOriginForeignKey() => $entity->{$entityReflection->getId()},
+                $linker->getTargetForeignKey() => $linkedEntity->{$targetEntityReflection->getId()},
+            ];
+        })->toArray();
+        return DB::table($linker->getPivotTable())->upsert(
+            $data,
+            [$linker->getOriginForeignKey(), $linker->getTargetForeignKey()]
+        );
+    }
 
     /**
      * @param  object  $entity

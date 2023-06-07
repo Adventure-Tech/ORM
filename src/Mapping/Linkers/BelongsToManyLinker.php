@@ -18,7 +18,7 @@ use Illuminate\Database\Query\JoinClause;
  * @implements Linker<ORIGIN,TARGET>
  */
 
-readonly class BelongsToManyLinker implements Linker
+readonly class BelongsToManyLinker implements Linker, PivotLinker
 {
     use ToMany;
 
@@ -83,5 +83,29 @@ readonly class BelongsToManyLinker implements Linker
                     }
                 }
             );
+    }
+
+    /**
+     * @return string
+     */
+    public function getPivotTable(): string
+    {
+        return $this->pivotTable;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOriginForeignKey(): string
+    {
+        return $this->originForeignKey;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTargetForeignKey(): string
+    {
+        return $this->targetForeignKey;
     }
 }

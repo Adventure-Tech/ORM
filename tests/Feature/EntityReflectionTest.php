@@ -94,7 +94,18 @@ test('Can names of selected columns correctly with owning linker (BelongsTo)', f
     $entityReflection = EntityReflection::new(Post::class);
     expect($entityReflection->getSelectColumns())
         ->toBeArray()
-        ->toEqualCanonicalizing(['id', 'title', 'content', 'published_at', 'published_tz', 'created_at', 'updated_at', 'deleted_at', 'author'])
+        ->toEqualCanonicalizing([
+            'id',
+            'title',
+            'content',
+            'published_at',
+            'published_tz',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'author',
+            'editor',
+        ])
         ->each(fn ($expectation, $key) => $expectation->toBe($key));
 });
 

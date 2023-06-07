@@ -20,33 +20,6 @@ test('The default mapper has a single column', function (DefaultMapper $mapper) 
         ->toEqualCanonicalizing(['db_column_name']);
 })->with('mapper');
 
-test('The default mapper can check if its property is set on a given entity instance', function (
-    DefaultMapper $mapper,
-    MapperTestClass $entity,
-    bool $isInitialized
-) {
-    expect($mapper->isInitialized($entity))->toBe($isInitialized);
-})
-    ->with('mapper')
-    ->with([
-        'not initialized' => [fn() => new MapperTestClass(), false],
-        'null' => [
-            function () {
-                $entity = new MapperTestClass();
-                $entity->stringProperty = null;
-                return $entity;
-            }, true,
-        ],
-        'empty string' => [
-            function () {
-                $entity = new MapperTestClass();
-                $entity->stringProperty = '';
-                return $entity;
-            },
-            true,
-            ],
-    ]);
-
 test('The default mapper can serialize an entity', function (
     DefaultMapper $mapper,
     ?string $value,

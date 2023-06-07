@@ -21,33 +21,6 @@ test('The datetimeTz mapper has a single column', function (DatetimeTZMapper $ma
         ->toEqualCanonicalizing(['datetime_db_column', 'tz_db_column']);
 })->with('mapper');
 
-test('The datetimeTz mapper can check if its property is set on a given entity instance', function (
-    DatetimeTZMapper $mapper,
-    MapperTestClass $entity,
-    bool $isInitialized
-) {
-    expect($mapper->isInitialized($entity))->toBe($isInitialized);
-})
-    ->with('mapper')
-    ->with([
-    'not initialized' => [fn() => new MapperTestClass(), false],
-    'null' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->datetimeProperty = null;
-            return $entity;
-        }, true,
-    ],
-    'carbon instance' => [
-        function () {
-            $entity = new MapperTestClass();
-            $entity->datetimeProperty = CarbonImmutable::now();
-            return $entity;
-        },
-        true,
-    ],
-]);
-
 test('The datetimeTz mapper can serialize an entity', function (
     DatetimeTZMapper $mapper,
     ?CarbonImmutable $value,

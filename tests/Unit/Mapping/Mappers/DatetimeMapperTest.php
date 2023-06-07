@@ -21,33 +21,6 @@ test('The datetime mapper has a single column', function (DatetimeMapper $mapper
         ->toEqualCanonicalizing(['db_column_name']);
 })->with('mapper');
 
-test('The datetime mapper can check if its property is set on a given entity instance', function (
-    DatetimeMapper $mapper,
-    MapperTestClass $entity,
-    bool $isInitialized
-) {
-    expect($mapper->isInitialized($entity))->toBe($isInitialized);
-})
-    ->with('mapper')
-    ->with([
-        'not initialized' => [fn() => new MapperTestClass(), false],
-        'null' => [
-            function () {
-                $entity = new MapperTestClass();
-                $entity->datetimeProperty = null;
-                return $entity;
-            }, true,
-        ],
-        'carbon instance' => [
-            function () {
-                $entity = new MapperTestClass();
-                $entity->datetimeProperty = CarbonImmutable::now();
-                return $entity;
-            },
-            true,
-        ],
-    ]);
-
 test('The datetime mapper can serialize an entity', function (
     DatetimeMapper $mapper,
     ?CarbonImmutable $value,

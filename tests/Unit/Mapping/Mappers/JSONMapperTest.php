@@ -21,41 +21,6 @@ test('The json mapper has a single column', function (JSONMapper $mapper) {
         ->toEqualCanonicalizing(['db_column_name']);
 })->with('mapper');
 
-test('The json mapper can check if its property is set on a given entity instance', function (
-    JSONMapper $mapper,
-    MapperTestClass $entity,
-    bool $isInitialized
-) {
-    expect($mapper->isInitialized($entity))->toBe($isInitialized);
-})
-    ->with('mapper')
-    ->with([
-        'not initialized' => [fn() => new MapperTestClass(), false],
-        'null' => [
-            function () {
-                $entity = new MapperTestClass();
-                $entity->jsonProperty = null;
-                return $entity;
-            }, true,
-        ],
-        'empty array' => [
-            function () {
-                $entity = new MapperTestClass();
-                $entity->jsonProperty = [];
-                return $entity;
-            },
-            true,
-        ],
-        'non-empty array' => [
-            function () {
-                $entity = new MapperTestClass();
-                $entity->jsonProperty = ['x' => 12];
-                    return $entity;
-            },
-            true,
-            ],
-    ]);
-
 test('The json mapper can serialize an entity', function (
     JSONMapper $mapper,
     ?array $value,

@@ -7,7 +7,6 @@ use AdventureTech\ORM\Mapping\Linkers\HasOneLinker;
 use AdventureTech\ORM\Repository\Filters\Filter;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 uses()
@@ -21,7 +20,7 @@ uses()
     });
 
 
-test('Linker exposes the target entity', function () {
+test('Linker exposes the target entity name', function () {
     $linker = new HasOneLinker('OriginEntity', 'TargetEntity', 'relation', 'foreign_key');
     expect($linker->getTargetEntity())->toBe('TargetEntity');
 });

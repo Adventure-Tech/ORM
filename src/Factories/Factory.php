@@ -15,10 +15,6 @@ use ReflectionClass;
 class Factory
 {
     private readonly Generator $faker;
-    /**
-     * @var PersistenceManager<T>
-     */
-    private readonly PersistenceManager $persistenceManager;
 
     /**
      * @template E of object
@@ -30,17 +26,17 @@ class Factory
     {
         $entityReflection = EntityReflection::new($class);
         $factory = $entityReflection->getFactory() ?? self::class;
-        return new $factory($class, $entityReflection);
+        $persistenceManager = self::getPersistenceManager($class);
+        return new $factory($entityReflection, $persistenceManager);
     }
 
     /**
-     * @param  class-string<T>  $class
      * @param  EntityReflection<T>  $entityReflection
+     * @param  PersistenceManager<T>  $persistenceManager
      */
-    private function __construct(string $class, private readonly EntityReflection $entityReflection)
+    private function __construct(private readonly EntityReflection $entityReflection, private readonly PersistenceManager $persistenceManager)
     {
         $this->faker = \Faker\Factory::create();
-        $this->persistenceManager = $this->getPersistenceManager($class);
     }
 
     /**
@@ -48,7 +44,7 @@ class Factory
      * @param  class-string<F>  $class
      * @return PersistenceManager<F>
      */
-    private function getPersistenceManager(string $class): PersistenceManager
+    private static function getPersistenceManager(string $class): PersistenceManager
     {
         // some reflection dark magic, but it's okay as factories are for test only
         /** @var PersistenceManager<F> $persistenceManager */

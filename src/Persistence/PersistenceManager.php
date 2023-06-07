@@ -132,6 +132,19 @@ abstract class PersistenceManager
         return $query->delete();
     }
 
+    /**
+     * @param  T  $entity
+     *
+     * @return int
+     */
+    public static function forceDelete(object $entity): int
+    {
+        $entityReflection = self::getEntityReflection($entity);
+        return DB::table($entityReflection->getTableName())
+            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+            ->delete();
+    }
+
 //    public function attach()
 //    {
 //    }

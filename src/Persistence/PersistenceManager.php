@@ -3,10 +3,10 @@
 namespace AdventureTech\ORM\Persistence;
 
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Exceptions\InconsistentEntitiesException;
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\CannotRestoreHardDeletedRecordException;
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
+use AdventureTech\ORM\Exceptions\InconsistentEntitiesException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
@@ -192,45 +192,67 @@ class PersistenceManager
 
     /**
      * @param  T  $entity
-     * @param  Collection<int|string,object>  $linkedEntities
+     * @param  Collection<int|string,object>|array<int|string,object>  $linkedEntities
      * @param  string  $relation
      * @return int
      */
-    public static function attach(object $entity, Collection $linkedEntities, string $relation): int
+    public static function attach(object $entity, Collection|array $linkedEntities, string $relation): int
     {
         $entityReflection = self::getEntityReflection($entity);
+
         $linker = $entityReflection->getLinkers()->get($relation);
+
+        $linkedEntities = Collection::wrap($linkedEntities);
+
         if (!($linker instanceof PivotLinker)) {
             throw new InvalidRelationException('Can only attach pure many-to-many relations');
         }
-        self::checkIdIsSet($entityReflection, $entity, 'Must set ID column on base entity when attaching');
-        $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
-        $data = $linkedEntities->map(function ($linkedEntity) use (
-            $entityReflection,
-            $entity,
-            $linker,
-            $linkedEntityReflection
-        ) {
-            if ($linkedEntity::class !== $linkedEntityReflection->getClass()) {
-                throw new InconsistentEntitiesException();
-            }
-            self::checkIdIsSet(
-                $linkedEntityReflection,
-                $linkedEntity,
-                'Must set ID columns of all entities when attaching'
-            );
-            return [
-                $linker->getOriginForeignKey() => $entity->{$entityReflection->getId()},
-                $linker->getTargetForeignKey() => $linkedEntity->{$linkedEntityReflection->getId()},
-            ];
-        })->toArray();
+
+        self::checkIdIsSet($entityReflection, $entity, 'Must set ID column on base entity when attaching/detaching');
+
+        $data = self::getPivotData($entityReflection, $entity, $linker, $linkedEntities);
 
         $entity->{$relation} = $linkedEntities;
 
-        return DB::table($linker->getPivotTable())->upsert(
-            $data,
-            [$linker->getOriginForeignKey(), $linker->getTargetForeignKey()]
-        );
+        return DB::table($linker->getPivotTable())->insertOrIgnore($data);
+    }
+
+    /**
+     * @param  T  $entity
+     * @param  Collection<int|string,object>|array<int|string,object>  $linkedEntities
+     * @param  string  $relation
+     * @return int
+     */
+    public static function detach(object $entity, Collection|array $linkedEntities, string $relation): int
+    {
+        $entityReflection = self::getEntityReflection($entity);
+
+        $linker = $entityReflection->getLinkers()->get($relation);
+
+        $linkedEntities = Collection::wrap($linkedEntities);
+
+        if (!($linker instanceof PivotLinker)) {
+            throw new InvalidRelationException('Can only detach pure many-to-many relations');
+        }
+
+        self::checkIdIsSet($entityReflection, $entity, 'Must set ID column on base entity when detaching');
+
+        $data = self::getPivotData($entityReflection, $entity, $linker, $linkedEntities);
+
+        // TODO: get proper column name
+        if ($entityReflection->checkPropertyInitialized($relation, $entity)) {
+            $linkedEntityIds = $linkedEntities->pluck('id', 'id');
+            $entity->{$relation} = $entity->{$relation}->filter(fn($entity) => !isset($entity->id) || $linkedEntityIds->doesntContain($entity->id));
+        } else {
+            $entity->{$relation} = Collection::empty();
+        }
+
+        $int = 0;
+        foreach ($data as $item) {
+            $int += DB::table($linker->getPivotTable())->where($item)->delete();
+        }
+
+        return $int;
     }
 
     /**
@@ -298,5 +320,43 @@ class PersistenceManager
         if ($int !== 1) {
             throw new RecordNotFoundException($message);
         }
+    }
+
+    /**
+     * @template D of object
+     * @param  EntityReflection<D>  $entityReflection
+     * @param  D  $entity
+     * @param  PivotLinker<D>  $linker
+     * @param  Collection<int|string,object>  $linkedEntities
+     * @return array<int|string,array<string,mixed>>
+     */
+    private static function getPivotData(
+        EntityReflection $entityReflection,
+        object $entity,
+        PivotLinker $linker,
+        Collection $linkedEntities
+    ): array {
+        $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
+        /** @var array<int|string,array<int|string>> $data */
+        $data = $linkedEntities->map(function ($linkedEntity) use (
+            $entityReflection,
+            $entity,
+            $linker,
+            $linkedEntityReflection
+        ) {
+            if ($linkedEntity::class !== $linkedEntityReflection->getClass()) {
+                throw new InconsistentEntitiesException();
+            }
+            self::checkIdIsSet(
+                $linkedEntityReflection,
+                $linkedEntity,
+                'Must set ID columns of all entities when attaching/detaching'
+            );
+            return [
+                $linker->getOriginForeignKey() => $entity->{$entityReflection->getId()},
+                $linker->getTargetForeignKey() => $linkedEntity->{$linkedEntityReflection->getId()},
+            ];
+        })->toArray();
+        return $data;
     }
 }

@@ -16,6 +16,7 @@ use Illuminate\Database\Query\JoinClause;
  * @template ORIGIN of object
  * @template TARGET of object
  * @implements Linker<ORIGIN,TARGET>
+ * @implements PivotLinker<TARGET>
  */
 
 readonly class BelongsToManyLinker implements Linker, PivotLinker

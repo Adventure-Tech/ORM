@@ -3,15 +3,16 @@
 namespace AdventureTech\ORM\Persistence;
 
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Exceptions\AttachingInconsistentEntitiesException;
-use AdventureTech\ORM\Exceptions\AttachingToInvalidRelationException;
+use AdventureTech\ORM\Exceptions\InconsistentEntitiesException;
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\CannotRestoreHardDeletedRecordException;
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
+use AdventureTech\ORM\Exceptions\InvalidRelationException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
 use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
+use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
@@ -35,14 +36,12 @@ class PersistenceManager
     /**
      * @param  T  $entity
      *
-     * @return T
+     * @return void
      */
-    public static function insert(object $entity): object
+    public static function insert(object $entity): void
     {
         $entityReflection = self::getEntityReflection($entity);
-        $arr = [];
-        EntityReflection::new(static::$entity);
-
+        $data = [];
         $id = $entityReflection->getId();
 
         foreach ($entityReflection->getManagedColumns() as $property => $managedColumn) {
@@ -58,107 +57,137 @@ class PersistenceManager
                 if ($property === $id) {
                     throw new IdSetForInsertException();
                 }
-                $arr = array_merge($arr, $mapper->serialize($entity->{$property}));
+                $data = array_merge($data, $mapper->serialize($entity->{$property}));
             } elseif ($property !== $id) {
                 throw new MissingValueForColumnException($property);
             }
         }
 
-        $arr = array_merge($arr, self::resolveOwningRelations($entity, $entityReflection));
+        $data = array_merge($data, self::resolveOwningRelations($entity, $entityReflection));
 
-        $id = DB::table($entityReflection->getTableName())->insertGetId($arr);
+        $id = DB::table($entityReflection->getTableName())->insertGetId($data);
         $entity->{$entityReflection->getId()} = $id;
-        return $entity;
     }
 
     /**
      * @param  T  $entity
      *
-     * @return int
+     * @return void
      */
-    public static function update(object $entity): int
+    public static function update(object $entity): void
     {
         $entityReflection = self::getEntityReflection($entity);
-        $arr = [];
+        $data = [];
 
         self::checkIdIsSet($entityReflection, $entity, 'Must set ID column when updating');
 
+        $query = DB::table($entityReflection->getTableName())
+            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
+
         foreach ($entityReflection->getManagedColumns() as $property => $managedColumn) {
-            $entity->{$property} = $managedColumn->getUpdateValue($entity->{$property} ?? null);
+            $updateValue = $managedColumn->getUpdateValue($entity->{$property} ?? null);
+            // TODO: distinction between null and not updating
+            if (!is_null($updateValue)) {
+                $entity->{$property} = $updateValue;
+            } else {
+                unset($entity->{$property});
+            }
         }
 
         foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
             $entity->{$property} = null;
+            // TODO: this is a duplicate
+            /** @var Mapper<mixed> $mapper */
+            $mapper = $entityReflection->getMappers()->get($property);
+            $query->whereNull($mapper->getColumnNames()[0]);
         }
 
         foreach ($entityReflection->getMappers() as $property => $mapper) {
             if ($entityReflection->checkPropertyInitialized($property, $entity)) {
-                $arr = array_merge($arr, $mapper->serialize($entity->{$property}));
+                $data = array_merge($data, $mapper->serialize($entity->{$property}));
             }
         }
 
-        $arr = array_merge($arr, self::resolveOwningRelations($entity, $entityReflection));
+        $data = array_merge($data, self::resolveOwningRelations($entity, $entityReflection));
 
-        // TODO: filter on soft-delete columns?
-        return DB::table($entityReflection->getTableName())
-            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
-            ->update($arr);
+        $int = $query->update($data);
+        self::checkNumberOfRowsAffected($int, 'Could not update entity');
     }
 
     /**
      * @param  T  $entity
      *
-     * @return int
+     * @return void
      */
-    public static function delete(object $entity): int
+    public static function delete(object $entity): void
     {
         $entityReflection = self::getEntityReflection($entity);
 
         self::checkIdIsSet($entityReflection, $entity, 'Must set ID column when deleting');
 
-        $query = DB::table($entityReflection->getTableName())
-            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
-
+        $data = [];
         foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
             /** @var Mapper<mixed> $mapper */
             $mapper = $entityReflection->getMappers()->get($property);
             $datetime = $softDelete->getDatetime();
             $entity->{$property} = $datetime;
-            return $query->update($mapper->serialize($datetime));
+            $data = array_merge($data, $mapper->serialize($datetime));
         }
 
-        return $query->delete();
+        if ($data) {
+            $int = DB::table($entityReflection->getTableName())
+                ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+                ->update($data);
+        } else {
+        // TODO: should this call forceDelete() instead?
+            $int = DB::table($entityReflection->getTableName())
+                ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+                ->delete();
+        }
+        self::checkNumberOfRowsAffected($int, 'Could not delete entity');
     }
 
     /**
      * @param  T  $entity
      *
-     * @return int
+     * @return void
      */
-    public static function forceDelete(object $entity): int
+    public static function forceDelete(object $entity): void
     {
         $entityReflection = self::getEntityReflection($entity);
         self::checkIdIsSet($entityReflection, $entity, 'Must set ID column when deleting');
-        return DB::table($entityReflection->getTableName())
+        $int = DB::table($entityReflection->getTableName())
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
             ->delete();
+        self::checkNumberOfRowsAffected($int, 'Could not force-delete entity');
     }
-    public static function restore(object $entity)
+
+    /**
+     * @param  T  $entity
+     *
+     * @return void
+     */
+    public static function restore(object $entity): void
     {
         $entityReflection = self::getEntityReflection($entity);
 
         self::checkIdIsSet($entityReflection, $entity, 'Must set ID column when restoring');
 
-        $query = DB::table($entityReflection->getTableName())
-            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
-
+        $data = [];
         foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
             /** @var Mapper<mixed> $mapper */
             $mapper = $entityReflection->getMappers()->get($property);
             $entity->{$property} = null;
-            return $query->update($mapper->serialize(null));
+            $data = array_merge($data, $mapper->serialize(null));
         }
-        throw new CannotRestoreHardDeletedRecordException();
+        if ($data) {
+            $int = DB::table($entityReflection->getTableName())
+                ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+                ->update($data);
+            self::checkNumberOfRowsAffected($int, 'Could not restore entity');
+        } else {
+            throw new CannotRestoreHardDeletedRecordException();
+        }
     }
 
     /**
@@ -172,7 +201,7 @@ class PersistenceManager
         $entityReflection = self::getEntityReflection($entity);
         $linker = $entityReflection->getLinkers()->get($relation);
         if (!($linker instanceof PivotLinker)) {
-            throw new AttachingToInvalidRelationException();
+            throw new InvalidRelationException('Can only attach pure many-to-many relations');
         }
         self::checkIdIsSet($entityReflection, $entity, 'Must set ID column on base entity when attaching');
         $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
@@ -183,7 +212,7 @@ class PersistenceManager
             $linkedEntityReflection
         ) {
             if ($linkedEntity::class !== $linkedEntityReflection->getClass()) {
-                throw new AttachingInconsistentEntitiesException();
+                throw new InconsistentEntitiesException();
             }
             self::checkIdIsSet(
                 $linkedEntityReflection,
@@ -211,7 +240,7 @@ class PersistenceManager
      */
     private static function resolveOwningRelations(object $entity, EntityReflection $entityReflection): array
     {
-        $arr = [];
+        $data = [];
         foreach ($entityReflection->getLinkers() as $property => $linker) {
             if ($linker instanceof OwningLinker) {
                 if (!$entityReflection->checkPropertyInitialized($property, $entity)) {
@@ -225,11 +254,13 @@ class PersistenceManager
                     throw new MissingOwningRelationException('Owned linked entity must have valid ID set');
                 }
                 if (!is_null($linkedEntity)) {
-                    $arr[$linker->getForeignKey()] = $entity->{$property}->{$linkedEntityId};
+                    $data[$linker->getForeignKey()] = $entity->{$property}->{$linkedEntityId};
+                } else {
+                    $data[$linker->getForeignKey()] = null;
                 }
             }
         }
-        return $arr;
+        return $data;
     }
 
     /**
@@ -248,10 +279,24 @@ class PersistenceManager
         return EntityReflection::new(static::$entity);
     }
 
+    /**
+     * @template D of object
+     * @param  EntityReflection<D>  $entityReflection
+     * @param  D  $entity
+     * @param  string  $message
+     * @return void
+     */
     private static function checkIdIsSet(EntityReflection $entityReflection, object $entity, string $message): void
     {
         if (!$entityReflection->checkPropertyInitialized($entityReflection->getId(), $entity)) {
             throw new MissingIdException($message);
+        }
+    }
+
+    private static function checkNumberOfRowsAffected(int $int, string $message): void
+    {
+        if ($int !== 1) {
+            throw new RecordNotFoundException($message);
         }
     }
 }

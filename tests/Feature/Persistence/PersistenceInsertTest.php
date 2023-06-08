@@ -41,9 +41,8 @@ test('Can insert entity', function () {
 test('When inserting entity the id is set on the object', function () {
     $user = new User();
     $user->name = 'Name';
-    $returned = UserPersistence::insert($user);
-    expect($user->id)->toBeNumeric()
-        ->and($returned)->toBe($user);
+    UserPersistence::insert($user);
+    expect($user->id)->toBeNumeric();
 });
 
 test('Trying to insert entity with ID already set leads exception', function () {
@@ -78,8 +77,8 @@ test('Managed columns cannot be overridden', function () {
 test('When inserting entity managed columns are set on the object', function () {
     $user = new User();
     $user->name = 'Name';
-    $returned = UserPersistence::insert($user);
-    expect($user)->toBe($returned)
+    UserPersistence::insert($user);
+    expect($user)
         ->createdAt->toBeInstanceOf(CarbonImmutable::class)
         ->updatedAt->toBeInstanceOf(CarbonImmutable::class);
 });
@@ -96,8 +95,8 @@ test('Soft-delete columns cannot be overridden', function () {
 test('When inserting entity soft-delete columns are set to null on the object', function () {
     $user = new User();
     $user->name = 'Name';
-    $returned = UserPersistence::insert($user);
-    expect($user)->toBe($returned)
+    UserPersistence::insert($user);
+    expect($user)
         ->deletedAt->toBeNull();
 });
 

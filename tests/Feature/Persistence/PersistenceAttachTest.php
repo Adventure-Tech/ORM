@@ -1,9 +1,9 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\AttachingInconsistentEntitiesException;
-use AdventureTech\ORM\Exceptions\AttachingToInvalidRelationException;
+use AdventureTech\ORM\Exceptions\InconsistentEntitiesException;
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
+use AdventureTech\ORM\Exceptions\InvalidRelationException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
@@ -32,7 +32,7 @@ test('Trying to attach to an entity not matching the persistence managers config
 test('Trying to attach non-existing relation leads to exception', function () {
     $user = new User();
     expect(fn() => UserPersistence::attach($user, Collection::empty(), 'relation'))->toThrow(
-        AttachingToInvalidRelationException::class,
+        InvalidRelationException::class,
         'Can only attach pure many-to-many relations'
     );
 });
@@ -40,7 +40,7 @@ test('Trying to attach non-existing relation leads to exception', function () {
 test('Cannot attach non-many-to-many relation', function () {
     $user = new User();
     expect(fn() => UserPersistence::attach($user, Collection::empty(), 'posts'))->toThrow(
-        AttachingToInvalidRelationException::class,
+        InvalidRelationException::class,
         'Can only attach pure many-to-many relations'
     );
 });
@@ -53,7 +53,7 @@ test('Entities to be attached must be of correct type', function () {
     $user->name = 'name';
     UserPersistence::insert($user);
     expect(fn() => UserPersistence::attach($user, collect([$friend, new Post()]), 'friends'))->toThrow(
-        AttachingInconsistentEntitiesException::class,
+        InconsistentEntitiesException::class,
         'All entities in collection must be of correct type'
     );
 });

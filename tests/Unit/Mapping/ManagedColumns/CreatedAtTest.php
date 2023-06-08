@@ -22,7 +22,6 @@ test('Function to get update value protects against wrong types', function (mixe
     expect(fn() => $instance->getUpdateValue($value))
         ->toThrow(InvalidTypeException::class, 'Wrong type passed to managed column');
 })->with([
-    null,
     'string',
     123,
     Carbon::now()

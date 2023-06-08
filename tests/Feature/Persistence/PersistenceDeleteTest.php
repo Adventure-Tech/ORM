@@ -3,6 +3,7 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
@@ -51,7 +52,6 @@ test('When deleting entity with soft-deletes the deletedAt property is set on th
     $user->name = 'Name';
     UserPersistence::insert($user);
     UserPersistence::delete($user);
-    UserPersistence::delete($user);
     expect($user->deletedAt)
         ->toBeInstanceOf(CarbonImmutable::class)
         ->toIso8601String()->toBe(now()->toIso8601String());
@@ -63,5 +63,23 @@ test('Trying to delete entity without ID set leads exception', function () {
     expect(fn() => UserPersistence::delete($user))->toThrow(
         MissingIdException::class,
         'Must set ID column when deleting'
+    );
+});
+
+test('Trying to soft-delete non-existing record leads to exception', function () {
+    $user = new User();
+    $user->id = 1;
+    expect(fn() => UserPersistence::delete($user))->toThrow(
+        RecordNotFoundException::class,
+        'Could not delete entity'
+    );
+});
+
+test('Trying to hard-delete non-existing record leads to exception', function () {
+    $personalDetails = new PersonalDetails();
+    $personalDetails->id = 1;
+    expect(fn() => PersonalDetailPersistence::delete($personalDetails))->toThrow(
+        RecordNotFoundException::class,
+        'Could not delete entity'
     );
 });

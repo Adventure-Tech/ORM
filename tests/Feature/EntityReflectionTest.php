@@ -65,7 +65,7 @@ test('Can get list of mappers correctly', function () {
     $entityReflection = EntityReflection::new(User::class);
     expect($entityReflection->getMappers())
         ->toBeInstanceOf(Collection::class)
-        ->toHaveCount(5)
+        ->toHaveCount(6)
         ->each->toBeInstanceOf(Mapper::class);
 });
 
@@ -86,7 +86,7 @@ test('Can names of selected columns correctly', function () {
     $entityReflection = EntityReflection::new(User::class);
     expect($entityReflection->getSelectColumns())
         ->toBeArray()
-        ->toEqualCanonicalizing(['id', 'name', 'created_at', 'updated_at', 'deleted_at'])
+        ->toEqualCanonicalizing(['id', 'name', 'created_at', 'updated_at', 'deleted_at', 'favourite_color'])
         ->each(fn ($expectation, $key) => $expectation->toBe($key));
 });
 

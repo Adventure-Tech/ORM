@@ -1,13 +1,8 @@
 <?php
 
 use AdventureTech\ORM\Exceptions\EntityNotFoundException;
-use AdventureTech\ORM\Exceptions\InvalidRelationException;
-use AdventureTech\ORM\Repository\Filters\IS;
-use AdventureTech\ORM\Repository\Filters\Where;
-use AdventureTech\ORM\Repository\Filters\WhereColumn;
 use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
-use AdventureTech\ORM\Tests\TestClasses\PostRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 

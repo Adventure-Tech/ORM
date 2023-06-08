@@ -4,6 +4,7 @@ use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\CannotRestoreHardDeletedRecordException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
@@ -65,5 +66,14 @@ test('Trying to restore entity without ID set leads exception', function () {
     expect(fn() => UserPersistence::restore($user))->toThrow(
         MissingIdException::class,
         'Must set ID column when restoring'
+    );
+});
+
+test('Trying to restore non-existing record leads to exception', function () {
+    $user = new User();
+    $user->id = 1;
+    expect(fn() => UserPersistence::restore($user))->toThrow(
+        RecordNotFoundException::class,
+        'Could not restore entity'
     );
 });

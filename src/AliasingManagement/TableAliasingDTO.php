@@ -19,11 +19,11 @@ class TableAliasingDTO
      */
     public function __construct(public readonly string $alias, array $columns)
     {
-        $arr = [];
+        $array = [];
         foreach ($columns as $column) {
-            $arr[$column] = $column;
+            $array[$column] = $column;
         }
-        $this->columns = $arr;
+        $this->columns = $array;
     }
     public function addChild(string $key, TableAliasingDTO $child): void
     {

@@ -3,13 +3,13 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PersonalDetailPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
-use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 test('Cannot use base persistence manager to force-delete entities', function () {
@@ -50,5 +50,23 @@ test('Trying to force-delete entity without ID set leads exception', function ()
     expect(fn() => UserPersistence::forceDelete($user))->toThrow(
         MissingIdException::class,
         'Must set ID column when deleting'
+    );
+});
+
+test('Trying to force-delete non-existing record leads to exception for entity with soft-deletes', function () {
+    $user = new User();
+    $user->id = 1;
+    expect(fn() => UserPersistence::forceDelete($user))->toThrow(
+        RecordNotFoundException::class,
+        'Could not force-delete entity'
+    );
+});
+
+test('Trying to force-delete non-existing record leads to exception for entity without soft-deletes', function () {
+    $personalDetails = new PersonalDetails();
+    $personalDetails->id = 1;
+    expect(fn() => PersonalDetailPersistence::forceDelete($personalDetails))->toThrow(
+        RecordNotFoundException::class,
+        'Could not force-delete entity'
     );
 });

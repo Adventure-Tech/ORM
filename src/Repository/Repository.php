@@ -153,7 +153,7 @@ class Repository
     public function with(string $relation, callable $callable = null): static
     {
         if (!$this->entityReflection->getLinkers()->has($relation)) {
-            throw new InvalidRelationException($relation);
+            throw new InvalidRelationException('Invalid relation used in with clause [tried to load relation "' . $relation . '"]');
         }
 
         /** @var Linker<T,object> $linker */

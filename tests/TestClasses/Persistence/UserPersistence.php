@@ -7,8 +7,5 @@ use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 
 class UserPersistence extends PersistenceManager
 {
-    public function __construct()
-    {
-        parent::__construct(User::class);
-    }
+    protected static string $entity = User::class;
 }

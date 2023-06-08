@@ -21,11 +21,25 @@ uses()
     });
 
 
-test('Linker exposes the target entity', function () {
+test('Linker exposes the target entity name', function () {
     $linker = new BelongsToManyLinker('OriginEntity', 'TargetEntity', 'relation', 'pivot_table', 'origin_foreign_key', 'target_foreign_key');
     expect($linker->getTargetEntity())->toBe('TargetEntity');
 });
 
+test('Linker exposes the pivot table name', function () {
+    $linker = new BelongsToManyLinker('OriginEntity', 'TargetEntity', 'relation', 'pivot_table', 'origin_foreign_key', 'target_foreign_key');
+    expect($linker->getPivotTable())->toBe('pivot_table');
+});
+
+test('Linker exposes the origin foreign key column name', function () {
+    $linker = new BelongsToManyLinker('OriginEntity', 'TargetEntity', 'relation', 'pivot_table', 'origin_foreign_key', 'target_foreign_key');
+    expect($linker->getOriginForeignKey())->toBe('origin_foreign_key');
+});
+
+test('Linker exposes the target foreign key column name', function () {
+    $linker = new BelongsToManyLinker('OriginEntity', 'TargetEntity', 'relation', 'pivot_table', 'origin_foreign_key', 'target_foreign_key');
+    expect($linker->getTargetForeignKey())->toBe('target_foreign_key');
+});
 
 test('Linker can link entities correctly', function () {
     $linker = new BelongsToManyLinker('OriginEntity', 'TargetEntity', 'relation', 'pivot_table', 'origin_foreign_key', 'target_foreign_key');

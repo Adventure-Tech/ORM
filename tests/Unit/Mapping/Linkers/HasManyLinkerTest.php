@@ -21,7 +21,7 @@ uses()
     });
 
 
-test('Linker exposes the target entity', function () {
+test('Linker exposes the target entity name', function () {
     $linker = new HasManyLinker('OriginEntity', 'TargetEntity', 'relation', 'foreign_key');
     expect($linker->getTargetEntity())->toBe('TargetEntity');
 });

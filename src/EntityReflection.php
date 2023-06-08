@@ -278,4 +278,13 @@ class EntityReflection
             $relationAnnotation->getLinker($property->getName(), $propertyType, $this->class)
         );
     }
+
+    public function checkPropertyInitialized(string $property, ?object $instance): bool
+    {
+        if (is_null($instance)) {
+            return false;
+        }
+        // TODO: handle reflection exception
+        return $this->reflectionClass->getProperty($property)->isInitialized($instance);
+    }
 }

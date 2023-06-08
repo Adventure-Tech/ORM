@@ -15,6 +15,7 @@ return new class () extends Migration {
             $table->timestamp('published_at')->nullable();
             $table->string('published_tz')->nullable();
             $table->foreignId('author')->constrained('users');
+            $table->foreignId('editor')->nullable()->constrained('users');
             $table->timestamps();
             $table->softDeletes();
         });

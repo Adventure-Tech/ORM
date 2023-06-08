@@ -16,12 +16,6 @@ interface Mapper
     public function getColumnNames(): array;
 
     /**
-     * @param  object  $instance
-     * @return bool
-     */
-    public function isInitialized(object $instance): bool;
-
-    /**
      * @param  mixed  $value
      * @return array<string,string|null>
      */

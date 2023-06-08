@@ -19,7 +19,7 @@ class CreatedAt implements ManagedColumnAnnotation
 
     public function getUpdateValue(mixed $value): ?CarbonImmutable
     {
-        if (!($value instanceof CarbonImmutable)) {
+        if (!($value instanceof CarbonImmutable) && !is_null($value)) {
             throw new InvalidTypeException('Wrong type passed to managed column');
         }
         return $value;

@@ -5,6 +5,7 @@ use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
 use AdventureTech\ORM\Exceptions\NullReflectionTypeException;
+use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
@@ -65,7 +66,7 @@ test('Can get list of mappers correctly', function () {
     $entityReflection = EntityReflection::new(User::class);
     expect($entityReflection->getMappers())
         ->toBeInstanceOf(Collection::class)
-        ->toHaveCount(5)
+        ->toHaveCount(6)
         ->each->toBeInstanceOf(Mapper::class);
 });
 
@@ -86,7 +87,7 @@ test('Can names of selected columns correctly', function () {
     $entityReflection = EntityReflection::new(User::class);
     expect($entityReflection->getSelectColumns())
         ->toBeArray()
-        ->toEqualCanonicalizing(['id', 'name', 'created_at', 'updated_at', 'deleted_at'])
+        ->toEqualCanonicalizing(['id', 'name', 'created_at', 'updated_at', 'deleted_at', 'favourite_color'])
         ->each(fn ($expectation, $key) => $expectation->toBe($key));
 });
 
@@ -94,7 +95,18 @@ test('Can names of selected columns correctly with owning linker (BelongsTo)', f
     $entityReflection = EntityReflection::new(Post::class);
     expect($entityReflection->getSelectColumns())
         ->toBeArray()
-        ->toEqualCanonicalizing(['id', 'title', 'content', 'published_at', 'published_tz', 'created_at', 'updated_at', 'deleted_at', 'author'])
+        ->toEqualCanonicalizing([
+            'id',
+            'title',
+            'content',
+            'published_at',
+            'published_tz',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'author',
+            'editor',
+        ])
         ->each(fn ($expectation, $key) => $expectation->toBe($key));
 });
 
@@ -154,6 +166,7 @@ test('Properties annotated as relations must have type set', function () {
         ->toThrow(NullReflectionTypeException::class, 'Reflection type returned null');
 });
 
+
 test('If entity instantiation fails an appropriate exception is thrown', function () {
     $class = new #[Entity] class ('arg')
     {
@@ -164,4 +177,15 @@ test('If entity instantiation fails an appropriate exception is thrown', functio
     $entityReflection = EntityReflection::new($class::class);
     expect(fn () =>$entityReflection->newInstance())
     ->toThrow(EntityInstantiationException::class);
+});
+
+test('Entity reflection can check if property is set on an instance', function () {
+    $class = new #[Entity] class ('arg')
+    {
+        public string $a;
+        public string $b = 'set';
+    };
+    $entityReflection = EntityReflection::new($class::class);
+    expect($entityReflection->checkPropertyInitialized('a', $class))->toBeFalse()
+        ->and($entityReflection->checkPropertyInitialized('b', $class))->toBeTrue();
 });

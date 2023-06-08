@@ -239,10 +239,15 @@ class PersistenceManager
 
         $data = self::getPivotData($entityReflection, $entity, $linker, $linkedEntities);
 
-        // TODO: get proper column name
+        $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
         if ($entityReflection->checkPropertyInitialized($relation, $entity)) {
-            $linkedEntityIds = $linkedEntities->pluck('id', 'id');
-            $entity->{$relation} = $entity->{$relation}->filter(fn($entity) => !isset($entity->id) || $linkedEntityIds->doesntContain($entity->id));
+            $linkedEntityIds = $linkedEntities->pluck(
+                $linkedEntityReflection->getId(),
+                $linkedEntityReflection->getId()
+            );
+            $entity->{$relation} = $entity->{$relation}->filter(fn($entity) =>
+                !isset($entity->{$linkedEntityReflection->getId()})
+                || $linkedEntityIds->doesntContain($entity->{$linkedEntityReflection->getId()}));
         } else {
             $entity->{$relation} = Collection::empty();
         }

@@ -26,7 +26,7 @@ class User
     public string $name;
 
     #[Column]
-    public ?string $favouriteColor = null;
+    public ?string $favouriteColor;
 
     #[HasMany(targetEntity: Post::class, foreignKey: 'author')]
     public Collection $posts;
@@ -41,4 +41,14 @@ class User
         targetForeignKey: 'b_id'
     )]
     public Collection $friends;
+
+//    public function getName(): string
+//    {
+//        return $this->name;
+//    }
+//
+//    public function setName(string $name): void
+//    {
+//        $this->name = $name;
+//    }
 }

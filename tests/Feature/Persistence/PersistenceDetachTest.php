@@ -135,6 +135,7 @@ test('Detaching handles non-existing links correctly', function () {
     $bob->name = 'Bob';
     UserPersistence::insert($bob);
     DB::table('friends')->insert(['a_id' => $alice->id, 'b_id' => $alice->id]);
+    $alice->friends = collect([$alice, $bob]);
 
     UserPersistence::detach($alice, [$alice, $bob], 'friends');
 

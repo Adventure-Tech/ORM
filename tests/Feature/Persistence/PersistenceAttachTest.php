@@ -11,7 +11,6 @@ use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 test('Cannot use base persistence manager to attach entities', function () {

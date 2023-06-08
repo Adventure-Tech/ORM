@@ -3,13 +3,10 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
-use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
-use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
-use AdventureTech\ORM\Tests\TestClasses\Persistence\PersonalDetailPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Carbon\CarbonImmutable;
@@ -70,6 +67,7 @@ test('Managed columns cannot be overridden', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name', 'created_at' => $createdAt, 'updated_at' => $updatedAt]);
     $user = new User();
     $user->id = $id;
+    $user->name = 'Name';
     $user->updatedAt = null;
     UserPersistence::update($user);
     expect(DB::table('users')->first())
@@ -81,6 +79,7 @@ test('When updating entity managed columns are set on the object', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name']);
     $user = new User();
     $user->id = $id;
+    $user->name = 'Name';
     UserPersistence::update($user);
     expect($user)
         ->updatedAt->toBeInstanceOf(CarbonImmutable::class);
@@ -90,6 +89,7 @@ test('Soft-delete columns cannot be overridden', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name']);
     $user = new User();
     $user->id = $id;
+    $user->name = 'Name';
     $user->deletedAt = CarbonImmutable::parse('2023-01-01 12:00');
     UserPersistence::update($user);
     expect(DB::table('users')->first())
@@ -142,7 +142,7 @@ test('Must set ID of non-nullable owning relation', function () {
     $post->author = $bob;
 
     expect(fn() => PostPersistence::update($post))->toThrow(
-        MissingOwningRelationException::class,
+        MissingIdException::class,
         'Owned linked entity must have valid ID set'
     );
 });

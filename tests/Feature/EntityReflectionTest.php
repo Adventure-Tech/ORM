@@ -179,13 +179,14 @@ test('If entity instantiation fails an appropriate exception is thrown', functio
     ->toThrow(EntityInstantiationException::class);
 });
 
-test('Entity reflection can check if property is set on an instance', function () {
+test('Entity reflection can check if property is nullable', function () {
     $class = new #[Entity] class ('arg')
     {
         public string $a;
-        public string $b = 'set';
+        public ?string $b;
     };
     $entityReflection = EntityReflection::new($class::class);
-    expect($entityReflection->checkPropertyInitialized('a', $class))->toBeFalse()
-        ->and($entityReflection->checkPropertyInitialized('b', $class))->toBeTrue();
+    expect($entityReflection->allowsNull('a'))->toBeFalse()
+        ->and($entityReflection->allowsNull('b'))->toBeTrue()
+        ->and($entityReflection->allowsNull('c'))->toBeFalse();
 });

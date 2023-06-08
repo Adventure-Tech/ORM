@@ -13,10 +13,9 @@ interface ManagedColumnAnnotation
     public function getInsertValue(): mixed;
 
     /**
-     * @param  mixed  $value
      * @return T|null
      */
-    public function getUpdateValue(mixed $value): mixed;
+    public function getUpdateValue(): mixed;
     /**
      * @return T|null
      */

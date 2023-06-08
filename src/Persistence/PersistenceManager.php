@@ -18,6 +18,7 @@ use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 /**
  * @template T of object
@@ -53,13 +54,15 @@ class PersistenceManager
         }
 
         foreach ($entityReflection->getMappers() as $property => $mapper) {
-            if ($entityReflection->checkPropertyInitialized($property, $entity)) {
-                if ($property === $id) {
+            if ($property === $id) {
+                if (isset($entity->{$property})) {
                     throw new IdSetForInsertException();
                 }
-                $data = array_merge($data, $mapper->serialize($entity->{$property}));
-            } elseif ($property !== $id) {
-                throw new MissingValueForColumnException($property);
+            } else {
+                if (!$entityReflection->allowsNull($property) && !isset($entity->{$property})) {
+                    throw new MissingValueForColumnException($property);
+                }
+                $data = array_merge($data, $mapper->serialize($entity->{$property} ?? null));
             }
         }
 
@@ -84,13 +87,13 @@ class PersistenceManager
         $query = DB::table($entityReflection->getTableName())
             ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
 
+        $unsetManagedColumns = [];
         foreach ($entityReflection->getManagedColumns() as $property => $managedColumn) {
-            $updateValue = $managedColumn->getUpdateValue($entity->{$property} ?? null);
-            // TODO: distinction between null and not updating
+            $updateValue = $managedColumn->getUpdateValue();
             if (!is_null($updateValue)) {
                 $entity->{$property} = $updateValue;
             } else {
-                unset($entity->{$property});
+                $unsetManagedColumns[$property] = $property;
             }
         }
 
@@ -103,9 +106,13 @@ class PersistenceManager
         }
 
         foreach ($entityReflection->getMappers() as $property => $mapper) {
-            if ($entityReflection->checkPropertyInitialized($property, $entity)) {
-                $data = array_merge($data, $mapper->serialize($entity->{$property}));
+            if (array_key_exists($property, $unsetManagedColumns)) {
+                continue;
             }
+            if (!$entityReflection->allowsNull($property) && !isset($entity->{$property})) {
+                throw new MissingValueForColumnException($property);
+            }
+            $data = array_merge($data, $mapper->serialize($entity->{$property} ?? null));
         }
 
         $data = array_merge($data, self::resolveOwningRelations($entity, $entityReflection));
@@ -240,7 +247,7 @@ class PersistenceManager
         $data = self::getPivotData($entityReflection, $entity, $linker, $linkedEntities);
 
         $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
-        if ($entityReflection->checkPropertyInitialized($relation, $entity)) {
+        if (isset($entity->{$relation})) {
             $linkedEntityIds = $linkedEntities->pluck(
                 $linkedEntityReflection->getId(),
                 $linkedEntityReflection->getId()
@@ -248,8 +255,6 @@ class PersistenceManager
             $entity->{$relation} = $entity->{$relation}->filter(fn($entity) =>
                 !isset($entity->{$linkedEntityReflection->getId()})
                 || $linkedEntityIds->doesntContain($entity->{$linkedEntityReflection->getId()}));
-        } else {
-            $entity->{$relation} = Collection::empty();
         }
 
         $int = 0;
@@ -270,17 +275,15 @@ class PersistenceManager
         $data = [];
         foreach ($entityReflection->getLinkers() as $property => $linker) {
             if ($linker instanceof OwningLinker) {
-                if (!$entityReflection->checkPropertyInitialized($property, $entity)) {
+                if (!$entityReflection->allowsNull($property) && !isset($entity->{$property})) {
                     throw new MissingOwningRelationException('Must set all non-nullable owning relations');
-                }
-                $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
-                $linkedEntity = $entity->{$property};
-                $linkedEntityId = $linkedEntityReflection->getId();
-                $initialized = $linkedEntityReflection->checkPropertyInitialized($linkedEntityId, $linkedEntity);
-                if (!$initialized && !is_null($linkedEntity)) {
-                    throw new MissingOwningRelationException('Owned linked entity must have valid ID set');
-                }
-                if (!is_null($linkedEntity)) {
+                    // case 4: non-nullable and not set
+                    //         -> exception
+                } elseif (isset($entity->{$property})) {
+                    $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
+                    $linkedEntity = $entity->{$property};
+                    $linkedEntityId = $linkedEntityReflection->getId();
+                    self::checkIdIsSet($linkedEntityReflection, $linkedEntity, 'Owned linked entity must have valid ID set');
                     $data[$linker->getForeignKey()] = $entity->{$property}->{$linkedEntityId};
                 } else {
                     $data[$linker->getForeignKey()] = null;
@@ -315,7 +318,7 @@ class PersistenceManager
      */
     private static function checkIdIsSet(EntityReflection $entityReflection, object $entity, string $message): void
     {
-        if (!$entityReflection->checkPropertyInitialized($entityReflection->getId(), $entity)) {
+        if (!isset($entity->{$entityReflection->getId()})) {
             throw new MissingIdException($message);
         }
     }

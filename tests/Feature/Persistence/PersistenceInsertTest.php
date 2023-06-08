@@ -3,6 +3,7 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
+use AdventureTech\ORM\Exceptions\MissingIdException;
 use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
@@ -59,7 +60,7 @@ test('Trying to insert entity with missing column leads exception', function () 
     $user = new User();
     expect(fn() => UserPersistence::insert($user))->toThrow(
         MissingValueForColumnException::class,
-        'Forgot to set column without default value [property "name"]'
+        'Forgot to set non-nullable property "name"'
     );
 });
 
@@ -139,7 +140,7 @@ test('Must set ID of owning relation', function () {
     $post->author = new User();
 
     expect(fn() => PostPersistence::insert($post))->toThrow(
-        MissingOwningRelationException::class,
+        MissingIdException::class,
         'Owned linked entity must have valid ID set'
     );
 });

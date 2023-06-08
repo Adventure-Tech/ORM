@@ -279,12 +279,8 @@ class EntityReflection
         );
     }
 
-    public function checkPropertyInitialized(string $property, ?object $instance): bool
+    public function allowsNull(string $property): bool
     {
-        if (is_null($instance)) {
-            return false;
-        }
-        // TODO: handle reflection exception
-        return $this->reflectionClass->getProperty($property)->isInitialized($instance);
+        return $this->reflectionClass->getProperty($property)->getType()->allowsNull();
     }
 }

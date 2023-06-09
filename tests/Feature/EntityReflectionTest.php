@@ -5,7 +5,6 @@ use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
 use AdventureTech\ORM\Exceptions\NullReflectionTypeException;
-use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
@@ -180,13 +179,18 @@ test('If entity instantiation fails an appropriate exception is thrown', functio
 });
 
 test('Entity reflection can check if property is nullable', function () {
-    $class = new #[Entity] class ('arg')
-    {
+    $class = new #[Entity] class {
         public string $a;
         public ?string $b;
     };
     $entityReflection = EntityReflection::new($class::class);
     expect($entityReflection->allowsNull('a'))->toBeFalse()
-        ->and($entityReflection->allowsNull('b'))->toBeTrue()
-        ->and($entityReflection->allowsNull('c'))->toBeFalse();
+        ->and($entityReflection->allowsNull('b'))->toBeTrue();
+});
+
+test('Entity reflection null-check throws exception if property does not exist', function () {
+    $class = new #[Entity] class {
+    };
+    $entityReflection = EntityReflection::new($class::class);
+    expect(fn () => $entityReflection->allowsNull('a'))->toThrow(ReflectionException::class);
 });

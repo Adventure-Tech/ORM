@@ -11,21 +11,10 @@ test('Insert value is generated correctly', function () {
     expect($instance->getInsertValue()->toIso8601String())->toBe($now->toIso8601String());
 });
 
-test('Update value is generated correctly', function () {
+test('Update value is generated correctly as null', function () {
     $instance = new CreatedAt();
-    $now = CarbonImmutable::now();
-    expect($instance->getUpdateValue($now))->toBe($now);
+    expect($instance->getUpdateValue())->toBeNull();
 });
-
-test('Function to get update value protects against wrong types', function (mixed $value) {
-    $instance = new CreatedAt();
-    expect(fn() => $instance->getUpdateValue($value))
-        ->toThrow(InvalidTypeException::class, 'Wrong type passed to managed column');
-})->with([
-    'string',
-    123,
-    Carbon::now()
-]);
 
 test('Delete value is generated correctly', function () {
     $instance = new CreatedAt();

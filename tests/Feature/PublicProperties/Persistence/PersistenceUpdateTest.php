@@ -3,6 +3,7 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
@@ -50,15 +51,15 @@ test('Trying to update entity without ID set leads exception', function () {
     );
 });
 
-test('Can do partial updates', function () {
+test('Attempting partial updates throws exception', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name', 'favourite_color' => 'turquoise']);
     $user = new User();
     $user->id = $id;
     $user->favouriteColor = null;
-    UserPersistence::update($user);
-    expect(DB::table('users')->first())
-        ->name->toBe('Name')
-        ->favourite_color->toBeNull();
+    expect(fn() => UserPersistence::update($user))->toThrow(
+        MissingValueForColumnException::class,
+        'Forgot to set non-nullable property "name"'
+    );
 });
 
 test('Managed columns cannot be overridden', function () {

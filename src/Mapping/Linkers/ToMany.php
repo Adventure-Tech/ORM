@@ -2,18 +2,19 @@
 
 namespace AdventureTech\ORM\Mapping\Linkers;
 
+use AdventureTech\ORM\EntityAccessorService;
 use Illuminate\Support\Collection;
 
 trait ToMany
 {
     public function link(object $currentEntity, ?object $relatedEntity): void
     {
-        if (!isset($currentEntity->{$this->relation})) {
-            $currentEntity->{$this->relation} = Collection::empty();
+        if (!EntityAccessorService::isset($currentEntity, $this->relation)) {
+            EntityAccessorService::set($currentEntity, $this->relation, Collection::empty());
         }
-        // TODO: this surely breaks
+        // TODO: this surely breaks. need better check
         if ($relatedEntity) {
-            $currentEntity->{$this->relation}[] = $relatedEntity;
+            EntityAccessorService::get($currentEntity, $this->relation)[] = $relatedEntity;
         }
     }
 }

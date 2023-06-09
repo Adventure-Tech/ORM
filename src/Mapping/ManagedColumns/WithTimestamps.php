@@ -9,9 +9,9 @@ trait WithTimestamps
 {
     #[Column]
     #[CreatedAt]
-    public ?CarbonImmutable $createdAt = null;
+    public ?CarbonImmutable $createdAt;
 
     #[Column]
     #[UpdatedAt]
-    public ?CarbonImmutable $updatedAt = null;
+    public ?CarbonImmutable $updatedAt;
 }

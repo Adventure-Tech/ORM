@@ -11,7 +11,7 @@ test('Can find individual record', function () {
     $repo = Repository::new(User::class);
     expect($repo->find($id))
         ->toBeInstanceOf(User::class)
-        ->id->toBe($id)
+        ->getId()->toBe($id)
         ->name->toBe('Name')
         ->createdAt->toBeNull()
         ->udpatedAt->toBeNull()
@@ -23,7 +23,7 @@ test('Can findOrFail individual record', function () {
     $repo = Repository::new(User::class);
     expect($repo->findOrFail($id))
         ->toBeInstanceOf(User::class)
-        ->id->toBe($id)
+        ->getId()->toBe($id)
         ->name->toBe('Name')
         ->createdAt->toBeNull()
         ->udpatedAt->toBeNull()

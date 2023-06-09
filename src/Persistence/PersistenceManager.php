@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Persistence;
 
+use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\CannotRestoreHardDeletedRecordException;
@@ -45,28 +46,30 @@ class PersistenceManager
         $id = $entityReflection->getId();
 
         foreach ($entityReflection->getManagedColumns() as $property => $managedColumn) {
-            $entity->{$property} = $managedColumn->getInsertValue();
+            EntityAccessorService::set($entity, $property, $managedColumn->getInsertValue());
         }
 
         foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
-            $entity->{$property} = null;
+            EntityAccessorService::set($entity, $property, null);
         }
 
         foreach ($entityReflection->getMappers() as $property => $mapper) {
-            if ($entityReflection->checkPropertyInitialized($property, $entity)) {
-                if ($property === $id) {
+            if ($property === $id) {
+                if (EntityAccessorService::isset($entity, $property)) {
                     throw new IdSetForInsertException();
                 }
-                $data = array_merge($data, $mapper->serialize($entity->{$property}));
-            } elseif ($property !== $id) {
-                throw new MissingValueForColumnException($property);
+            } else {
+                if (!$entityReflection->allowsNull($property) && !EntityAccessorService::isset($entity, $property)) {
+                    throw new MissingValueForColumnException($property);
+                }
+                $data = array_merge($data, $mapper->serialize(EntityAccessorService::get($entity, $property)));
             }
         }
 
         $data = array_merge($data, self::resolveOwningRelations($entity, $entityReflection));
 
         $id = DB::table($entityReflection->getTableName())->insertGetId($data);
-        $entity->{$entityReflection->getId()} = $id;
+        EntityAccessorService::setId($entity, $id);
     }
 
     /**
@@ -79,23 +82,23 @@ class PersistenceManager
         $entityReflection = self::getEntityReflection($entity);
         $data = [];
 
-        self::checkIdIsSet($entityReflection, $entity, 'Must set ID column when updating');
+        self::checkIdIsSet($entity, 'Must set ID column when updating');
 
         $query = DB::table($entityReflection->getTableName())
-            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()});
+            ->where($entityReflection->getId(), '=', EntityAccessorService::getId($entity));
 
+        $unsetManagedColumns = [];
         foreach ($entityReflection->getManagedColumns() as $property => $managedColumn) {
-            $updateValue = $managedColumn->getUpdateValue($entity->{$property} ?? null);
-            // TODO: distinction between null and not updating
+            $updateValue = $managedColumn->getUpdateValue();
             if (!is_null($updateValue)) {
-                $entity->{$property} = $updateValue;
+                EntityAccessorService::set($entity, $property, $updateValue);
             } else {
-                unset($entity->{$property});
+                $unsetManagedColumns[$property] = $property;
             }
         }
 
         foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
-            $entity->{$property} = null;
+            EntityAccessorService::set($entity, $property, null);
             // TODO: this is a duplicate
             /** @var Mapper<mixed> $mapper */
             $mapper = $entityReflection->getMappers()->get($property);
@@ -103,9 +106,13 @@ class PersistenceManager
         }
 
         foreach ($entityReflection->getMappers() as $property => $mapper) {
-            if ($entityReflection->checkPropertyInitialized($property, $entity)) {
-                $data = array_merge($data, $mapper->serialize($entity->{$property}));
+            if (array_key_exists($property, $unsetManagedColumns)) {
+                continue;
             }
+            if (!$entityReflection->allowsNull($property) && !EntityAccessorService::isset($entity, $property)) {
+                throw new MissingValueForColumnException($property);
+            }
+            $data = array_merge($data, $mapper->serialize(EntityAccessorService::get($entity, $property)));
         }
 
         $data = array_merge($data, self::resolveOwningRelations($entity, $entityReflection));
@@ -123,25 +130,25 @@ class PersistenceManager
     {
         $entityReflection = self::getEntityReflection($entity);
 
-        self::checkIdIsSet($entityReflection, $entity, 'Must set ID column when deleting');
+        self::checkIdIsSet($entity, 'Must set ID column when deleting');
 
         $data = [];
         foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
             /** @var Mapper<mixed> $mapper */
             $mapper = $entityReflection->getMappers()->get($property);
             $datetime = $softDelete->getDatetime();
-            $entity->{$property} = $datetime;
+            EntityAccessorService::set($entity, $property, $datetime);
             $data = array_merge($data, $mapper->serialize($datetime));
         }
 
         if ($data) {
             $int = DB::table($entityReflection->getTableName())
-                ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+                ->where($entityReflection->getId(), '=', EntityAccessorService::getId($entity))
                 ->update($data);
         } else {
         // TODO: should this call forceDelete() instead?
             $int = DB::table($entityReflection->getTableName())
-                ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+                ->where($entityReflection->getId(), '=', EntityAccessorService::getId($entity))
                 ->delete();
         }
         self::checkNumberOfRowsAffected($int, 'Could not delete entity');
@@ -155,9 +162,9 @@ class PersistenceManager
     public static function forceDelete(object $entity): void
     {
         $entityReflection = self::getEntityReflection($entity);
-        self::checkIdIsSet($entityReflection, $entity, 'Must set ID column when deleting');
+        self::checkIdIsSet($entity, 'Must set ID column when deleting');
         $int = DB::table($entityReflection->getTableName())
-            ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+            ->where($entityReflection->getId(), '=', EntityAccessorService::getId($entity))
             ->delete();
         self::checkNumberOfRowsAffected($int, 'Could not force-delete entity');
     }
@@ -171,18 +178,18 @@ class PersistenceManager
     {
         $entityReflection = self::getEntityReflection($entity);
 
-        self::checkIdIsSet($entityReflection, $entity, 'Must set ID column when restoring');
+        self::checkIdIsSet($entity, 'Must set ID column when restoring');
 
         $data = [];
         foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
             /** @var Mapper<mixed> $mapper */
             $mapper = $entityReflection->getMappers()->get($property);
-            $entity->{$property} = null;
+            EntityAccessorService::set($entity, $property, null);
             $data = array_merge($data, $mapper->serialize(null));
         }
         if ($data) {
             $int = DB::table($entityReflection->getTableName())
-                ->where($entityReflection->getId(), '=', $entity->{$entityReflection->getId()})
+                ->where($entityReflection->getId(), '=', EntityAccessorService::getId($entity))
                 ->update($data);
             self::checkNumberOfRowsAffected($int, 'Could not restore entity');
         } else {
@@ -208,11 +215,11 @@ class PersistenceManager
             throw new InvalidRelationException('Can only attach pure many-to-many relations');
         }
 
-        self::checkIdIsSet($entityReflection, $entity, 'Must set ID column on base entity when attaching/detaching');
+        self::checkIdIsSet($entity, 'Must set ID column on base entity when attaching/detaching');
 
         $data = self::getPivotData($entityReflection, $entity, $linker, $linkedEntities);
 
-        $entity->{$relation} = $linkedEntities;
+        EntityAccessorService::set($entity, $relation, $linkedEntities);
 
         return DB::table($linker->getPivotTable())->insertOrIgnore($data);
     }
@@ -235,21 +242,19 @@ class PersistenceManager
             throw new InvalidRelationException('Can only detach pure many-to-many relations');
         }
 
-        self::checkIdIsSet($entityReflection, $entity, 'Must set ID column on base entity when detaching');
+        self::checkIdIsSet($entity, 'Must set ID column on base entity when detaching');
 
         $data = self::getPivotData($entityReflection, $entity, $linker, $linkedEntities);
 
-        $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
-        if ($entityReflection->checkPropertyInitialized($relation, $entity)) {
-            $linkedEntityIds = $linkedEntities->pluck(
-                $linkedEntityReflection->getId(),
-                $linkedEntityReflection->getId()
-            );
-            $entity->{$relation} = $entity->{$relation}->filter(fn($entity) =>
-                !isset($entity->{$linkedEntityReflection->getId()})
-                || $linkedEntityIds->doesntContain($entity->{$linkedEntityReflection->getId()}));
-        } else {
-            $entity->{$relation} = Collection::empty();
+        if (EntityAccessorService::isset($entity, $relation)) {
+            $linkedEntityIds = $linkedEntities->mapWithKeys(fn ($entity) => [
+                EntityAccessorService::getId($entity) => EntityAccessorService::getId($entity)
+            ]);
+            /** @var Collection<int|string,object> $currentRelationValue */
+            $currentRelationValue = EntityAccessorService::get($entity, $relation);
+            $newRelationValue = $currentRelationValue->filter(fn($entity) => !EntityAccessorService::issetId($entity)
+                || $linkedEntityIds->doesntContain(EntityAccessorService::getId($entity)));
+            EntityAccessorService::set($entity, $relation, $newRelationValue);
         }
 
         $int = 0;
@@ -270,18 +275,15 @@ class PersistenceManager
         $data = [];
         foreach ($entityReflection->getLinkers() as $property => $linker) {
             if ($linker instanceof OwningLinker) {
-                if (!$entityReflection->checkPropertyInitialized($property, $entity)) {
+                if (!$entityReflection->allowsNull($property) && !EntityAccessorService::isset($entity, $property)) {
                     throw new MissingOwningRelationException('Must set all non-nullable owning relations');
-                }
-                $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
-                $linkedEntity = $entity->{$property};
-                $linkedEntityId = $linkedEntityReflection->getId();
-                $initialized = $linkedEntityReflection->checkPropertyInitialized($linkedEntityId, $linkedEntity);
-                if (!$initialized && !is_null($linkedEntity)) {
-                    throw new MissingOwningRelationException('Owned linked entity must have valid ID set');
-                }
-                if (!is_null($linkedEntity)) {
-                    $data[$linker->getForeignKey()] = $entity->{$property}->{$linkedEntityId};
+                    // case 4: non-nullable and not set
+                    //         -> exception
+                } elseif (EntityAccessorService::isset($entity, $property)) {
+                    /** @var object $linkedEntity */
+                    $linkedEntity = EntityAccessorService::get($entity, $property);
+                    self::checkIdIsSet($linkedEntity, 'Owned linked entity must have valid ID set');
+                    $data[$linker->getForeignKey()] = EntityAccessorService::getId($linkedEntity);
                 } else {
                     $data[$linker->getForeignKey()] = null;
                 }
@@ -307,15 +309,13 @@ class PersistenceManager
     }
 
     /**
-     * @template D of object
-     * @param  EntityReflection<D>  $entityReflection
-     * @param  D  $entity
+     * @param  object  $entity
      * @param  string  $message
      * @return void
      */
-    private static function checkIdIsSet(EntityReflection $entityReflection, object $entity, string $message): void
+    private static function checkIdIsSet(object $entity, string $message): void
     {
-        if (!$entityReflection->checkPropertyInitialized($entityReflection->getId(), $entity)) {
+        if (!EntityAccessorService::issetId($entity)) {
             throw new MissingIdException($message);
         }
     }
@@ -344,7 +344,6 @@ class PersistenceManager
         $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
         /** @var array<int|string,array<int|string>> $data */
         $data = $linkedEntities->map(function ($linkedEntity) use (
-            $entityReflection,
             $entity,
             $linker,
             $linkedEntityReflection
@@ -352,14 +351,10 @@ class PersistenceManager
             if ($linkedEntity::class !== $linkedEntityReflection->getClass()) {
                 throw new InconsistentEntitiesException();
             }
-            self::checkIdIsSet(
-                $linkedEntityReflection,
-                $linkedEntity,
-                'Must set ID columns of all entities when attaching/detaching'
-            );
+            self::checkIdIsSet($linkedEntity, 'Must set ID columns of all entities when attaching/detaching');
             return [
-                $linker->getOriginForeignKey() => $entity->{$entityReflection->getId()},
-                $linker->getTargetForeignKey() => $linkedEntity->{$linkedEntityReflection->getId()},
+                $linker->getOriginForeignKey() => EntityAccessorService::getId($entity),
+                $linker->getTargetForeignKey() => EntityAccessorService::getId($linkedEntity),
             ];
         })->toArray();
         return $data;

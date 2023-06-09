@@ -8,6 +8,7 @@ namespace AdventureTech\ORM\Repository;
 
 use AdventureTech\ORM\AliasingManagement\AliasingManager;
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
+use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\EntityNotFoundException;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
@@ -282,7 +283,11 @@ class Repository
             $this->resolvingId = $id;
             $this->resolvingEntity = $this->entityReflection->newInstance();
             foreach ($this->entityReflection->getMappers() as $property => $mapper) {
-                $this->resolvingEntity->{$property} = $mapper->deserialize($item, $this->localAliasingManager);
+                EntityAccessorService::set(
+                    $this->resolvingEntity,
+                    $property,
+                    $mapper->deserialize($item, $this->localAliasingManager)
+                );
             }
             $reset = true;
         }

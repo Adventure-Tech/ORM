@@ -3,13 +3,11 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
-use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
+use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
-use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
-use AdventureTech\ORM\Tests\TestClasses\Persistence\PersonalDetailPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Carbon\CarbonImmutable;
@@ -34,7 +32,7 @@ test('Cannot update non-matching entity', function () {
 test('Can update entity', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name']);
     $user = new User();
-    $user->id = $id;
+    $user->setId($id);
     $user->name = 'New Name';
 
     UserPersistence::update($user);
@@ -53,15 +51,15 @@ test('Trying to update entity without ID set leads exception', function () {
     );
 });
 
-test('Can do partial updates', function () {
+test('Attempting partial updates throws exception', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name', 'favourite_color' => 'turquoise']);
     $user = new User();
-    $user->id = $id;
+    $user->setId($id);
     $user->favouriteColor = null;
-    UserPersistence::update($user);
-    expect(DB::table('users')->first())
-        ->name->toBe('Name')
-        ->favourite_color->toBeNull();
+    expect(fn() => UserPersistence::update($user))->toThrow(
+        MissingValueForColumnException::class,
+        'Forgot to set non-nullable property "name"'
+    );
 });
 
 test('Managed columns cannot be overridden', function () {
@@ -69,7 +67,8 @@ test('Managed columns cannot be overridden', function () {
     $updatedAt = CarbonImmutable::parse('2023-01-02 12:00')->toIso8601String();
     $id = DB::table('users')->insertGetId(['name' => 'Name', 'created_at' => $createdAt, 'updated_at' => $updatedAt]);
     $user = new User();
-    $user->id = $id;
+    $user->setId($id);
+    $user->name = 'Name';
     $user->updatedAt = null;
     UserPersistence::update($user);
     expect(DB::table('users')->first())
@@ -80,7 +79,8 @@ test('Managed columns cannot be overridden', function () {
 test('When updating entity managed columns are set on the object', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name']);
     $user = new User();
-    $user->id = $id;
+    $user->setId($id);
+    $user->name = 'Name';
     UserPersistence::update($user);
     expect($user)
         ->updatedAt->toBeInstanceOf(CarbonImmutable::class);
@@ -89,7 +89,8 @@ test('When updating entity managed columns are set on the object', function () {
 test('Soft-delete columns cannot be overridden', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name']);
     $user = new User();
-    $user->id = $id;
+    $user->setId($id);
+    $user->name = 'Name';
     $user->deletedAt = CarbonImmutable::parse('2023-01-01 12:00');
     UserPersistence::update($user);
     expect(DB::table('users')->first())
@@ -99,7 +100,7 @@ test('Soft-delete columns cannot be overridden', function () {
 test('When updating entity soft-delete columns are set to null on the object', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name']);
     $user = new User();
-    $user->id = $id;
+    $user->setId($id);
     $user->name = 'Name';
     UserPersistence::update($user);
     expect($user)->deletedAt->toBeNull();
@@ -123,7 +124,7 @@ test('Can update owning relations', function () {
     PostPersistence::update($post);
 
     expect(DB::table('posts')->first())
-        ->author->toBe($bob->id);
+        ->author->toBe($bob->getId());
 });
 
 test('Must set ID of non-nullable owning relation', function () {
@@ -142,7 +143,7 @@ test('Must set ID of non-nullable owning relation', function () {
     $post->author = $bob;
 
     expect(fn() => PostPersistence::update($post))->toThrow(
-        MissingOwningRelationException::class,
+        MissingIdException::class,
         'Owned linked entity must have valid ID set'
     );
 });
@@ -167,7 +168,7 @@ test('Can set nullable owning relation to null', function () {
 
 test('Trying to update non-existing record leads to exception', function () {
     $user = new User();
-    $user->id = 1;
+    $user->setId(1);
     expect(fn() => UserPersistence::delete($user))->toThrow(
         RecordNotFoundException::class,
         'Could not delete entity'

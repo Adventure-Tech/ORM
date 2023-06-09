@@ -55,7 +55,7 @@ test('Trying to force-delete entity without ID set leads exception', function ()
 
 test('Trying to force-delete non-existing record leads to exception for entity with soft-deletes', function () {
     $user = new User();
-    $user->id = 1;
+    $user->setId(1);
     expect(fn() => UserPersistence::forceDelete($user))->toThrow(
         RecordNotFoundException::class,
         'Could not force-delete entity'

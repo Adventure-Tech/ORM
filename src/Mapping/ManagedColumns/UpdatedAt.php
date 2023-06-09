@@ -16,7 +16,7 @@ class UpdatedAt implements ManagedColumnAnnotation
         return CarbonImmutable::now();
     }
 
-    public function getUpdateValue(mixed $value): CarbonImmutable
+    public function getUpdateValue(): CarbonImmutable
     {
         return CarbonImmutable::now();
     }

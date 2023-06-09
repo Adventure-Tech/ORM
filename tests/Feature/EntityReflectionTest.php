@@ -5,7 +5,6 @@ use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
 use AdventureTech\ORM\Exceptions\NullReflectionTypeException;
-use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
@@ -16,7 +15,7 @@ use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use AdventureTech\ORM\Tests\TestClasses\Factories\PostFactory;
-use AdventureTech\ORM\Tests\TestClasses\PostRepository;
+use AdventureTech\ORM\Tests\TestClasses\Repositories\PostRepository;
 use Illuminate\Support\Collection;
 use Mockery\MockInterface;
 
@@ -179,13 +178,30 @@ test('If entity instantiation fails an appropriate exception is thrown', functio
     ->toThrow(EntityInstantiationException::class);
 });
 
-test('Entity reflection can check if property is set on an instance', function () {
-    $class = new #[Entity] class ('arg')
-    {
+test('Entity reflection can check if property is nullable', function () {
+    $class = new #[Entity] class {
         public string $a;
-        public string $b = 'set';
+        public ?string $b;
     };
     $entityReflection = EntityReflection::new($class::class);
-    expect($entityReflection->checkPropertyInitialized('a', $class))->toBeFalse()
-        ->and($entityReflection->checkPropertyInitialized('b', $class))->toBeTrue();
+    expect($entityReflection->allowsNull('a'))->toBeFalse()
+        ->and($entityReflection->allowsNull('b'))->toBeTrue();
+});
+
+test('Entity reflection null-check throws exception if property does not exist', function () {
+    $class = new #[Entity] class {
+    };
+    $entityReflection = EntityReflection::new($class::class);
+    expect(fn () => $entityReflection->allowsNull('a'))->toThrow(ReflectionException::class);
+});
+
+test('Entity reflection null-check throws exception no type on property', function () {
+    $class = new #[Entity] class {
+        public $a;
+    };
+    $entityReflection = EntityReflection::new($class::class);
+    expect(fn () => $entityReflection->allowsNull('a'))->toThrow(
+        NullReflectionTypeException::class,
+        'Reflection type returned null'
+    );
 });

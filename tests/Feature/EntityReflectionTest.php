@@ -194,3 +194,14 @@ test('Entity reflection null-check throws exception if property does not exist',
     $entityReflection = EntityReflection::new($class::class);
     expect(fn () => $entityReflection->allowsNull('a'))->toThrow(ReflectionException::class);
 });
+
+test('Entity reflection null-check throws exception no type on property', function () {
+    $class = new #[Entity] class {
+        public $a;
+    };
+    $entityReflection = EntityReflection::new($class::class);
+    expect(fn () => $entityReflection->allowsNull('a'))->toThrow(
+        NullReflectionTypeException::class,
+        'Reflection type returned null'
+    );
+});

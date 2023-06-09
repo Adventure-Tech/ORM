@@ -14,7 +14,9 @@ trait ToMany
         }
         // TODO: this surely breaks. need better check
         if ($relatedEntity) {
-            EntityAccessorService::get($currentEntity, $this->relation)[] = $relatedEntity;
+            /** @var Collection<int|string,object> $collection */
+            $collection = EntityAccessorService::get($currentEntity, $this->relation);
+            $collection[] = $relatedEntity;
         }
     }
 }

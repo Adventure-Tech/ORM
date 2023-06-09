@@ -250,10 +250,11 @@ class PersistenceManager
             $linkedEntityIds = $linkedEntities->mapWithKeys(fn ($entity) => [
                 EntityAccessorService::getId($entity) => EntityAccessorService::getId($entity)
             ]);
-            $value = EntityAccessorService::get($entity, $relation)->filter(fn($entity) =>
-                !EntityAccessorService::issetId($entity)
+            /** @var Collection<int|string,object> $currentRelationValue */
+            $currentRelationValue = EntityAccessorService::get($entity, $relation);
+            $newRelationValue = $currentRelationValue->filter(fn($entity) => !EntityAccessorService::issetId($entity)
                 || $linkedEntityIds->doesntContain(EntityAccessorService::getId($entity)));
-            EntityAccessorService::set($entity, $relation, $value);
+            EntityAccessorService::set($entity, $relation, $newRelationValue);
         }
 
         $int = 0;
@@ -279,10 +280,10 @@ class PersistenceManager
                     // case 4: non-nullable and not set
                     //         -> exception
                 } elseif (EntityAccessorService::isset($entity, $property)) {
-                    $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
+                    /** @var object $linkedEntity */
                     $linkedEntity = EntityAccessorService::get($entity, $property);
                     self::checkIdIsSet($linkedEntity, 'Owned linked entity must have valid ID set');
-                    $data[$linker->getForeignKey()] = EntityAccessorService::getId(EntityAccessorService::get($entity, $property));
+                    $data[$linker->getForeignKey()] = EntityAccessorService::getId($linkedEntity);
                 } else {
                     $data[$linker->getForeignKey()] = null;
                 }
@@ -343,7 +344,6 @@ class PersistenceManager
         $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
         /** @var array<int|string,array<int|string>> $data */
         $data = $linkedEntities->map(function ($linkedEntity) use (
-            $entityReflection,
             $entity,
             $linker,
             $linkedEntityReflection

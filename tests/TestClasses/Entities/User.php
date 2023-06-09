@@ -20,7 +20,7 @@ class User
 
     #[Id]
     #[Column]
-    public int $id;
+    private int $id;
 
     #[Column]
     public string $name;
@@ -28,6 +28,9 @@ class User
     #[Column]
     public ?string $favouriteColor;
 
+    /**
+     * @var Collection<int,Post>
+     */
     #[HasMany(targetEntity: Post::class, foreignKey: 'author')]
     public Collection $posts;
 
@@ -41,4 +44,14 @@ class User
         targetForeignKey: 'b_id'
     )]
     public Collection $friends;
+
+    public function getId(): ?int
+    {
+        return $this->id ?? null;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
 }

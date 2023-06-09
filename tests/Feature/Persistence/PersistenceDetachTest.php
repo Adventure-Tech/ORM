@@ -96,10 +96,10 @@ test('Can detach many-to-many relations', function () {
 
     expect(DB::table('friends')->get())->toHaveCount(1)
         ->map(fn($obj) => (array)$obj)->toArray()->toEqualCanonicalizing([
-            ['a_id' => $alice->id, 'b_id' => $claire->id],
+            ['a_id' => $alice->getId(), 'b_id' => $claire->getId()],
         ])
         ->and($alice->friends)->toHaveCount(1)
-        ->pluck('id')->toArray()->toEqualCanonicalizing([ $claire->id]);
+        ->map(fn(User $user) => $user->getId())->toArray()->toEqualCanonicalizing([$claire->getId()]);
 });
 
 test('Attaching removes detached entities from relation property', function () {
@@ -121,7 +121,7 @@ test('Attaching removes detached entities from relation property', function () {
 
     expect(DB::table('friends')->get())->toHaveCount(1)
         ->map(fn($obj) => (array)$obj)->toArray()->toEqualCanonicalizing([
-            ['a_id' => $alice->id, 'b_id' => $bob->id],
+            ['a_id' => $alice->getId(), 'b_id' => $bob->getId()],
         ])
         ->and($alice->friends)->toHaveCount(1)
         ->first()->toBe($ted);
@@ -134,7 +134,7 @@ test('Detaching handles non-existing links correctly', function () {
     $bob = new User();
     $bob->name = 'Bob';
     UserPersistence::insert($bob);
-    DB::table('friends')->insert(['a_id' => $alice->id, 'b_id' => $alice->id]);
+    DB::table('friends')->insert(['a_id' => $alice->getId(), 'b_id' => $alice->getId()]);
     $alice->friends = collect([$alice, $bob]);
 
     UserPersistence::detach($alice, [$alice, $bob], 'friends');

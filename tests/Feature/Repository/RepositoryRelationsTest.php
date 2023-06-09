@@ -36,7 +36,7 @@ test('Can load relations within relations', function () {
         ->find($authorId);
     expect($user->posts->first()->author)
         ->toBeInstanceOf(User::class)
-        ->id->toBe($authorId);
+        ->getId()->toBe($authorId);
 });
 
 test('Trying to load invalid relation leads to exception', function () {

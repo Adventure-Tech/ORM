@@ -246,12 +246,10 @@ class PersistenceManager
 
         $data = self::getPivotData($entityReflection, $entity, $linker, $linkedEntities);
 
-        $linkedEntityReflection = EntityReflection::new($linker->getTargetEntity());
         if (EntityAccessorService::isset($entity, $relation)) {
-            $linkedEntityIds = $linkedEntities->pluck(
-                $linkedEntityReflection->getId(),
-                $linkedEntityReflection->getId()
-            );
+            $linkedEntityIds = $linkedEntities->mapWithKeys(fn ($entity) => [
+                EntityAccessorService::getId($entity) => EntityAccessorService::getId($entity)
+            ]);
             $value = EntityAccessorService::get($entity, $relation)->filter(fn($entity) =>
                 !EntityAccessorService::issetId($entity)
                 || $linkedEntityIds->doesntContain(EntityAccessorService::getId($entity)));

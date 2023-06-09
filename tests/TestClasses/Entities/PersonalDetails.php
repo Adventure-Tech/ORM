@@ -18,20 +18,20 @@ class PersonalDetails
     public int $id;
 
     #[Column]
-    public ?string $phone = null;
+    public ?string $phone;
 
     #[Column]
     public string $email;
 
     #[Column]
-    public ?string $address = null;
+    public ?string $address;
 
     #[Column]
-    public ?string $zip = null;
+    public ?string $zip;
 
     #[Column]
     public string $country = 'NOR';
 
     #[BelongsTo]
-    public ?User $user = null;
+    public ?User $user;
 }

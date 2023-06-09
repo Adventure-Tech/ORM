@@ -15,7 +15,7 @@ use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use AdventureTech\ORM\Tests\TestClasses\Factories\PostFactory;
-use AdventureTech\ORM\Tests\TestClasses\PostRepository;
+use AdventureTech\ORM\Tests\TestClasses\Repositories\PostRepository;
 use Illuminate\Support\Collection;
 use Mockery\MockInterface;
 

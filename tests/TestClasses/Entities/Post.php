@@ -10,7 +10,7 @@ use AdventureTech\ORM\Mapping\ManagedColumns\WithTimestamps;
 use AdventureTech\ORM\Mapping\Relations\BelongsTo;
 use AdventureTech\ORM\Mapping\SoftDeletes\WithSoftDeletes;
 use AdventureTech\ORM\Tests\TestClasses\Factories\PostFactory;
-use AdventureTech\ORM\Tests\TestClasses\PostRepository;
+use AdventureTech\ORM\Tests\TestClasses\Repositories\PostRepository;
 use Carbon\CarbonImmutable;
 
 #[Entity(repository: PostRepository::class, factory: PostFactory::class)]
@@ -30,11 +30,11 @@ class Post
     public string $content;
 
     #[DatetimeTZColumn(tzName: 'published_tz')]
-    public ?CarbonImmutable $publishedAt = null;
+    public ?CarbonImmutable $publishedAt;
 
     #[BelongsTo(foreignKey: 'author')]
     public User $author;
 
     #[BelongsTo(foreignKey: 'editor')]
-    public ?User $editor = null;
+    public ?User $editor;
 }

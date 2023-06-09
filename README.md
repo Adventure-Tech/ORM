@@ -47,7 +47,7 @@ The default `#[Column]` annotation infers the database column name based on the 
 
 The object properties need to be public for the persistence manager to function. They should also always be properly type-hinted, including nullability. Finally, their default value should be set appropriately, including for nullable columns.
 ```php
-public ?string $nullableColumn = null;
+public ?string $nullableColumn;
 public string $nonNullableColumWithDefault = 'default';
 public string $nonNullableColumWithoutDefault;
 ```

@@ -27,6 +27,4 @@ interface Mapper
      * @return T|null
      */
     public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): mixed;
-
-    public function getPropertyType(): string;
 }

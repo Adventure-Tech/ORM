@@ -20,7 +20,6 @@ readonly class JSONMapper implements Mapper
 {
     use WithDefaultMapperMethods;
 
-
     /**
      * @param  array<mixed,mixed>|null  $value
      * @return array<string,string|null>

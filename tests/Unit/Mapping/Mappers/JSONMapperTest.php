@@ -11,10 +11,6 @@ use Mockery;
 use ReflectionProperty;
 use stdClass;
 
-test('The json mapper identifies its type as array', function (JSONMapper $mapper) {
-    expect($mapper->getPropertyType())->toBe('array');
-})->with('mapper');
-
 test('The json mapper has a single column', function (JSONMapper $mapper) {
     expect($mapper->getColumnNames())
         ->toBeArray()

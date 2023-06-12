@@ -11,10 +11,6 @@ use Mockery;
 use ReflectionProperty;
 use stdClass;
 
-test('The datetimeTz mapper identifies its type as CarbonImmutable', function (DatetimeTZMapper $mapper) {
-    expect($mapper->getPropertyType())->toBe(CarbonImmutable::class);
-})->with('mapper');
-
 test('The datetimeTz mapper has a single column', function (DatetimeTZMapper $mapper) {
     expect($mapper->getColumnNames())
         ->toBeArray()

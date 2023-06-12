@@ -5,7 +5,7 @@ namespace AdventureTech\ORM;
 use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
-use AdventureTech\ORM\Exceptions\NullReflectionTypeException;
+use AdventureTech\ORM\Exceptions\UnsupportedReflectionTypeException;
 use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Mapping\Columns\ColumnAnnotation;
 use AdventureTech\ORM\Mapping\Entity;
@@ -179,7 +179,7 @@ class EntityReflection
     }
 
     /**
-     * @return string
+     * @return class-string<T>
      */
     public function getClass(): string
     {
@@ -266,25 +266,31 @@ class EntityReflection
      */
     private function registerLinker(RelationAnnotation $relationAnnotation, ReflectionProperty $property): void
     {
-        /** @var ReflectionNamedType|null $type */
-        $type = $property->getType();
-        if (is_null($type)) {
-            throw new NullReflectionTypeException();
-        }
+        $propertyName = $property->getName();
         /** @var class-string<object> $propertyType */
-        $propertyType = $type->getName();
+        $propertyType = $this->getPropertyType($propertyName);
         $this->linkers->put(
-            $property->getName(),
-            $relationAnnotation->getLinker($property->getName(), $propertyType, $this->class)
+            $propertyName,
+            $relationAnnotation->getLinker($propertyName, $propertyType, $this->class)
         );
     }
 
     public function allowsNull(string $property): bool
     {
+        return $this->getReflectionType($property)->allowsNull();
+    }
+
+    public function getPropertyType(string $property): string
+    {
+        return $this->getReflectionType($property)->getName();
+    }
+
+    private function getReflectionType(string $property): ReflectionNamedType
+    {
         $type = $this->reflectionClass->getProperty($property)->getType();
-        if (is_null($type)) {
-            throw new NullReflectionTypeException();
+        if (!($type instanceof ReflectionNamedType)) {
+            throw new UnsupportedReflectionTypeException();
         }
-        return $type->allowsNull();
+        return $type;
     }
 }

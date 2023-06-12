@@ -54,7 +54,7 @@ test('Soft-deletes are filtered correctly in loaded relations', function () {
     expect($users)->toHaveCount(1)
         ->first()->getId()->toBe($authorId)
         ->and($users->first()->posts)->toHaveCount(1)
-        ->first()->id->toBe(1);
+        ->and($users->first()->posts->first())->id->toBe(1);
 });
 
 test('Soft-deletes can be deactivated in loaded relations', function () {

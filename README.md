@@ -1,5 +1,5 @@
 # ORM
-A performant and encapsulated ORM built on top of Eloquent's query builder
+A repository-based and encapsulated ORM built on top of Eloquent's query builder
 
 ## Entities
 Entities are at the core of the ORM. They define not only data-transfer objects, but also form the basis of how data is retrieved by the repositories, how data is inserted by the persistence managers, and even provide default factories for testing purposes.
@@ -52,7 +52,7 @@ public string $firstName
 ```
 The default `#[Column]` annotation infers the database column name based on the property name it is mapped to. For example `$firstName` is assumed to be found in the database column `first_name`. This can be overridden by an optional parameter for the annotation, e.g. `#[Column(name: 'my_column_name')]`.
 
-#### Property types
+#### Property Types
 
 The entity properties must always be correctly typed. In particular, nullable columns should have nullable types. Further, default values should be set appropriately, except for nullable columns which have an implicit null default. For example consider the following valid declaration:
 ```php
@@ -85,7 +85,7 @@ The basic `#[Column]` annotation supports the following types:
 - `array` utilising `json_encode`/`json_decode` and associative arrays
 - any other type that is natively supported by Laravel's query builder, i.e. `int`, `float`, `string` and `bool`
 
-#### Getters and setters
+#### Getters and Setters
 Properties must be either public or provide appropriately named getters and setters. The naming convention is illustrated in the following example:
 ```php
 public string $foo;
@@ -112,12 +112,63 @@ There is also a `#[DeletedAt]` annotation, which marks the object property as a 
 
 The ORM provides two traits for convenience: `WithDatetimes` and `WithSoftDeletes`, which mirror Laravel's `->timestamps()` and `->softDeletes()` methods.
 
-### Relation Attributes and Linkers
+### Relation Attributes
+An important part of any ORM is the ability to map relations between entities. This is done via relation attributes which are named in line with Eloquent's relations.
+
 #### BelongsTo
+```php
+class FooEntity
+{
+    #[BelongsTo(foreignKey: 'bar_entity_id')]
+    public BarEntity $bar;
+}
+```
+`BelongsTo` relations signify the owning side of a one-to-one or one-to-many relation. "Owning-side" in this case refers to the foreign key that resides on the table of the entity which has the `BelongsTo` relation declared.
+
+The `BelongsTo` annotation allows the foreign key to be customised, but provides a default based on the property type, e.g. `BarEntity` would lead to `bar_entity_id`.
+
 #### HasMany
+```php
+class FooEntity
+{
+    #[HasMany(targetEntity: BarEntity::class, foreignKey: 'bar_entity_id')]
+    public Collection $bars;
+}
+```
+`HasMany` relations signify a many-to-one relation. The other side of the `HasMany` relation, its target entity, is a `BelongsTo` relation.
+
+The `HasMany` annotation requires the target entity to be provided and allows the foreign key on the target entity's database table to be customised. A default similar to the `BelongsTo` relation is used if no foreign key is provided.
+
+An important note is that the `HasMany` relation requires the property to be typed as a `Illuminate\Support\Collection`.
+
 #### HasOne
+```php
+class FooEntity
+{
+    #[HasOne(foreignKey: 'foo_entity_id')]
+    public BarEntity $bar;
+}
+```
+`HasOne` relations signify the non-owning side of a one-to-one relation. They are very similar to a `HasMany` relation, but have an additional unique constraint on the foreign key on the owning database table.
+
+Similar to the `BelongsTo` relation, an optional foreign key can be provided. However, unlike the `BelongsTo` relation, the default foreign key of a `HasOne` relation is based on the entity class name itself, e.g. `MyEntity` would lead to `my_entity_id`.
+
 #### BelongsToMany
-#### Custom Relations
+```php
+class FooEntity
+{
+    #[BelongsToMany(
+        targetEntity: BarEntity::class,
+        pivotTable: 'foo_bar_pivot_table',
+        originForeignKey: 'foo_entity_id',
+        targetForeignKey: 'bar_entity_id'
+    )]
+    public Collection $bars;
+}
+```
+Many-to-many relations are encoded by the `BelongsToMany` annotation. On the database these relations are encoded by a pivot table, whose only columns are two foreign key columns which form a compound primary key.
+
+The `BelongsToMany` annotation requires the target entity and pivot table to be provided. The two foreign keys can be customised but are inferred by default from the class name and target entity similar to the `HasMany` and `BelongsTo` relations, respectively.
 
 ## Repositories
 ### Loading Relations
@@ -155,5 +206,7 @@ The ORM is very extensible. All that needs to be done is to implement the `Colum
 - `serialize` – a function serializing the object property value to a list of values to be inserted into the database
 - `deserialize` – a function deserializing a list of values retrieved from the database to be set on the object
 
-### Custom managed columns / soft-deletes
+### Custom Managed Columns / Soft-Deletes
 Again you can in theory provide your own managed-columns (not just for datetimes) and soft-delete annotations (must be a datetime column). All you have to do is implement the according interfaces `ManagedColumnAnnotation` or `SoftDeleteAnnotation`, respectively.
+
+### Custom Relations and Linkers

@@ -81,30 +81,3 @@ test('Can reuse factories', function () {
             $author->getId(),
         ]);
 });
-
-
-########################################################
-
-
-test('post factory', function () {
-    $author = Factory::new(User::class)->create(['name' => 'Alice']);
-    $editorFactory = Factory::new(User::class)->state(['name' => 'Bob']);
-    $post = Factory::new(Post::class)->create([
-        'author' => $author,
-        'editor' => $editorFactory,
-    ]);
-    DB::table('posts')->get()->dump();
-    DB::table('users')->get()->dump();
-});
-
-test('multiple post factory', function () {
-    $author = Factory::new(User::class)->create(['name' => 'Alice']);
-    $editorFactory = Factory::new(User::class)->state(['name' => 'Bob']);
-    $post = Factory::new(Post::class)->state([
-        'author' => $author,
-        'editor' => $editorFactory,
-    ])->createMultiple(5)->count();
-    dump($post);
-    DB::table('posts')->get()->dump();
-    DB::table('users')->get()->dump();
-});

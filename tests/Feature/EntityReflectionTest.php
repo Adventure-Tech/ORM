@@ -4,7 +4,7 @@ use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
-use AdventureTech\ORM\Exceptions\NullReflectionTypeException;
+use AdventureTech\ORM\Exceptions\UnsupportedReflectionTypeException;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
@@ -162,7 +162,7 @@ test('Properties annotated as relations must have type set', function () {
         public $a;
     };
     expect(fn() => EntityReflection::new($class::class))
-        ->toThrow(NullReflectionTypeException::class, 'Reflection type returned null');
+        ->toThrow(UnsupportedReflectionTypeException::class, 'Type hints are mandatory and must not be union or intersection types');
 });
 
 
@@ -201,7 +201,7 @@ test('Entity reflection null-check throws exception for property without type', 
     };
     $entityReflection = EntityReflection::new($class::class);
     expect(fn () => $entityReflection->allowsNull('a'))->toThrow(
-        NullReflectionTypeException::class,
-        'Reflection type returned null'
+        UnsupportedReflectionTypeException::class,
+        'Type hints are mandatory and must not be union or intersection types'
     );
 });

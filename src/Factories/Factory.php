@@ -60,7 +60,11 @@ class Factory
      */
     public function createMultiple(int $count): Collection
     {
-        return Collection::times($count)->map(fn($_) => $this->create());
+        $collection = Collection::empty();
+        for ($i = 0; $i < $count; $i++) {
+            $collection->put($i, $this->create());
+        }
+        return $collection;
     }
 
     /**
@@ -124,6 +128,10 @@ class Factory
         /** @var PersistenceManager<T> $persistenceManager */
         $persistenceManager = new class ($this->entityReflection->getClass()) extends PersistenceManager {
             protected static string $entity;
+
+            /**
+             * @param  class-string<T>  $entityClassName
+             */
             public function __construct(string $entityClassName)
             {
                 self::$entity = $entityClassName;

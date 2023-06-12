@@ -13,7 +13,6 @@ use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use Attribute;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Str;
 use ReflectionNamedType;
 use ReflectionProperty;
 
@@ -43,9 +42,9 @@ readonly class Column implements ColumnAnnotation
         /** @var ReflectionNamedType $reflectionNamedType */
         $reflectionNamedType = $property->getType();
         return match ($reflectionNamedType->getName()) {
-            CarbonImmutable::class => new DatetimeMapper($name, $property),
-            'array' => new JSONMapper($name, $property),
-            default => new DefaultMapper($name, $property)
+            CarbonImmutable::class => new DatetimeMapper($name),
+            'array' => new JSONMapper($name),
+            default => new DefaultMapper($name),
         };
     }
 }

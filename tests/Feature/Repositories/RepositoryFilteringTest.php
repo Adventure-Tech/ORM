@@ -52,7 +52,7 @@ test('Can filter within loaded relations', function () {
         ->and($user->posts)
         ->toBeInstanceOf(Collection::class)
         ->toHaveCount(1)
-        ->first()->id->toBe(1);
+        ->and($user->posts->first()->id)->toBe(1);
 });
 
 test('Can filter into loaded relations', function () {
@@ -94,5 +94,5 @@ test('Can filter across relations', function () {
         ->find($authorId);
     expect($user)->toBeInstanceOf(User::class)
         ->and($user->posts)->toHaveCount(1)
-        ->first()->id->toBe(1);
+        ->and($user->posts->first()->id)->toBe(1);
 });

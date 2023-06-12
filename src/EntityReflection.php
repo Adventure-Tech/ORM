@@ -281,10 +281,20 @@ class EntityReflection
 
     public function allowsNull(string $property): bool
     {
+        return $this->getReflectionType($property)->allowsNull();
+    }
+
+    public function getPropertyType(string $property): string
+    {
+        return $this->getReflectionType($property)->getName();
+    }
+
+    private function getReflectionType(string $property): ReflectionNamedType
+    {
         $type = $this->reflectionClass->getProperty($property)->getType();
         if (is_null($type)) {
             throw new NullReflectionTypeException();
         }
-        return $type->allowsNull();
+        return $type;
     }
 }

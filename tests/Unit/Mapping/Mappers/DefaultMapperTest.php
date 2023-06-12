@@ -10,10 +10,6 @@ use Mockery;
 use ReflectionProperty;
 use stdClass;
 
-test('The datetime mapper identifies its type correctly', function (DefaultMapper $mapper) {
-    expect($mapper->getPropertyType())->toBe('string');
-})->with('mapper');
-
 test('The default mapper has a single column', function (DefaultMapper $mapper) {
     expect($mapper->getColumnNames())
         ->toBeArray()

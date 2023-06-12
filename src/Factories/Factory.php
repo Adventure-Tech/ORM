@@ -9,7 +9,6 @@ use AdventureTech\ORM\Persistence\PersistenceManager;
 use Carbon\CarbonImmutable;
 use Faker\Generator;
 use Illuminate\Support\Collection;
-use ReflectionClass;
 
 /**
  * @template T of object
@@ -50,7 +49,6 @@ class Factory
      */
     public function create(array $state = []): object
     {
-
         $entity = $this->createEntity($state);
         $this->insert($entity);
         return $entity;
@@ -100,8 +98,12 @@ class Factory
         return $entity;
     }
 
-    private function defaults(string $type): mixed
+    private function defaults(string $property): mixed
     {
+        if ($this->entityReflection->allowsNull($property)) {
+            return null;
+        }
+        $type = $this->entityReflection->getPropertyType($property);
         return match ($type) {
             'int' => $this->faker->randomNumber(),
             'float' => $this->faker->randomFloat(),
@@ -120,14 +122,13 @@ class Factory
     {
         // some reflection dark magic, but it's okay as factories are for test only
         /** @var PersistenceManager<T> $persistenceManager */
-        $persistenceManager = new class extends PersistenceManager {
-            public function __construct()
+        $persistenceManager = new class ($this->entityReflection->getClass()) extends PersistenceManager {
+            protected static string $entity;
+            public function __construct(string $entityClassName)
             {
+                self::$entity = $entityClassName;
             }
         };
-        // TODO: handle reflection exceptions
-        $refProperty = (new ReflectionClass($persistenceManager))->getProperty('entity');
-        $refProperty->setValue($persistenceManager, $this->entityReflection->getClass());
 
         $persistenceManager::insert($entity);
     }
@@ -140,7 +141,7 @@ class Factory
     {
         foreach ($this->entityReflection->getMappers() as $property => $mapper) {
             if ($property !== $this->entityReflection->getId() && !key_exists($property, $state)) {
-                $state[$property] = $this->defaults($mapper->getPropertyType());
+                $state[$property] = $this->defaults($property);
             }
         }
     }
@@ -153,7 +154,9 @@ class Factory
     {
         foreach ($this->entityReflection->getLinkers() as $property => $linker) {
             if ($linker instanceof OwningLinker && !key_exists($property, $state)) {
-                $state[$property] = Factory::new($linker->getTargetEntity());
+                $state[$property] = $this->entityReflection->allowsNull($property)
+                    ? null
+                    : Factory::new($linker->getTargetEntity());
             }
         }
     }

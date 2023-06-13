@@ -112,8 +112,10 @@ class Factory
             'int' => $this->faker->randomNumber(),
             'float' => $this->faker->randomFloat(),
             'string' => $this->faker->word(),
+            'bool' => $this->faker->randomElement([true, false]),
             CarbonImmutable::class => CarbonImmutable::parse($this->faker->dateTime()),
             'array' => [],
+            // TODO: throw exception instead of null here:
             default => null
         };
     }

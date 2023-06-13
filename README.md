@@ -437,7 +437,7 @@ The process of mapping database columns to entity properties consists of two par
 1) A `ColumnAnnotation` that resolves to a mapper via the `getMapper` function and allows any relevant info to be passed in via the constructor of the annotation
 2) A `Mapper` that provides `serialize` and `deserialize` functions
 
-#### Behind-the-scenes
+#### Existing Mappers
 The `#[Column]` annotation resolves to the following mappers:
 
 - `array` types resolve to the `JSONMapper` based on a simple `json_encode`/`json_decode` logic
@@ -447,11 +447,9 @@ The `#[Column]` annotation resolves to the following mappers:
 There is a further `DatetimeTZMapper` available with a dedicated `DatetimeTZColumn` annotation, which stores the timezone in a separate varchar column.
 
 #### Custom Column Mappers
-The ORM is very extensible. All that needs to be done is to implement the `ColumnAnnotation` interface and provide a suitable `getMapper()` function. This gets access to the `ReflectionProperty` of the object property which is annotated with the custom column annotation. It needs to return a mapper implementing the `Mapper` interface. This requires the following methods:
+The ORM is very extendable. All that needs to be done is to implement the `ColumnAnnotation` interface and provide a suitable `getMapper()` function. This gets access to the `ReflectionProperty` of the object property which is annotated with the custom column annotation. It needs to return a mapper implementing the `Mapper` interface. This requires the following methods:
 
-- `getPropertyName` – returning the name of the object property
 - `getColumnNames` – the names of columns that need to be selected from the database
-- `isInitialized` – a function checking
 - `serialize` – a function serializing the object property value to a list of values to be inserted into the database
 - `deserialize` – a function deserializing a list of values retrieved from the database to be set on the object
 
@@ -459,3 +457,5 @@ The ORM is very extensible. All that needs to be done is to implement the `Colum
 Again you can in theory provide your own managed-columns (not just for datetimes) and soft-delete annotations (must be a datetime column). All you have to do is implement the according interfaces `ManagedColumnAnnotation` or `SoftDeleteAnnotation`, respectively.
 
 ### Custom Relations and Linkers
+
+### Custom Filters

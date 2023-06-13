@@ -88,18 +88,23 @@ The basic `#[Column]` annotation supports the following types:
 #### Getters and Setters
 Properties must be either public or provide appropriately named getters and setters. The naming convention is illustrated in the following example:
 ```php
-public string $foo;
-
-private string $bar;
-
-public function getFoo(): string
+class MyEntity
 {
-    return $this->foo;
-}
+    #[Column]
+    public string $foo;
 
-public function setFoo(string $value): void
-{
-    $this->foo = $value;
+    #[Column]
+    private string $bar;
+
+    public function getFoo(): string
+    {
+        return $this->foo;
+    }
+
+    public function setFoo(string $value): void
+    {
+        $this->foo = $value;
+    }
 }
 ```
 
@@ -171,15 +176,259 @@ Many-to-many relations are encoded by the `BelongsToMany` annotation. On the dat
 The `BelongsToMany` annotation requires the target entity and pivot table to be provided. The two foreign keys can be customised but are inferred by default from the class name and target entity similar to the `HasMany` and `BelongsTo` relations, respectively.
 
 ## Repositories
+Repositories provide a mechanism to retrieve data from the database. To retrieve a repository you have to use the static `Repository::new()` method. This returns the repository set in the `#[Entity(repository: MyRepository::class)]` annotation or a generic `Repository` instance.
+
+This instance exposes several methods inspired by Eloquent's methods.
+```php
+$repository = Repository::new(FooEntity::class);
+
+// get all entities (matching any applied filters)
+$repository->get();
+
+// find specific entity by ID - return null if not found
+$repository->find($id);
+
+// find specific entity by ID - throw exception if not found
+$repository->findOrFail($id);
+```
+
 ### Loading Relations
+By default, repositories only load the data mapped in the entity they are based on. Any relations need to be loaded explicitly by calling the `with()` method providing the property name of the relation to be loaded.
+```php
+$fooEntity = Repository::new(FooEntity::class)
+    ->with('bar')
+    ->find($id);
+
+$fooEntity->bar // is now loaded
+```
+
+Unloaded relations result in non-initialised properties on the entity. This means that an error would be thrown if one attempts to access an unloaded relation, e.g. `$fooEntity->bar` without calling `->with('bar')`.
+
+As an optional second argument for the `with()` method a function can be provided which gives access to the repository of the loaded relation:
+```php
+Repository::new(FooEntity::class)
+    ->with('bar', function(Repository $barRepository) {
+        // can call filters or other things on $barRepository here
+    })
+```
+
 ### Filters
-### Custom Repositories
+Repositories allow filtering of the results via the `filter()` method. This method accepts a single argument: an instance implementing the `Filter` interface. The ORM provides a few filters out of the box inspired by Eloquent's filter methods:
+```php
+new Where('column', IS::EQUAL, 'value');
+new WhereIn('column', ['a', 'b', 'c']);
+new WhereNull('column');
+new WhereNot('column', IS::GREATER_THAN_OR_EQUAL_TO, 3);
+new WhereNotIn('column', [1, 2, 3]);
+new WhereNotNull('column');
+new WhereColumn('column', IS::NOT_EQUAL, 'other_column');
+```
+Note that these refer to database column names, not entity property names.
+
+There are also two filters which allow to chain multiple filters either via AND or via OR. Note that multiple calls to the `filter()` method are chained as AND.
+```php
+new AndWhere($filterA, $filterB, ...);
+new OrWhere($filterA, $filterB, ...);
+```
+
+#### Filtering within loaded Relations
+When loading relations filters can be applied both to the parent repository and the loaded repository. Further, filters get access across the chain of loading repositories via a DSL inspired by unix path syntax: e.g. `../relation/column`. Note that relations that are referenced in filters must be loaded.
+```php
+Repository::new(FooEntity::class)
+    ->with('bar', function (Repository $barRepository) {
+        $barRepository->with('baz', function (Repository $bazRepository) {
+            $bazRepository
+                ->filter(new Where('../../column_on_foo', IS::EQUAL, 'foo_value'))
+                ->filter(new Where('../../bam/column_on_bam', IS::EQUAL, 'bam_value'))
+                ->filter(new Where('../column_on_bar', IS::EQUAL, 'bar_value'))
+                ->filter(new Where('column_on_baz', IS::EQUAL, 'baz_value'));
+        })
+    })
+    ->with('bam')
+```
+
+It is important to distinguish the following two cases:
+
+- Applying a filter within a loaded relation. This does not at all affect the parent entities retrieved, only which entities are loaded. In the following example all `FooEntity` are retrieved, but only `BarEntity` are loaded which match the filter.
+```php
+Repository::new(FooEntity::class)
+    ->with('bar', function (Repository $barRepository) {
+        $barRepository->filter(new Where('column', IS::EQUAL, 'value'));
+    })
+```
+- Applying a filter on the parent repository which references the loaded relation. This on the other hand restrict with parent entities are loaded. In the following example only `FooEntity` matching the filter are loaded, but for each `FooEntity` all `BarEntity` are loaded.
+```php
+Repository::new(FooEntity::class)
+    ->with('bar')
+    ->filter(new Where('bar/column', IS::EQUAL, 'value'))
+```
 
 ## Persistence Managers
+Where repositories enable reading of data from the database, persistence managers enable writing to the database. While a generic repository is provided for all entities out of the box, persistence managers must be defined manually for each entity.
+```php
+class FooPersistenceManager extends PersistenceManager
+{
+    protected static string $entity = FooEntity::class;
+}
+```
+
+This enables using architectural tests to limit access to write functionality by restricting the usage of the relevant persistence manager.
+
+### Inserting
+To insert a record to the database, a new entity instance needs to be passed to the static `insert` method with all non-nullable column properties except the ID property set. If the ID is set or any property is missing, an exception is thrown.
+
+Note that owning relations, such as the `BelongsTo` relation, must be set as well if they are non-nullable. In this context "set" means that the linked entity must have a valid ID set on them.
+
+The static `insert` method updates the entity instance passed to it, setting the ID value on it and any managed columns. Note that setting the value of a managed column gets ignored and overridden by the persistence manager.
+
+```php
+// Create entity instance
+$fooEntity = new FooEntity;
+$fooEntity->column = 'value';
+$fooEntity->createdAt = now()->subDay(); // gets ignored
+
+// Insert via persistence manager
+FooPersistenceManager::insert($fooEntity);
+
+// Entity instance got updated
+$fooEntity->id;         // ID is now set
+$fooEntity->createdAt; // managed columns are also set
+```
+
+### Updating
+To update a record on the database a entity instance with the ID set needs to be passed to the static `update`. If the ID is missing or any non-nullable column is missing, an exception is thrown.
+
+Similar to the `insert` method, the `update` method automatically handles managed columns, such as the `updated_at` column.
+
+```php
+// Retrieve entity (with set ID)
+$fooEntity = Repository::new(FooEntity::class)->find(1);
+
+// Update properties as required
+$fooEntity->column = 'updated_value';
+$fooEntity->updatedAt = now()->subDay(); // gets ignored
+
+// Persist updates via persistence manager
+FooPersistenceManager::update($fooEntity);
+```
+
+Note that updating effectively is a `PUT` operation and not a `PATCH`, therefore all changes to the entity will be persisted.
+
+### Deleting
+To delete an entity, simply pass an entity with its ID set to the static `delete` method. This then either deletes the record from the database or sets the soft-delete column if the entity has soft-deletes enabled.
+
+
+You can undo soft-deletes by calling the `restore()` method, or force-delete permanently via the `forceDelete()` method.
+
+
+```php
+// Soft-delete via persistence manager
+FooPersistenceManager::delete($fooEntity);
+
+// The soft-delete column is now non-null
+$fooEntity->deletedAt !== null;
+
+// Can restore soft-deleted records
+FooPersistenceManager::restore($fooEntity);
+
+// Now again have
+$fooEntity->deletedAt === null;
+
+// Can also permanently delete the record
+FooPersistenceManager::forceDelete($fooEntity);
+```
+
+### Many-to-many Relations
+Finally, to insert/delete records on pivot tables of many-to-many relations (`BelongsToMany`) use the static `attach`/`detach` methods:
+```php
+// Assume FooEntity has a BelongsToMany property called bar linking to BarEntities.
+// Then can attach via
+FooPersistenceManager::attach($fooEntity, [$barEntityA, $barEntityB], 'bar');
+
+// And detach via
+FooPersistenceManager::detach($fooEntity, [$barEntityA, $barEntityB], 'bar');
+```
 
 ## Factories
+Factories are a very convenient way to create test data via the entities.
+Similar to repositories, the factories are retrieved by the static `Factory::new()` method. This returns the factory set in the `#[Entity(factory: MyFactory::class)]` annotation or a generic `Factory` instance.
 
-## Customising the ORM
+The factory then provides methods similar to Laravel's factories, such as
+```php
+$factory = Factory::new(FooEntity::class);
+
+// Set state for this instance of the factory
+$factory->state([
+    'property' => 'original value',
+]);
+
+// Can override the state during the create process
+fooEntity = $factory->create([
+    'property' => 'another value'
+]);
+$fooEntity->column === 'another value';
+
+// Overriding state in the create method does not affect the factory instance
+fooEntity = $factory->create();
+$fooEntity->column === 'original value';
+
+// Can also create multiple instances at once
+$collection = $factory->createMultiple(5);
+$collection->count() === 5;
+```
+
+Similar to setting properties in the `state()` and `create()` methods, you can also set owning relations such as `BelongsTo` relations. These can be set both to specific instances or to factory instances which may have their own state set. Relations set to factories are resolve when the `create()` or `createMultiple` methods are called.
+```php
+$barEntity = Factory::new(BarEntity::class)->create(['property' => 'A']);
+
+$bazFactory = Factory::new(BazEntity::class)->state(['property' => 'B']);
+
+Factory::new(FooEntity::class)->state([
+    'bar' => $barEntity,
+    'baz' => $bazFactory,
+])->createMultiple(3);
+
+// This creates the following number of entities on the database
+Repository::new(FooEntity::class)->get()->count() === 3;
+Repository::new(BarEntity::class)->get()->count() === 1;
+Repository::new(BazEntity::class)->get()->count() === 3;
+```
+
+### Custom Factories
+The generic factory provides random default values based on the property type in the entity definition. These defaults are as follows:
+
+- `int` results in `$faker->randomNumber()`
+- `float` results in `$faker->randomFloat()`
+- `string` results in `$faker->word()`
+- `bool` results in `$faker->randomElement([true, false])`
+- `CarbonImmutable` results in `CarbonImmutable::parse($faker->dateTime())`
+- `array` results in `[]`
+- nullable columns are set to `null`
+
+
+As mentioned above the default factory can be overridden in the `#[Entity(factory: MyFactory::class)]` annotation. The custom factory must extend the base `Factory` and can override the protected `define()` method similar to Eloquent's factories. The main difference to Eloquent is that not all columns need to be mapped, as all non-mapped columns are resolved to the generic defaults listed above. And example of a custom factory might look like
+
+```php
+class MyFactory extends Factory
+{
+    protected function define(): array
+    {
+        return [
+            // Have access to a faker instance
+            'text' => $this->faker->paragraph(),
+
+            // Can set owning relations to instances or factories
+            'relation' => Factory::new(FooEntity::class)->state(['property' => 'value']),
+
+            // The following is redundant
+            'myProperty' => $this->faker->randomNumber(),
+        ];
+    }
+}
+```
+
+
+## Extending the ORM
 The ORM is highly extendable. Most concepts are encoded in interfaces and simply providing your own implementations allows to include new functionality into the ORM.
 
 ### Column Attributes and Mappers

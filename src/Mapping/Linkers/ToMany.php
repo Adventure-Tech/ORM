@@ -12,8 +12,7 @@ trait ToMany
         if (!EntityAccessorService::isset($currentEntity, $this->relation)) {
             EntityAccessorService::set($currentEntity, $this->relation, Collection::empty());
         }
-        // TODO: this surely breaks. need better check
-        if ($relatedEntity) {
+        if (!is_null($relatedEntity)) {
             /** @var Collection<int|string,object> $collection */
             $collection = EntityAccessorService::get($currentEntity, $this->relation);
             $collection[] = $relatedEntity;

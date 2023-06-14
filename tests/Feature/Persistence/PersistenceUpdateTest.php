@@ -5,7 +5,9 @@ use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
+use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Persistence\PersistenceManager;
+use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
@@ -173,4 +175,14 @@ test('Trying to update non-existing record leads to exception', function () {
         RecordNotFoundException::class,
         'Could not delete entity'
     );
+});
+
+test('Updating nullable column to null', function () {
+    $user = Factory::new(User::class)->create(['favouriteColor' => 'red']);
+    $user->favouriteColor = null;
+
+    UserPersistence::update($user);
+
+    $user = Repository::new(User::class)->get()->first();
+    expect($user->favouriteColor)->toBeNull();
 });

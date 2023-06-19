@@ -15,7 +15,8 @@ use Illuminate\Support\Collection;
  */
 class Factory
 {
-    protected readonly Generator $faker;
+    private static array $fakers = [];
+
     /**
      * @var array<string,mixed>
      */
@@ -31,16 +32,21 @@ class Factory
     {
         $entityReflection = EntityReflection::new($class);
         $factory = $entityReflection->getFactory() ?? self::class;
-        return new $factory($entityReflection);
+        if (!isset(self::$fakers[$factory])) {
+            self::$fakers[$factory] = \Faker\Factory::create();
+        }
+        return new $factory($entityReflection, self::$fakers[$factory]);
     }
 
     /**
      * @param  EntityReflection<T>  $entityReflection
+     * @param $
+     * @param  Generator  $faker
      */
     private function __construct(
-        private readonly EntityReflection $entityReflection
+        private readonly EntityReflection $entityReflection,
+        protected readonly Generator $faker
     ) {
-        $this->faker = \Faker\Factory::create();
     }
 
     /**

@@ -81,3 +81,10 @@ test('Can reuse factories', function () {
             $author->getId(),
         ]);
 });
+
+test('Can generate unique values via faker in factories', function () {
+    expect(fn() => Factory::new(Post::class)->createMultiple(183))->toThrow(
+        OverflowException::class,
+        'Maximum retries of 10000 reached without finding a unique value'
+    );
+});

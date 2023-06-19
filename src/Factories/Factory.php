@@ -15,7 +15,6 @@ use Illuminate\Support\Collection;
  */
 class Factory
 {
-    protected readonly Generator $faker;
     /**
      * @var array<string,mixed>
      */
@@ -24,23 +23,34 @@ class Factory
     /**
      * @template E of object
      * @param  class-string<E>  $class
-     *
      * @return Factory<E>
      */
     public static function new(string $class): Factory
     {
+        return self::internalNew($class, \Faker\Factory::create());
+    }
+
+    /**
+     * @template E of object
+     * @param  class-string<E>  $class
+     * @param  Generator  $faker
+     * @return Factory<E>
+     */
+    public static function internalNew(string $class, Generator $faker): Factory
+    {
         $entityReflection = EntityReflection::new($class);
-        $factory = $entityReflection->getFactory() ?? self::class;
-        return new $factory($entityReflection);
+        $factory = $entityReflection->getFactory() ?? Factory::class;
+        return new $factory($entityReflection, $faker);
     }
 
     /**
      * @param  EntityReflection<T>  $entityReflection
+     * @param  Generator  $faker
      */
     private function __construct(
-        private readonly EntityReflection $entityReflection
+        private readonly EntityReflection $entityReflection,
+        protected readonly Generator $faker
     ) {
-        $this->faker = \Faker\Factory::create();
     }
 
     /**
@@ -166,7 +176,7 @@ class Factory
             if ($linker instanceof OwningLinker && !key_exists($property, $state)) {
                 $state[$property] = $this->entityReflection->allowsNull($property)
                     ? null
-                    : Factory::new($linker->getTargetEntity());
+                    : Factory::internalNew($linker->getTargetEntity(), $this->faker);
             }
         }
     }

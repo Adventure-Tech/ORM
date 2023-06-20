@@ -37,15 +37,15 @@ test('Can sort in ascending order within loaded relation', function () {
     shuffle($userData);
     DB::table('users')->insert($userData);
     $postData = [
-        ['title' => 'A1', 'content' => 'content', 'author' => 1],
-        ['title' => 'A2', 'content' => 'content', 'author' => 1],
-        ['title' => 'A3', 'content' => 'content', 'author' => 1],
-        ['title' => 'B1', 'content' => 'content', 'author' => 2],
-        ['title' => 'B2', 'content' => 'content', 'author' => 2],
-        ['title' => 'B3', 'content' => 'content', 'author' => 2],
-        ['title' => 'C1', 'content' => 'content', 'author' => 3],
-        ['title' => 'C2', 'content' => 'content', 'author' => 3],
-        ['title' => 'C3', 'content' => 'content', 'author' => 3],
+        ['title' => 'A1', 'content' => 'content', 'number' => 1, 'author' => 1],
+        ['title' => 'A2', 'content' => 'content', 'number' => 1, 'author' => 1],
+        ['title' => 'A3', 'content' => 'content', 'number' => 1, 'author' => 1],
+        ['title' => 'B1', 'content' => 'content', 'number' => 1, 'author' => 2],
+        ['title' => 'B2', 'content' => 'content', 'number' => 1, 'author' => 2],
+        ['title' => 'B3', 'content' => 'content', 'number' => 1, 'author' => 2],
+        ['title' => 'C1', 'content' => 'content', 'number' => 1, 'author' => 3],
+        ['title' => 'C2', 'content' => 'content', 'number' => 1, 'author' => 3],
+        ['title' => 'C3', 'content' => 'content', 'number' => 1, 'author' => 3],
     ];
     shuffle($postData);
     DB::table('posts')->insert($postData);
@@ -68,15 +68,15 @@ test('Can sort in descending order within loaded relation', function () {
     shuffle($userData);
     DB::table('users')->insert($userData);
     $postData = [
-        ['title' => 'A1', 'content' => 'content', 'author' => 1],
-        ['title' => 'A2', 'content' => 'content', 'author' => 1],
-        ['title' => 'A3', 'content' => 'content', 'author' => 1],
-        ['title' => 'B1', 'content' => 'content', 'author' => 2],
-        ['title' => 'B2', 'content' => 'content', 'author' => 2],
-        ['title' => 'B3', 'content' => 'content', 'author' => 2],
-        ['title' => 'C1', 'content' => 'content', 'author' => 3],
-        ['title' => 'C2', 'content' => 'content', 'author' => 3],
-        ['title' => 'C3', 'content' => 'content', 'author' => 3],
+        ['title' => 'A1', 'content' => 'content', 'number' => 1, 'author' => 1],
+        ['title' => 'A2', 'content' => 'content', 'number' => 1, 'author' => 1],
+        ['title' => 'A3', 'content' => 'content', 'number' => 1, 'author' => 1],
+        ['title' => 'B1', 'content' => 'content', 'number' => 1, 'author' => 2],
+        ['title' => 'B2', 'content' => 'content', 'number' => 1, 'author' => 2],
+        ['title' => 'B3', 'content' => 'content', 'number' => 1, 'author' => 2],
+        ['title' => 'C1', 'content' => 'content', 'number' => 1, 'author' => 3],
+        ['title' => 'C2', 'content' => 'content', 'number' => 1, 'author' => 3],
+        ['title' => 'C3', 'content' => 'content', 'number' => 1, 'author' => 3],
     ];
     shuffle($postData);
     DB::table('posts')->insert($postData);

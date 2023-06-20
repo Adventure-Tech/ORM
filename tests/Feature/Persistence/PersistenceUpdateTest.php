@@ -10,6 +10,7 @@ use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
+use AdventureTech\ORM\Tests\TestClasses\IntEnum;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Carbon\CarbonImmutable;
@@ -120,6 +121,7 @@ test('Can update owning relations', function () {
     $post->title = 'Title';
     $post->content = 'Content';
     $post->author = $alice;
+    $post->number = IntEnum::ONE;
     PostPersistence::insert($post);
 
     $post->author = $bob;
@@ -140,6 +142,7 @@ test('Must set ID of non-nullable owning relation', function () {
     $post->title = 'Title';
     $post->content = 'Content';
     $post->author = $alice;
+    $post->number = IntEnum::ONE;
     PostPersistence::insert($post);
 
     $post->author = $bob;
@@ -160,6 +163,7 @@ test('Can set nullable owning relation to null', function () {
     $post->content = 'Content';
     $post->author = $user;
     $post->editor = $user;
+    $post->number = IntEnum::ONE;
     PostPersistence::insert($post);
 
     $post->editor = null;

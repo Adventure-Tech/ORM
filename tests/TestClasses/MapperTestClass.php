@@ -11,4 +11,5 @@ class MapperTestClass
     public ?bool $boolProperty;
     public ?CarbonImmutable $datetimeProperty;
     public ?array $jsonProperty;
+    public ?IntEnum $enumProperty;
 }

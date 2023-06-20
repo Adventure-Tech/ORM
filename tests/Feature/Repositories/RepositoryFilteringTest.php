@@ -39,9 +39,9 @@ test('Repositories allow filtering of the results', function () {
 test('Can filter within loaded relations', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'Name']);
     DB::table('posts')->insert([
-        ['id' => 1, 'title' => 'Title', 'content' => 'Content', 'author' => $authorId, 'deleted_at' => null],
-        ['id' => 2, 'title' => 'Other Title', 'content' => 'Content', 'author' => $authorId, 'deleted_at' => null],
-        ['id' => 3, 'title' => 'Title', 'content' => 'Content', 'author' => $authorId, 'deleted' => now()],
+        ['id' => 1, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => null],
+        ['id' => 2, 'title' => 'Other Title', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => null],
+        ['id' => 3, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted' => now()],
      ]);
     $user = Repository::new(User::class)
         ->with('posts', function (Repository $repository) {
@@ -58,7 +58,7 @@ test('Can filter within loaded relations', function () {
 test('Can filter into loaded relations', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'Name']);
     DB::table('posts')->insert([
-        ['id' => 1, 'title' => 'Other Title', 'content' => 'Content', 'author' => $authorId, 'deleted_at' => null],
+        ['id' => 1, 'title' => 'Other Title', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => null],
     ]);
     $users = Repository::new(User::class)
         ->with('posts')
@@ -70,7 +70,7 @@ test('Can filter into loaded relations', function () {
 test('Can filter out of loaded relations', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'Name']);
     DB::table('posts')->insert([
-        ['id' => 1, 'title' => 'Other Title', 'content' => 'Content', 'author' => $authorId, 'deleted_at' => null],
+        ['id' => 1, 'title' => 'Other Title', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => null],
     ]);
     $user = Repository::new(User::class)
         ->with('posts', function (Repository $repository) {
@@ -84,8 +84,8 @@ test('Can filter out of loaded relations', function () {
 test('Can filter across relations', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'FOO']);
     DB::table('posts')->insert([
-        ['id' => 1, 'title' => 'FOO', 'content' => 'Content', 'author' => $authorId, 'deleted_at' => null],
-        ['id' => 2, 'title' => 'BAR', 'content' => 'Content', 'author' => $authorId, 'deleted_at' => null],
+        ['id' => 1, 'title' => 'FOO', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => null],
+        ['id' => 2, 'title' => 'BAR', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => null],
     ]);
     $user = Repository::new(User::class)
         ->with('posts', function (Repository $repository) {

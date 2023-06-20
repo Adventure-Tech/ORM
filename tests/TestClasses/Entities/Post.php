@@ -10,6 +10,7 @@ use AdventureTech\ORM\Mapping\ManagedColumns\WithTimestamps;
 use AdventureTech\ORM\Mapping\Relations\BelongsTo;
 use AdventureTech\ORM\Mapping\SoftDeletes\WithSoftDeletes;
 use AdventureTech\ORM\Tests\TestClasses\Factories\PostFactory;
+use AdventureTech\ORM\Tests\TestClasses\IntEnum;
 use AdventureTech\ORM\Tests\TestClasses\Repositories\PostRepository;
 use Carbon\CarbonImmutable;
 
@@ -28,6 +29,9 @@ class Post
 
     #[Column]
     public string $content;
+
+    #[Column]
+    public IntEnum $number;
 
     #[DatetimeTZColumn(tzName: 'published_tz')]
     public ?CarbonImmutable $publishedAt;

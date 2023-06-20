@@ -2,6 +2,7 @@
 
 use AdventureTech\ORM\AliasingManagement\AliasingManager;
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
+use AdventureTech\ORM\Exceptions\EnumSerializationException;
 use AdventureTech\ORM\Mapping\Mappers\EnumMapper;
 use AdventureTech\ORM\Tests\TestClasses\IntEnum;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
@@ -26,6 +27,21 @@ test('The enum mapper can serialize an entity', function (
         'null' => [null, ['db_column_name' => null]],
         'enum value' => [IntEnum::ONE, ['db_column_name' => 1]],
     ]);
+
+test('The enum mapper throws error when trying to serialize value that is not enum', function (
+    EnumMapper $mapper,
+    mixed $value,
+    array $expected
+) {
+    expect($mapper->serialize($value))
+        ->toBeArray()
+        ->toEqualCanonicalizing($expected);
+})
+    ->with('mapper')
+    ->with([
+        'string value' => ['foo', ['db_column_name' => null]],
+        'object value' => [(object) ['foo' => 'bar'], ['db_column_name' => null]],
+    ])->throws(EnumSerializationException::class);
 
 test('The enum mapper can deserialize an item with a null value', function (
     EnumMapper $mapper,
@@ -55,6 +71,7 @@ test('The json mapper can deserialize an item with a non-null value', function (
         'string value' => [(object) ['db_column_name' => '1'], IntEnum::ONE],
         'int value' => [(object) ['db_column_name' => 1], IntEnum::ONE],
     ]);
+
 
 dataset('mapper', function () {
     $property = new ReflectionProperty(MapperTestClass::class, 'enumProperty');

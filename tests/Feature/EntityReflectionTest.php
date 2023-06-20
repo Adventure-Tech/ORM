@@ -98,6 +98,7 @@ test('Can names of selected columns correctly with owning linker (BelongsTo)', f
             'id',
             'title',
             'content',
+            'number',
             'published_at',
             'published_tz',
             'created_at',

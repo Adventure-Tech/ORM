@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Factories;
 
+use AdventureTech\ORM\ColumnPropertyService;
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
@@ -9,6 +10,7 @@ use AdventureTech\ORM\Persistence\PersistenceManager;
 use Carbon\CarbonImmutable;
 use Faker\Generator;
 use Illuminate\Support\Collection;
+use ReflectionProperty;
 
 /**
  * @template T of object
@@ -117,7 +119,13 @@ class Factory
         if ($this->entityReflection->allowsNull($property)) {
             return null;
         }
+
         $type = $this->entityReflection->getPropertyType($property);
+
+        $property = new ReflectionProperty($this->entityReflection->getClass(), $property);
+        if (ColumnPropertyService::isEnum($property)) {
+            return $this->faker->randomElement($type::cases());
+        }
         return match ($type) {
             'int' => $this->faker->randomNumber(),
             'float' => $this->faker->randomFloat(),

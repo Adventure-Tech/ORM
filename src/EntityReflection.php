@@ -5,7 +5,6 @@ namespace AdventureTech\ORM;
 use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
-use AdventureTech\ORM\Exceptions\UnsupportedReflectionTypeException;
 use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Mapping\Columns\ColumnAnnotation;
 use AdventureTech\ORM\Mapping\Entity;
@@ -23,7 +22,6 @@ use Mockery;
 use Mockery\Mock;
 use ReflectionClass;
 use ReflectionException;
-use ReflectionNamedType;
 use ReflectionProperty;
 
 /**
@@ -83,7 +81,7 @@ class EntityReflection
     /**
      * @return Mock|EntityReflection<object>
      */
-    public static function fake(): Mock | EntityReflection
+    public static function fake(): Mock|EntityReflection
     {
         self::$fake = Mockery::mock(self::class)->makePartial();
         return self::$fake;
@@ -267,7 +265,7 @@ class EntityReflection
     private function registerLinker(RelationAnnotation $relationAnnotation, ReflectionProperty $property): void
     {
         $propertyName = $property->getName();
-        /** @var class-string<object> $propertyType */
+        /** @var class-string $propertyType */
         $propertyType = $this->getPropertyType($propertyName);
         $this->linkers->put(
             $propertyName,
@@ -277,20 +275,11 @@ class EntityReflection
 
     public function allowsNull(string $property): bool
     {
-        return $this->getReflectionType($property)->allowsNull();
+        return ColumnPropertyService::allowsNull($this->reflectionClass->getProperty($property));
     }
 
     public function getPropertyType(string $property): string
     {
-        return $this->getReflectionType($property)->getName();
-    }
-
-    private function getReflectionType(string $property): ReflectionNamedType
-    {
-        $type = $this->reflectionClass->getProperty($property)->getType();
-        if (!($type instanceof ReflectionNamedType)) {
-            throw new UnsupportedReflectionTypeException();
-        }
-        return $type;
+        return ColumnPropertyService::getPropertyType($this->reflectionClass->getProperty($property));
     }
 }

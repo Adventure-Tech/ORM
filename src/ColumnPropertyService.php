@@ -2,31 +2,63 @@
 
 namespace AdventureTech\ORM;
 
-use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
+use AdventureTech\ORM\Exceptions\UnsupportedReflectionTypeException;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionNamedType;
 use ReflectionProperty;
 
 class ColumnPropertyService
 {
     /**
-     * Test if the property of the column being mapped is an enum
+     * Check if the Property is nullable
      *
      * @param  ReflectionProperty  $property
      * @return bool
      */
+    public static function allowsNull(ReflectionProperty $property): bool
+    {
+        return self::getReflectionType($property)->allowsNull();
+    }
+
+    /**
+     * Return the property type name
+     *
+     * @param  ReflectionProperty  $property
+     * @return string
+     */
+    public static function getPropertyType(ReflectionProperty $property): string
+    {
+        return self::getReflectionType($property)->getName();
+    }
+
+    /**
+     * Check if the Property is an enum
+     *
+     * @param  ReflectionProperty  $property
+     * @return bool
+     * @throws ReflectionException
+     */
     public static function isEnum(ReflectionProperty $property): bool
     {
-        if ($property->getType()->isBuiltin()) {
+        $type = self::getReflectionType($property);
+        if ($type->isBuiltin()) {
             return false;
         }
 
-        try {
-            $reflectionClass = new RefLectionClass($property->getType()->getName());
-        } catch (ReflectionException) {
-            throw new EntityReflectionInstantiationException($property->getType()->getName());
-        }
+        /** @var class-string $className */
+        $className = $type->getName();
+        $reflectionClass = new RefLectionClass($className);
 
         return $reflectionClass->isEnum();
+    }
+
+    private static function getReflectionType(ReflectionProperty $property): ReflectionNamedType
+    {
+        $type = $property->getType();
+        if (!($type instanceof ReflectionNamedType)) {
+            throw new UnsupportedReflectionTypeException();
+        }
+        return $type;
     }
 }

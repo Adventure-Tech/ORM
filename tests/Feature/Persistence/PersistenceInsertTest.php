@@ -9,6 +9,7 @@ use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
+use AdventureTech\ORM\Tests\TestClasses\IntEnum;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Carbon\CarbonImmutable;
@@ -114,6 +115,7 @@ test('Can insert owning relations', function () {
     $post->content = 'Content';
     $post->author = $author;
     $post->editor = $editor;
+    $post->number = IntEnum::ONE;
 
     PostPersistence::insert($post);
 
@@ -126,6 +128,7 @@ test('Must set owning relation', function () {
     $post = new Post();
     $post->title = 'Title';
     $post->content = 'Content';
+    $post->number = IntEnum::ONE;
 
     expect(fn() => PostPersistence::insert($post))->toThrow(
         MissingOwningRelationException::class,
@@ -137,6 +140,7 @@ test('Must set ID of owning relation', function () {
     $post = new Post();
     $post->title = 'Title';
     $post->content = 'Content';
+    $post->number = IntEnum::ONE;
     $post->author = new User();
 
     expect(fn() => PostPersistence::insert($post))->toThrow(
@@ -153,6 +157,7 @@ test('Can set nullable owning relation to null', function () {
     $post = new Post();
     $post->title = 'Title';
     $post->content = 'Content';
+    $post->number = IntEnum::ONE;
     $post->author = $user;
     $post->editor = null;
 

@@ -14,6 +14,7 @@ return new class () extends Migration {
             $table->text('content');
             $table->timestamp('published_at')->nullable();
             $table->string('published_tz')->nullable();
+            $table->enum('number', [1, 2]);
             $table->foreignId('author')->constrained('users');
             $table->foreignId('editor')->nullable()->constrained('users');
             $table->timestamps();

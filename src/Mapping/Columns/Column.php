@@ -35,7 +35,7 @@ readonly class Column implements ColumnAnnotation
 
     /**
      * @param  ReflectionProperty  $property
-     * @return DefaultMapper<T>|JSONMapper|DatetimeMapper
+     * @return DefaultMapper<T>|JSONMapper|DatetimeMapper|EnumMapper
      */
     public function getMapper(ReflectionProperty $property): Mapper
     {

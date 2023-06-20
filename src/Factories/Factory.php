@@ -10,6 +10,7 @@ use AdventureTech\ORM\Persistence\PersistenceManager;
 use Carbon\CarbonImmutable;
 use Faker\Generator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use ReflectionProperty;
 
 /**
@@ -17,6 +18,11 @@ use ReflectionProperty;
  */
 class Factory
 {
+    /**
+     * @var array<class-string,Generator>
+     */
+    private static array $factories = [];
+
     /**
      * @var array<string,mixed>
      */
@@ -29,20 +35,26 @@ class Factory
      */
     public static function new(string $class): Factory
     {
-        return self::internalNew($class, \Faker\Factory::create());
+        $entityReflection = EntityReflection::new($class);
+        $factory = $entityReflection->getFactory() ?? Factory::class;
+        if (!isset(self::$factories[$class])) {
+            self::$factories[$class] = \Faker\Factory::create(App::currentLocale());
+        }
+        return new $factory($entityReflection, self::$factories[$class]);
     }
 
     /**
      * @template E of object
-     * @param  class-string<E>  $class
-     * @param  Generator  $faker
-     * @return Factory<E>
+     * @param  class-string<E>|null  $class
+     * @return void
      */
-    public static function internalNew(string $class, Generator $faker): Factory
+    public static function resetFakers(string $class = null): void
     {
-        $entityReflection = EntityReflection::new($class);
-        $factory = $entityReflection->getFactory() ?? Factory::class;
-        return new $factory($entityReflection, $faker);
+        if (isset($class)) {
+            unset(self::$factories[$class]);
+        } else {
+            self::$factories = [];
+        }
     }
 
     /**
@@ -184,7 +196,7 @@ class Factory
             if ($linker instanceof OwningLinker && !key_exists($property, $state)) {
                 $state[$property] = $this->entityReflection->allowsNull($property)
                     ? null
-                    : Factory::internalNew($linker->getTargetEntity(), $this->faker);
+                    : Factory::new($linker->getTargetEntity());
             }
         }
     }

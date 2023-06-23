@@ -17,17 +17,13 @@ use stdClass;
 
 readonly class DatetimeTZMapper implements Mapper
 {
-    use WithDefaultMapperMethods;
-
     /**
      * @param  string  $name
      * @param  string  $tzName
-     * @param  ReflectionProperty  $property
      */
     public function __construct(
         private string $name,
         private string $tzName,
-        private ReflectionProperty $property
     ) {
     }
 

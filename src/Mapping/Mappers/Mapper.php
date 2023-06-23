@@ -6,7 +6,7 @@ use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use stdClass;
 
 /**
- * @template T
+ * @template-covariant T
  */
 interface Mapper
 {

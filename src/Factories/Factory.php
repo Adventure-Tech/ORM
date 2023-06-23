@@ -21,7 +21,7 @@ class Factory
     /**
      * @var array<class-string,Generator>
      */
-    private static array $factories = [];
+    private static array $fakers = [];
 
     /**
      * @var array<string,mixed>
@@ -37,10 +37,10 @@ class Factory
     {
         $entityReflection = EntityReflection::new($class);
         $factory = $entityReflection->getFactory() ?? Factory::class;
-        if (!isset(self::$factories[$class])) {
-            self::$factories[$class] = \Faker\Factory::create(App::currentLocale());
+        if (!isset(self::$fakers[$class])) {
+            self::$fakers[$class] = \Faker\Factory::create(App::currentLocale());
         }
-        return new $factory($entityReflection, self::$factories[$class]);
+        return new $factory($entityReflection, self::$fakers[$class]);
     }
 
     /**
@@ -51,9 +51,9 @@ class Factory
     public static function resetFakers(string $class = null): void
     {
         if (isset($class)) {
-            unset(self::$factories[$class]);
+            unset(self::$fakers[$class]);
         } else {
-            self::$factories = [];
+            self::$fakers = [];
         }
     }
 

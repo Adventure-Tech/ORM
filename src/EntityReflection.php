@@ -245,7 +245,7 @@ class EntityReflection
     }
 
     /**
-     * @param  ColumnAnnotation<mixed>  $column
+     * @param  ColumnAnnotation  $column
      * @param  ReflectionProperty  $property
      * @return void
      */

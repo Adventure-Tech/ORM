@@ -12,10 +12,10 @@ use JsonException;
 use stdClass;
 
 /**
- * @implements Mapper<array>
+ * @implements SimpleMapper<array>
  */
 
-readonly class JSONMapper implements Mapper
+readonly class JSONMapper implements SimpleMapper
 {
     use WithDefaultMapperMethods;
 

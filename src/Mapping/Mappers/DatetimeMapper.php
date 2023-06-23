@@ -11,10 +11,10 @@ use Carbon\CarbonImmutable;
 use stdClass;
 
 /**
- * @implements Mapper<CarbonImmutable>
+ * @implements SimpleMapper<CarbonImmutable>
  */
 
-readonly class DatetimeMapper implements Mapper
+readonly class DatetimeMapper implements SimpleMapper
 {
     use WithDefaultMapperMethods;
 

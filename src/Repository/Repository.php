@@ -297,6 +297,8 @@ class Repository
             $linkedRepo->linker->link($this->resolvingEntity, $entity);
         }
 
+        EntityAccessorService::initEntity($this->resolvingEntity);
+
         return $reset && isset($this->resolvingEntity) ? $this->resolvingEntity : null;
     }
 

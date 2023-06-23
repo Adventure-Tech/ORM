@@ -48,4 +48,11 @@ class EntityAccessorService
     {
         return self::isset($entity, EntityReflection::new($entity::class)->getId());
     }
+
+    public static function initEntity(object $entity): void
+    {
+        if (method_exists($entity, 'init')) {
+            $entity->init();
+        }
+    }
 }

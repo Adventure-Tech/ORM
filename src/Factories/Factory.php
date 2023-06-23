@@ -123,6 +123,7 @@ class Factory
         foreach ($state as $property => $value) {
             EntityAccessorService::set($entity, $property, $value);
         }
+        EntityAccessorService::initEntity($entity);
         return $entity;
     }
 

@@ -11,10 +11,10 @@ use stdClass;
 
 /**
  * @template T
- * @implements Mapper<T>
+ * @implements SimpleMapper<T>
  */
 
-readonly class DefaultMapper implements Mapper
+readonly class DefaultMapper implements SimpleMapper
 {
     use WithDefaultMapperMethods;
 

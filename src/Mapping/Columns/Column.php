@@ -13,33 +13,39 @@ use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
 use AdventureTech\ORM\Mapping\Mappers\EnumMapper;
 use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
+use AdventureTech\ORM\Mapping\Mappers\SimpleMapper;
 use Attribute;
 use Carbon\CarbonImmutable;
+use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
 
-/**
- * @template T
- * @implements ColumnAnnotation<T>
- */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 readonly class Column implements ColumnAnnotation
 {
     /**
      * @param  string|null  $name
+     * @param  class-string<SimpleMapper<mixed>>|null  $mapper
      */
     public function __construct(
-        private ?string $name = null
+        private ?string $name = null,
+        private ?string $mapper = null
     ) {
     }
 
     /**
      * @param  ReflectionProperty  $property
-     * @return DefaultMapper<T>|JSONMapper|DatetimeMapper|EnumMapper
+     * @return SimpleMapper<mixed>|EnumMapper|JSONMapper|DatetimeMapper|DefaultMapper<mixed>
+     * @throws ReflectionException
      */
-    public function getMapper(ReflectionProperty $property): Mapper
+    public function getMapper(ReflectionProperty $property): SimpleMapper|EnumMapper|JSONMapper|DatetimeMapper|DefaultMapper
     {
         $name = $this->name ?? DefaultNamingService::columnFromProperty($property->getName());
+
+        if (isset($this->mapper)) {
+            return new $this->mapper($name);
+        }
+
         /** @var ReflectionNamedType $reflectionNamedType */
         $reflectionNamedType = $property->getType();
 

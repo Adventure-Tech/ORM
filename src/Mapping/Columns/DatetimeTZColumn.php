@@ -13,10 +13,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 use ReflectionProperty;
 
-/**
- * @implements ColumnAnnotation<CarbonImmutable>
- */
-
 #[Attribute(Attribute::TARGET_PROPERTY)]
 readonly class DatetimeTZColumn implements ColumnAnnotation
 {
@@ -38,6 +34,6 @@ readonly class DatetimeTZColumn implements ColumnAnnotation
     {
         $name = $this->name ?? DefaultNamingService::columnFromProperty($property->getName());
         $tzName = $this->tzName ?? $name . '_timezone';
-        return new DatetimeTZMapper($name, $tzName, $property);
+        return new DatetimeTZMapper($name, $tzName);
     }
 }

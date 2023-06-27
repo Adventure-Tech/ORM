@@ -2,12 +2,13 @@
 A repository-based and encapsulated ORM built on top of Eloquent's query builder
 
 # Table of contents
-| Chapter                                       | Content                           |
-|-----------------------------------------------|-----------------------------------|
-| [Entities](#entities)                         | Entities are at the core of the ORM. They define not only data-transfer objects, but also form the basis of how data is retrieved by the repositories, how data is inserted by the persistence managers, and even provide default factories for testing purposes.  |
-| [Repositories](#repositories)                 | Repositories provide a mechanism to retrieve data from the database. |
-| [Persistence Managers](#persistence-managers) | Where repositories enable reading of data from the database, persistence managers enable writing to the database.           |
-| [Factories](#factories)                       | Factories are a very convenient way to create test data via the entities.           |
+| Chapter                                       | Content                                                                                                                                                                                                                                                           |
+|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Entities](#entities)                         | Entities are at the core of the ORM. They define not only data-transfer objects, but also form the basis of how data is retrieved by the repositories, how data is inserted by the persistence managers, and even provide default factories for testing purposes. |
+| [Repositories](#repositories)                 | Repositories provide a mechanism to retrieve data from the database.                                                                                                                                                                                              |
+| [Persistence Managers](#persistence-managers) | Where repositories enable reading of data from the database, persistence managers enable writing to the database.                                                                                                                                                 |
+| [Factories](#factories)                       | Factories are a very convenient way to create test data via the entities.                                                                                                                                                                                         |
+| [Extending the ORM](#extending-the-orm)       | The ORM is highly extendable.                                                                                                                                                                                                                                     |
 
 ## Entities
 Entities are at the core of the ORM. They define not only data-transfer objects, but also form the basis of how data is retrieved by the repositories, how data is inserted by the persistence managers, and even provide default factories for testing purposes.

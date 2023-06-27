@@ -12,7 +12,6 @@ use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
 use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
 use AdventureTech\ORM\Mapping\Mappers\EnumMapper;
 use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
-use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Mapping\Mappers\SimpleMapper;
 use Attribute;
 use Carbon\CarbonImmutable;

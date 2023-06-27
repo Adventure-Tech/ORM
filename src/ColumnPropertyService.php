@@ -25,7 +25,7 @@ class ColumnPropertyService
      * Get the default value of the Property
      *
      * @param  ReflectionProperty  $property
-     * @return bool
+     * @return mixed
      */
     public static function getDefaultValue(ReflectionProperty $property): mixed
     {

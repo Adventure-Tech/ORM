@@ -2,12 +2,13 @@
 A repository-based and encapsulated ORM built on top of Eloquent's query builder
 
 # Table of contents
-| Chapter                                       | Content                           |
-|-----------------------------------------------|-----------------------------------|
-| [Entities](#entities)                         | Entities are at the core of the ORM. They define not only data-transfer objects, but also form the basis of how data is retrieved by the repositories, how data is inserted by the persistence managers, and even provide default factories for testing purposes.  |
-| [Repositories](#repositories)                 | Repositories provide a mechanism to retrieve data from the database. |
-| [Persistence Managers](#persistence-managers) | Where repositories enable reading of data from the database, persistence managers enable writing to the database.           |
-| [Factories](#factories)                       | Factories are a very convenient way to create test data via the entities.           |
+| Chapter                                       | Content                                                                                                                                                                                                                                                           |
+|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Entities](#entities)                         | Entities are at the core of the ORM. They define not only data-transfer objects, but also form the basis of how data is retrieved by the repositories, how data is inserted by the persistence managers, and even provide default factories for testing purposes. |
+| [Repositories](#repositories)                 | Repositories provide a mechanism to retrieve data from the database.                                                                                                                                                                                              |
+| [Persistence Managers](#persistence-managers) | Where repositories enable reading of data from the database, persistence managers enable writing to the database.                                                                                                                                                 |
+| [Factories](#factories)                       | Factories are a very convenient way to create test data via the entities.                                                                                                                                                                                         |
+| [Extending the ORM](#extending-the-orm)       | The ORM is highly extendable.                                                                                                                                                                                                                                     |
 
 ## Entities
 Entities are at the core of the ORM. They define not only data-transfer objects, but also form the basis of how data is retrieved by the repositories, how data is inserted by the persistence managers, and even provide default factories for testing purposes.
@@ -117,6 +118,8 @@ class MyEntity
 ```
 
 Note that if a property is public but also has a getter and setter, the ORM will prioritise the getter/setter.
+
+Also, be careful to ensure that getters/setters don't break the serialization to and from the database. Most data transformation should probably live in [custom mappers](#column-attributes-and-mappers), while getters/setters can manage any side effects, such as setting additional properties on the entity for convenience.
 
 ### Managed Columns and Soft-Deletes
 There are built-in annotations for the managed datetime columns `#[CreatedAt]` and `#[UpdatedAt]`. Object properties annotated with these annotations are completely managed by the ORM and cannot be manually set or updated.
@@ -299,7 +302,7 @@ $fooEntity->createdAt = now()->subDay(); // gets ignored
 FooPersistenceManager::insert($fooEntity);
 
 // Entity instance got updated
-$fooEntity->id;         // ID is now set
+$fooEntity->id;        // ID is now set
 $fooEntity->createdAt; // managed columns are also set
 ```
 
@@ -439,6 +442,28 @@ class MyFactory extends Factory
 ## Extending the ORM
 The ORM is highly extendable. Most concepts are encoded in interfaces and simply providing your own implementations allows to include new functionality into the ORM.
 
+### Custom Filters
+You can easily add new filters to the ORM by implementing the `Filter` interface:
+```php
+readonly class FooFilter implements Filter
+{
+	public function __construct(
+		private string $column,
+		// any other data needed
+	) {}
+
+	public function applyFilter(
+		JoinClause|Builder $query,
+		LocalAliasingManager $aliasingManager
+	): void
+	{
+		$column = $aliasingManager->getQualifiedColumnName($this->column);
+		// simply apply the wanted where clauses to the $query builder
+	}
+}
+```
+Ensure to correctly obtain the column name by using the `LocalAliasingManager` (see [Aliasing](#aliasing) for details).
+
 ### Column Attributes and Mappers
 The process of mapping database columns to entity properties consists of two parts:
 
@@ -448,22 +473,176 @@ The process of mapping database columns to entity properties consists of two par
 #### Existing Mappers
 The `#[Column]` annotation resolves to the following mappers:
 
-- `array` types resolve to the `JSONMapper` based on a simple `json_encode`/`json_decode` logic
-- `CarbonImmutable` types resolve to the `DatetimeMapper` based on `CarbonImmutable::parse`
-- all other types get resolved to the `DefaultMapper`, which assumes the query builder mapped the result correctly
+- `array` types resolve to the `JSONMapper` based on a simple `json_encode()`/`json_decode()` logic
+- `CarbonImmutable` types resolve to the `DatetimeMapper` based on `CarbonImmutable::parse()`
+- all other types get resolved to the `DefaultMapper`, which assumes the query builder mapped the result correctly  (valid e.g. for `bool`, `int`, `string`, `float`)
 
-There is a further `DatetimeTZMapper` available with a dedicated `DatetimeTZColumn` annotation, which stores the timezone in a separate varchar column.
+There is a further `DatetimeTZMapper` available with a dedicated `DatetimeTZColumn` annotation. This enables storing of the timezone in a separate varchar column, and correctly sets the timezone in the `CarbonImmutable` instance.
 
-#### Custom Column Mappers
-The ORM is very extendable. All that needs to be done is to implement the `ColumnAnnotation` interface and provide a suitable `getMapper()` function. This gets access to the `ReflectionProperty` of the object property which is annotated with the custom column annotation. It needs to return a mapper implementing the `Mapper` interface. This requires the following methods:
+There are two ways of providing a custom mapper:
 
-- `getColumnNames` – the names of columns that need to be selected from the database
-- `serialize` – a function serializing the object property value to a list of values to be inserted into the database
-- `deserialize` – a function deserializing a list of values retrieved from the database to be set on the object
+##### 1. Custom `SimpleMapper` via the `#[Column]` annotation
+The `#[Column]` annotation accepts an optional argument, which is the class name for a mapper implementing the `SimpleMapper` interface.
+```php
+#[Entity]
+class FooEntity
+{
+	#[Column(mapper: FooSimpleMapper::class)]
+	public FooType $foo;
+}
+```
+Where the `FooSimpleMapper` looks something like
+```php
+readonly class FooSimpleMapper implements SimpleMapper
+{
+	use WithDefaultMapperMethods;
+
+//    WithDefaultMapperMethods provides the following sensible defaults:
+//
+//    public function __construct(private string $name)
+//    {
+//    }
+//
+//    public function getColumnNames(): array
+//    {
+//        return [ $this->name ];
+//    }
+
+	public function serialize(mixed $value): array
+	{
+		// $value is instance of FooType
+		return [
+			$this->name => $value->convertFooToString(),
+		];
+	}
+
+	public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): FooType
+	{
+		$column = $aliasingManager->getSelectedColumnName($this->name);
+		$value = $item->{$column};
+		return new FooType($value);
+	}
+}
+```
+See [Aliasing](#aliasing) for an explanation of the `LocalAliasingManager`.
+
+Note that as PHP does not support default implementations for interfaces, the default implementations are provided via the `WithDefaultMapperMethods` trait instead.
+
+Also, care needs to be taken to ensure that mappers and getters/setters are compatible!
+
+#### 2. More general custom `Mapper` with custom `ColumnAnnotation`
+There are use cases where we might want to parametrise more than the column name in the mapper. Or alternatively some mappers might combine multiple database columns into a single value (e.g. the `DatetimeTZMapper`).
+
+To implement such a case yourself you need to provide both a `ColumnAnnotation`
+```php
+readonly class FooColumn implements ColumnAnnotation
+{
+	public function __construct(
+		private ?string $name = null,
+		private array $myExtraData = [],
+	) {}
+
+	public function getMapper(ReflectionProperty $property): FooMapper
+	{
+		return new FooMapper(
+			$this->name ?? 'default_foo_column_name',
+			$this->myExtraData
+		);
+	}
+}
+```
+and a `Mapper`:
+```php
+readonly class FooMapper implements Mapper
+{
+	public function __construct(
+		private string $name,
+		private array $myExtraData
+	) {}
+
+    public function getColumnNames(): array
+    {
+        return [ $this->name, $this->myExtraData['extra_column'] ];
+    }
+
+	public function serialize(mixed $value): array
+	{
+		// $value is instance of FooType
+		return [
+			$this->name                        => $value->convertFooToString(),
+			$this->myExtraData['extra_column'] => $value->convertFooToExtra(),
+		];
+	}
+
+	public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): FooType
+	{
+		$column = $aliasingManager->getQualifiedColumnName($this->name);
+		$value = $item->{$column};
+
+		$extraColumn = $aliasingManager->getQualifiedColumnName($this->myExtraData['extra_column']);
+		$extra = $item->{$extraColumn};
+
+		return new FooType($value, $extraValue);
+	}
+}
+```
+
+You can then use the custom `ColumnAnnotation` just as you would the normal `#[Column]` annotation:
+
+This is then utilised in the entity by
+```php
+#[Entity]
+class FooEntity
+{
+	#[FooColumn(name: 'foo_value', extraData: ['extra_column' => 'foo_extra'])]
+	public FooType $foo;
+}
+```
+
 
 ### Custom Managed Columns / Soft-Deletes
 Again you can in theory provide your own managed-columns (not just for datetimes) and soft-delete annotations (must be a datetime column). All you have to do is implement the according interfaces `ManagedColumnAnnotation` or `SoftDeleteAnnotation`, respectively.
 
 ### Custom Relations and Linkers
+Similar to `ColumnAnnotations` and `Mappers`, there is a pair of interfaces for defining custom relations: the `Relation` annotation and the actual `Linker`. While possible to provide custom relations, this is anticipated to be a very rare requirement. Hence, we omit the details here, but we encourage to have a look at the existing implementations and have a play around!
 
-### Custom Filters
+### Aliasing
+The way the ORM works is by compiling any request for data by the Repository into a single SQL query with a join for each loaded relationship. When executed, the query builder then populates a `stdClass` object with the data, where it simply overwrites any values which have the same column name (e.g. an `id` column on multiple joined database tables).
+
+To avoid this the ORM aliases all joined tables and all selected columns.
+
+Therefore, whenever we interact with either the query itself (e.g. filters and linkers) or the `stdClass` retrieved by the query builder we need to use the appropriately aliased column names. This is made easy by the `LocalAliasingManager`, which exposes several methods.
+
+For example the consider the following query:
+```php
+Repository::new(FooEntity::class)
+	->with('bar', function(Repository $repo) use ($barFilter) {
+		$repo->filter($barFilter);
+	})
+	->filter($fooFilter);
+```
+Ignoring the two filters, this will generate SQL looking something like:
+```sql
+SELECT
+    "foo_table"."id" AS "foo_tableid",
+    "_0_"."id" AS "_0_id",
+FROM
+    "foo_table"
+    LEFT JOIN "bar_table" AS "_0_" ON "_0_"."foo_id" = "foo_table"."id"
+```
+In the `$fooFilter` the `LocalAliasingManager` will return the following:
+```php
+$localAliasingManager->getQualifiedColumnName('id')     === 'foo_table.id';
+$localAliasingManager->getSelectedColumnName('id')      === 'foo_tableid';
+$localAliasingManager->getQualifiedColumnName('bar/id') === '_0_.id';
+$localAliasingManager->getSelectedColumnName('bar/id')  === '_0_id';
+$localAliasingManager->getAliasedTableName()            === 'foo_table';
+```
+In the `$barFilter` on the other hand the `LocalAliasingManager` will return the following:
+```php
+$localAliasingManager->getQualifiedColumnName('id')    === '_0_.id';
+$localAliasingManager->getSelectedColumnName('id')     === '_0_id';
+$localAliasingManager->getQualifiedColumnName('../id') === 'foo_table.id';
+$localAliasingManager->getSelectedColumnName('../id')  === 'foo_tableid';
+$localAliasingManager->getAliasedTableName()           === '_0_';
+```

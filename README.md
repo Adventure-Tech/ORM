@@ -478,10 +478,9 @@ The `#[Column]` annotation resolves to the following mappers:
 
 There is a further `DatetimeTZMapper` available with a dedicated `DatetimeTZColumn` annotation. This enables storing of the timezone in a separate varchar column, and correctly sets the timezone in the `CarbonImmutable` instance.
 
-#### Custom Column Mappers
 There are two ways of providing a custom mapper:
 
-##### 1. By providing a `SimpleMapper` to the `#[Column]` annotation
+##### 1. Custom `SimpleMapper` via the `#[Column]` annotation
 The `#[Column]` annotation accepts an optional argument, which is the class name for a mapper implementing the `SimpleMapper` interface.
 ```php
 #[Entity]
@@ -530,7 +529,7 @@ Note that as PHP does not support default implementations for interfaces, the de
 
 Also, care needs to be taken to ensure that mappers and getters/setters are compatible!
 
-##### 2. By creating both a custom `Mapper` and a custom `ColumnAnnotation`
+#### 2. More general custom `Mapper` with custom `ColumnAnnotation`
 There are use cases where we might want to parametrise more than the column name in the mapper. Or alternatively some mappers might combine multiple database columns into a single value (e.g. the `DatetimeTZMapper`).
 
 To implement such a case yourself you need to provide both a `ColumnAnnotation`

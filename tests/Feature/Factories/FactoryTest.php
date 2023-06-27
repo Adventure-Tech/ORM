@@ -1,6 +1,7 @@
 <?php
 
 use AdventureTech\ORM\Factories\Factory;
+use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use AdventureTech\ORM\Tests\TestClasses\IntEnum;
@@ -98,4 +99,10 @@ test('Can generate unique values via faker in factories', function () {
             OverflowException::class,
             'Maximum retries of 10000 reached without finding a unique value'
         );
+});
+
+test('Factories uses default values if set in the entity', function () {
+    $entities = Factory::new(PersonalDetails::class)->createMultiple(10);
+
+    expect($entities->pluck('country'))->each->toBe('NOR');
 });

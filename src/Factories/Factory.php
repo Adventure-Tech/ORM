@@ -128,6 +128,10 @@ class Factory
 
     private function defaults(string $property): mixed
     {
+        $default = $this->entityReflection->getDefaultValue($property);
+        if (!is_null($default)) {
+            return $default;
+        }
         if ($this->entityReflection->allowsNull($property)) {
             return null;
         }

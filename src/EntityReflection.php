@@ -282,4 +282,9 @@ class EntityReflection
     {
         return ColumnPropertyService::getPropertyType($this->reflectionClass->getProperty($property));
     }
+
+    public function getDefaultValue(string $property): mixed
+    {
+        return ColumnPropertyService::getDefaultValue($this->reflectionClass->getProperty($property));
+    }
 }

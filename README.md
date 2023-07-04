@@ -8,7 +8,7 @@ A repository-based and encapsulated ORM built on top of Eloquent's query builder
 | [Repositories](#repositories)                 | Repositories provide a mechanism to retrieve data from the database.                                                                                                                                                                                              |
 | [Persistence Managers](#persistence-managers) | Where repositories enable reading of data from the database, persistence managers enable writing to the database.                                                                                                                                                 |
 | [Factories](#factories)                       | Factories are a very convenient way to create test data via the entities.                                                                                                                                                                                         |
-| [Extending the ORM](#extending-the-orm)       | The ORM is highly extendable.                                                                                                                                                                                                                                     |
+| [Extending the ORM](#extending-the-orm)       | The ORM is highly extendable. Most concepts are encoded in interfaces and simply providing your own implementations allows to include new functionality into the ORM.                                                                                             |
 
 ## Entities
 Entities are at the core of the ORM. They define not only data-transfer objects, but also form the basis of how data is retrieved by the repositories, how data is inserted by the persistence managers, and even provide default factories for testing purposes.
@@ -531,9 +531,9 @@ Note that as PHP does not support default implementations for interfaces, the de
 Also, care needs to be taken to ensure that mappers and getters/setters are compatible!
 
 #### 2. More general custom `Mapper` with custom `ColumnAnnotation`
-There are use cases where we might want to parametrise more than the column name in the mapper. Or alternatively some mappers might combine multiple database columns into a single value (e.g. the `DatetimeTZMapper`).
+There are use cases where we might want to parametrise more than the column name in the mapper. Or alternatively, some mappers might combine multiple database columns into a single value (e.g. the `DatetimeTZMapper`).
 
-To implement such a case yourself you need to provide both a `ColumnAnnotation`
+To implement such a case yourself you need to provide both a `ColumnAnnotation`:
 ```php
 readonly class FooColumn implements ColumnAnnotation
 {
@@ -545,7 +545,7 @@ readonly class FooColumn implements ColumnAnnotation
 	public function getMapper(ReflectionProperty $property): FooMapper
 	{
 		return new FooMapper(
-			$this->name ?? 'default_foo_column_name',
+			$this->name ?? DefaultNamingService::columnFromProperty($property),
 			$this->myExtraData
 		);
 	}
@@ -588,8 +588,6 @@ readonly class FooMapper implements Mapper
 ```
 
 You can then use the custom `ColumnAnnotation` just as you would the normal `#[Column]` annotation:
-
-This is then utilised in the entity by
 ```php
 #[Entity]
 class FooEntity
@@ -601,7 +599,7 @@ class FooEntity
 
 
 ### Custom Managed Columns / Soft-Deletes
-Again you can in theory provide your own managed-columns (not just for datetimes) and soft-delete annotations (must be a datetime column). All you have to do is implement the according interfaces `ManagedColumnAnnotation` or `SoftDeleteAnnotation`, respectively.
+Again, you can in theory provide your own managed-columns (not just for datetimes) and soft-delete annotations (must be a datetime column). All you have to do is implement the according interfaces `ManagedColumnAnnotation` or `SoftDeleteAnnotation`, respectively.
 
 ### Custom Relations and Linkers
 Similar to `ColumnAnnotations` and `Mappers`, there is a pair of interfaces for defining custom relations: the `Relation` annotation and the actual `Linker`. While possible to provide custom relations, this is anticipated to be a very rare requirement. Hence, we omit the details here, but we encourage to have a look at the existing implementations and have a play around!
@@ -609,11 +607,11 @@ Similar to `ColumnAnnotations` and `Mappers`, there is a pair of interfaces for 
 ### Aliasing
 The way the ORM works is by compiling any request for data by the Repository into a single SQL query with a join for each loaded relationship. When executed, the query builder then populates a `stdClass` object with the data, where it simply overwrites any values which have the same column name (e.g. an `id` column on multiple joined database tables).
 
-To avoid this the ORM aliases all joined tables and all selected columns.
+To avoid this, the ORM aliases all joined tables and all selected columns.
 
 Therefore, whenever we interact with either the query itself (e.g. filters and linkers) or the `stdClass` retrieved by the query builder we need to use the appropriately aliased column names. This is made easy by the `LocalAliasingManager`, which exposes several methods.
 
-For example the consider the following query:
+For example, consider the following query:
 ```php
 Repository::new(FooEntity::class)
 	->with('bar', function(Repository $repo) use ($barFilter) {
@@ -630,6 +628,7 @@ FROM
     "foo_table"
     LEFT JOIN "bar_table" AS "_0_" ON "_0_"."foo_id" = "foo_table"."id"
 ```
+
 In the `$fooFilter` the `LocalAliasingManager` will return the following:
 ```php
 $localAliasingManager->getQualifiedColumnName('id')     === 'foo_table.id';

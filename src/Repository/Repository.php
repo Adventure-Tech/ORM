@@ -27,7 +27,7 @@ use stdClass;
  */
 class Repository
 {
-    private ?int $resolvingId = null;
+    private int|string|null $resolvingId = null;
     /**
      * @var T
      */
@@ -99,11 +99,11 @@ class Repository
     }
 
     /**
-     * @param  int  $id
+     * @param  int|string  $id
      *
      * @return T|null
      */
-    public function find(int $id)
+    public function find(int|string $id)
     {
         $data = $this->buildQuery()
             ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId()), $id)
@@ -114,12 +114,11 @@ class Repository
     }
 
     /**
-     * @param  int  $id
+     * @param  int|string  $id
      *
      * @return T
-     * @throws EntityNotFoundException
      */
-    public function findOrFail(int $id)
+    public function findOrFail(int|string $id)
     {
         $entity = $this->find($id);
         if (is_null($entity)) {

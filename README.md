@@ -210,7 +210,7 @@ $fooEntity = Repository::new(FooEntity::class)
     ->with('bar')
     ->find($id);
 
-$fooEntity->bar // is now loaded
+$fooEntity->bar; // is now loaded
 ```
 
 Unloaded relations result in non-initialised properties on the entity. This means that an error would be thrown if one attempts to access an unloaded relation, e.g. `$fooEntity->bar` without calling `->with('bar')`.
@@ -220,7 +220,40 @@ As an optional second argument for the `with()` method a function can be provide
 Repository::new(FooEntity::class)
     ->with('bar', function(Repository $barRepository) {
         // can call filters or other things on $barRepository here
+    });
+```
+
+To load nested relations a convenient shorthand notation is available:
+```php
+Repository::new(FooEntity::class)
+    ->with('bar/baz')
+    ->with('bar/bam');
+
+// is equivalent to:
+Repository::new(FooEntity::class)
+    ->with('bar', function(Repository $barRepository) {
+        $barRepository->with('baz')->with('bam');
+    });
+```
+Note that you cannot provide a callable when using shorthand, i.e. `->with('bar/baz', function($repo) {...})` is invalid.
+Also note that loading a relationship without the shorthand and providing a callable results in any shorthand-loading of relations to be ignored:
+
+```php
+$foo = Repository::new(FooEntity::class)
+    ->with('bar/baz')
+    ->with('qux/quux')
+    ->with('bar', function(Repository $barRepository) {
+        // ...
     })
+    ->with('bar/bam')
+    ->find($id);
+
+// loaded:
+$foo->bar->bam;
+$foo->qux->quux;
+
+// not loaded and will throw exception when called:
+$foo->bar->baz;
 ```
 
 ### Filters

@@ -27,7 +27,7 @@ use stdClass;
  */
 class Repository
 {
-    private ?int $resolvingId = null;
+    private int|string|null $resolvingId = null;
     /**
      * @var T
      */
@@ -99,11 +99,11 @@ class Repository
     }
 
     /**
-     * @param  int  $id
+     * @param  int|string  $id
      *
      * @return T|null
      */
-    public function find(int $id)
+    public function find(int|string $id)
     {
         $data = $this->buildQuery()
             ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId()), $id)
@@ -114,12 +114,11 @@ class Repository
     }
 
     /**
-     * @param  int  $id
+     * @param  int|string  $id
      *
      * @return T
-     * @throws EntityNotFoundException
      */
-    public function findOrFail(int $id)
+    public function findOrFail(int|string $id)
     {
         $entity = $this->find($id);
         if (is_null($entity)) {
@@ -153,6 +152,21 @@ class Repository
      */
     public function with(string $relation, callable $callable = null): static
     {
+        // TODO: refactor to tidy
+        if (is_null($callable)) {
+            $relations = explode(AliasingManager::SEPARATOR, $relation, 2);
+            $relation = $relations[0];
+            if (array_key_exists($relation, $this->with)) {
+                if (isset($relations[1])) {
+                    $this->with[$relation]->repository->with($relations[1]);
+                }
+                return $this;
+            }
+            if (isset($relations[1])) {
+                $callable = fn(self $repository) => $repository->with($relations[1]);
+            }
+        }
+
         if (!$this->entityReflection->getLinkers()->has($relation)) {
             throw new InvalidRelationException('Invalid relation used in with clause [tried to load relation "' . $relation . '"]');
         }
@@ -163,10 +177,10 @@ class Repository
         $repository = self::internalNew(
             $linker->getTargetEntity(),
             $this->aliasingManager,
-            $this->localRoot . '/' . $relation,
+            $this->localRoot . AliasingManager::SEPARATOR . $relation,
         );
         $this->aliasingManager->addRelation(
-            $this->localRoot . '/' . $relation,
+            $this->localRoot . AliasingManager::SEPARATOR . $relation,
             $repository->entityReflection->getSelectColumns()
         );
         if ($callable) {

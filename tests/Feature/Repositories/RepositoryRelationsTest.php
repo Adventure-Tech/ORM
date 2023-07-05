@@ -46,3 +46,41 @@ test('Trying to load invalid relation leads to exception', function () {
             'Invalid relation used in with clause [tried to load relation "invalid"]'
         );
 });
+
+test('Can use shorthand to load nested relations', function () {
+    $authorId = DB::table('users')->insertGetId(['name' => 'Author']);
+    $editorId = DB::table('users')->insertGetId(['name' => 'Editor']);
+    DB::table('posts')->insertGetId([
+        'title' => 'Title',
+        'content' => 'Content',
+        'author' => $authorId,
+        'editor' => $editorId,
+        'number' => 1
+    ]);
+    $user = Repository::new(User::class)
+        ->with('posts/editor/posts')
+        ->with('posts/author')
+        ->find($authorId);
+    expect(isset($user->posts->first()->editor->posts))->toBeTrue()
+        ->and(isset($user->posts->first()->author))->toBeTrue();
+});
+
+test('Second with() statement overrides shorthand loaded relations', function () {
+    $authorId = DB::table('users')->insertGetId(['name' => 'Author']);
+    $editorId = DB::table('users')->insertGetId(['name' => 'Editor']);
+    DB::table('posts')->insertGetId([
+        'title' => 'Title',
+        'content' => 'Content',
+        'author' => $authorId,
+        'editor' => $editorId,
+        'number' => 1
+    ]);
+    $user = Repository::new(User::class)
+        ->with('posts/editor/posts')
+        ->with('posts', function (Repository $repository) {
+            $repository->with('author');
+        })
+        ->find($authorId);
+    expect(isset($user->posts->first()->editor->posts))->toBeFalse()
+        ->and(isset($user->posts->first()->author))->toBeTrue();
+});

@@ -152,6 +152,21 @@ class Repository
      */
     public function with(string $relation, callable $callable = null): static
     {
+        // TODO: refactor to tidy
+        if (is_null($callable)) {
+            $relations = explode(AliasingManager::SEPARATOR, $relation, 2);
+            $relation = $relations[0];
+            if (array_key_exists($relation, $this->with)) {
+                if (isset($relations[1])) {
+                    $this->with[$relation]->repository->with($relations[1]);
+                }
+                return $this;
+            }
+            if (isset($relations[1])) {
+                $callable = fn(self $repository) => $repository->with($relations[1]);
+            }
+        }
+
         if (!$this->entityReflection->getLinkers()->has($relation)) {
             throw new InvalidRelationException('Invalid relation used in with clause [tried to load relation "' . $relation . '"]');
         }
@@ -162,10 +177,10 @@ class Repository
         $repository = self::internalNew(
             $linker->getTargetEntity(),
             $this->aliasingManager,
-            $this->localRoot . '/' . $relation,
+            $this->localRoot . AliasingManager::SEPARATOR . $relation,
         );
         $this->aliasingManager->addRelation(
-            $this->localRoot . '/' . $relation,
+            $this->localRoot . AliasingManager::SEPARATOR . $relation,
             $repository->entityReflection->getSelectColumns()
         );
         if ($callable) {

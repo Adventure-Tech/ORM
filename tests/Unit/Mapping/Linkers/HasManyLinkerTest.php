@@ -30,7 +30,7 @@ test('Linker exposes the target entity name', function () {
 test('Linker can link entities correctly', function () {
     $linker = new HasManyLinker('OriginEntity', 'TargetEntity', 'relation', 'foreign_key');
     $currentEntity = new stdClass();
-    $relatedEntity = new stdClass();
+    $relatedEntity = (object) ['id_column' => 1];
     $linker->link($currentEntity, $relatedEntity);
     expect($currentEntity)->toHaveProperty('relation')
         ->relation->toBeInstanceOf(Collection::class)

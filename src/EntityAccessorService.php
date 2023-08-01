@@ -19,9 +19,12 @@ class EntityAccessorService
         }
     }
 
-    public static function getId(object $entity): mixed
+    public static function getId(object $entity): int|string|null
     {
-        return self::get($entity, EntityReflection::new($entity::class)->getId());
+        // TODO: type check here? Other parts of the ORM rely on IDs being int|string...
+        /** @var int|string $id */
+        $id = self::get($entity, EntityReflection::new($entity::class)->getId());
+        return $id;
     }
 
     public static function set(object $entity, string $property, mixed $value): void

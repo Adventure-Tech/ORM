@@ -30,6 +30,9 @@ class PersistenceManager
      */
     protected static string $entity;
 
+    /**
+     * @codeCoverageIgnore
+     */
     private function __construct()
     {
     }

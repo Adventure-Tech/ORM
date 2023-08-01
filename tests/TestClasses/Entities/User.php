@@ -34,6 +34,12 @@ class User
     #[HasMany(targetEntity: Post::class, foreignKey: 'author')]
     public Collection $posts;
 
+    /**
+     * @var Collection<int,Comment>
+     */
+    #[HasMany(targetEntity: Comment::class, foreignKey: 'author')]
+    public Collection $comments;
+
     #[HasOne]
     public ?PersonalDetails $personalDetails;
 

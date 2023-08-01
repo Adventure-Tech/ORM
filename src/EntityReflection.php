@@ -84,7 +84,7 @@ class EntityReflection
      */
     public static function fake(): Mock|EntityReflection
     {
-        self::$fake = Mockery::mock(self::class)->makePartial();
+        self::$fake = mock(self::class)->makePartial();
         return self::$fake;
     }
 

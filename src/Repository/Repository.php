@@ -108,7 +108,6 @@ class Repository
         $data = $this->buildQuery()
             ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId()), $id)
             ->get();
-        $data->pluck('_0_id')->dump();
 
         return $this->mapToEntities(
             $data
@@ -130,6 +129,7 @@ class Repository
     }
 
     /**
+     * @codeCoverageIgnore
      * @return void
      */
     #[NoReturn] public function dd(): void
@@ -138,6 +138,7 @@ class Repository
     }
 
     /**
+     * @codeCoverageIgnore
      * @return static
      */
     public function dump(): static

@@ -44,7 +44,7 @@ test('Linker exposes the target foreign key column name', function () {
 test('Linker can link entities correctly', function () {
     $linker = new BelongsToManyLinker('OriginEntity', 'TargetEntity', 'relation', 'pivot_table', 'origin_foreign_key', 'target_foreign_key');
     $currentEntity = new stdClass();
-    $relatedEntity = new stdClass();
+    $relatedEntity = (object) ['id_column' => 1];
     $linker->link($currentEntity, $relatedEntity);
     expect($currentEntity)->toHaveProperty('relation')
         ->relation->toBeInstanceOf(Collection::class)

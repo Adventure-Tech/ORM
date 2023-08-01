@@ -16,7 +16,7 @@ trait ToMany
             /** @var Collection<int|string,object> $collection */
             $collection = EntityAccessorService::get($currentEntity, $this->relation);
             $id = EntityAccessorService::getId($relatedEntity);
-            if (!$collection->has($id)) {
+            if (!is_null($id) && !$collection->has($id)) {
                 $collection[$id] = $relatedEntity;
             }
         }

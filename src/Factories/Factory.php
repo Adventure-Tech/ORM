@@ -51,7 +51,9 @@ class Factory
     public static function resetFakers(string $class = null): void
     {
         if (isset($class)) {
+            // @codeCoverageIgnoreStart
             unset(self::$fakers[$class]);
+            // @codeCoverageIgnoreEnd
         } else {
             self::$fakers = [];
         }

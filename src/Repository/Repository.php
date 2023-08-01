@@ -108,6 +108,8 @@ class Repository
         $data = $this->buildQuery()
             ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId()), $id)
             ->get();
+        $data->pluck('_0_id')->dump();
+
         return $this->mapToEntities(
             $data
         )->first();
@@ -271,15 +273,18 @@ class Repository
      */
     private function mapToEntities(Collection $data): Collection
     {
-        $result = Collection::empty();
         foreach ($data as $item) {
-            if ($entity = $this->resolve($item)) {
-                $result[] = $entity;
-            }
+            $this->resolve($item);
         }
+        $result = Collection::wrap($this->resolved);
         $this->resetResolver();
         return $result;
     }
+
+    /**
+     * @var array<int|string,T>
+     */
+    private array $resolved = [];
 
     /**
      * @param  stdClass  $item
@@ -293,31 +298,31 @@ class Repository
             // occurs when filtering out of relation (../../)
             return null;
         }
-        if ($id !== $this->resolvingId) {
-            $this->resolvingId = $id;
-            $this->resolvingEntity = $this->entityReflection->newInstance();
+        if (!array_key_exists($id, $this->resolved)) {
+            $entity = $this->entityReflection->newInstance();
             foreach ($this->entityReflection->getMappers() as $property => $mapper) {
                 EntityAccessorService::set(
-                    $this->resolvingEntity,
+                    $entity,
                     $property,
                     $mapper->deserialize($item, $this->localAliasingManager)
                 );
             }
-            $reset = true;
+            $this->resolved[$id] = $entity;
+        } else {
+            $entity = $this->resolved[$id];
         }
 
         foreach ($this->with as $linkedRepo) {
-            $entity = $linkedRepo->repository->resolve($item, $reset);
-            $linkedRepo->linker->link($this->resolvingEntity, $entity);
+            $linkedEntity = $linkedRepo->repository->resolve($item, $reset);
+            $linkedRepo->linker->link($entity, $linkedEntity);
         }
 
-        return $reset && isset($this->resolvingEntity) ? $this->resolvingEntity : null;
+        return $entity;
     }
 
     private function resetResolver(): void
     {
-        $this->resolvingId = null;
-        unset($this->resolvingEntity);
+        $this->resolved = [];
         foreach ($this->with as $linkedRepository) {
             $linkedRepository->repository->resetResolver();
         }

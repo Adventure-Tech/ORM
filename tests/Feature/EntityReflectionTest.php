@@ -73,7 +73,7 @@ test('Can get list of linkers correctly', function () {
     $entityReflection = EntityReflection::new(User::class);
     expect($entityReflection->getLinkers())
         ->toBeInstanceOf(Collection::class)
-        ->toHaveCount(3)
+        ->toHaveCount(4)
         ->each->toBeInstanceOf(Linker::class);
 });
 

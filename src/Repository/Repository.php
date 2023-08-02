@@ -213,18 +213,21 @@ class Repository
      */
     private array $orderBys = [];
 
-    public function orderBy(string $column): static
+    public function orderBy(string $column, Direction $direction): static
     {
         $column = $this->localAliasingManager->getQualifiedColumnName($column);
-        $this->orderBys[$column] = Direction::ASCENDING;
+        $this->orderBys[$column] = $direction;
         return $this;
+    }
+
+    public function orderByAsc(string $column): static
+    {
+        return $this->orderBy($column, Direction::ASCENDING);
     }
 
     public function orderByDesc(string $column): static
     {
-        $column = $this->localAliasingManager->getQualifiedColumnName($column);
-        $this->orderBys[$column] = Direction::DESCENDING;
-        return $this;
+        return $this->orderBy($column, Direction::DESCENDING);
     }
 
     private function buildQuery(): Builder

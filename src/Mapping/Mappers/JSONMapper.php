@@ -33,9 +33,9 @@ readonly class JSONMapper implements SimpleMapper
     /**
      * @param  stdClass  $item
      * @param  LocalAliasingManager  $aliasingManager
-     * @return array<mixed,mixed>|null
+     * @return mixed
      */
-    public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): array|null
+    public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): mixed
     {
         $json = json_decode($item->{$aliasingManager->getSelectedColumnName($this->name)}, true);
         if (!is_array($json) && !is_null($json)) {

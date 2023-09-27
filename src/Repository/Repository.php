@@ -44,6 +44,12 @@ class Repository
     private array $with = [];
 
     /**
+     * @var array<string,Direction>
+     */
+    private array $orderBys = [];
+    private int $limit;
+
+    /**
      * @template E of object
      * @param  class-string<E>  $class
      *
@@ -105,12 +111,11 @@ class Repository
      */
     public function find(int|string $id)
     {
-        $data = $this->buildQuery()
-            ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId()), $id)
-            ->get();
-
+        unset($this->limit);
+        $query = $this->buildQuery()
+            ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId()), $id);
         return $this->mapToEntities(
-            $data
+            $this->applyLimitViaSubquery($query, 1)->get()
         )->first();
     }
 
@@ -208,10 +213,11 @@ class Repository
         return $this;
     }
 
-    /**
-     * @var array<string,Direction>
-     */
-    private array $orderBys = [];
+    public function limit(int $limit): static
+    {
+        $this->limit = $limit;
+        return $this;
+    }
 
     public function orderBy(string $column, Direction $direction): static
     {
@@ -247,6 +253,11 @@ class Repository
 
         foreach ($this->getOrderBys() as $column => $direction) {
             $query->orderBy($column, $direction->value);
+        }
+
+        // NOTE: this needs to be last (this wraps the query in a subquery to utilise the DENSE_RANK windowing function)
+        if (isset($this->limit)) {
+            $query = $this->applyLimitViaSubquery($query, $this->limit);
         }
 
         return $query;
@@ -355,5 +366,16 @@ class Repository
             $orderBys = array_merge($orderBys, $linkedRepository->repository->getOrderBys());
         }
         return $orderBys;
+    }
+
+    private function applyLimitViaSubquery(Builder $query, int $limit): Builder
+    {
+        $query->selectRaw('DENSE_RANK () OVER (ORDER BY '
+            . $this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId())
+            . ') AS _dense_rank_number');
+        $query = DB::query()
+            ->fromSub($query, '_limited')
+            ->where('_limited._dense_rank_number', '<=', $limit);
+        return $query;
     }
 }

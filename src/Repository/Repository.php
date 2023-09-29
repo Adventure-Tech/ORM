@@ -139,7 +139,7 @@ class Repository
     }
 
     /**
-     * @return T
+     * @return T|null
      */
     public function first()
     {

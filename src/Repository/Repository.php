@@ -27,6 +27,9 @@ use stdClass;
  */
 class Repository
 {
+    const LIMIT_OFFSET_SUBQUERY_ALIAS = '_limited';
+    const LIMIT_OFFSET_COUNTER = '_dense_rank_number';
+    public readonly string $entity;
     private int|string|null $resolvingId = null;
     /**
      * @var T
@@ -47,7 +50,8 @@ class Repository
      * @var array<string,Direction>
      */
     private array $orderBys = [];
-    private int $limit;
+    private ?int $limit = null;
+    private ?int $offset = null;
 
     /**
      * @template E of object
@@ -94,6 +98,7 @@ class Repository
         private readonly string $localRoot
     ) {
         $this->localAliasingManager = new LocalAliasingManager($this->aliasingManager, $this->localRoot);
+        $this->entity = $this->entityReflection->getClass();
     }
 
     /**
@@ -111,12 +116,12 @@ class Repository
      */
     public function find(int|string $id)
     {
-        unset($this->limit);
+        $this->limit = null;
+        $this->offset = null;
         $query = $this->buildQuery()
             ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId()), $id);
-        return $this->mapToEntities(
-            $this->applyLimitViaSubquery($query, 1)->get()
-        )->first();
+        $query = $this->applyLimitAndOffset($query, 1, null);
+        return $this->mapToEntities($query->get())->first();
     }
 
     /**
@@ -129,6 +134,27 @@ class Repository
         $entity = $this->find($id);
         if (is_null($entity)) {
             throw new EntityNotFoundException($this->entityReflection->getClass(), $id);
+        }
+        return $entity;
+    }
+
+    /**
+     * @return T
+     */
+    public function first()
+    {
+        $this->limit = 1;
+        return $this->get()->first();
+    }
+
+    /**
+     * @return T
+     */
+    public function firstOrFail()
+    {
+        $entity = $this->first();
+        if (is_null($entity)) {
+            throw new EntityNotFoundException($this->entityReflection->getClass());
         }
         return $entity;
     }
@@ -219,6 +245,12 @@ class Repository
         return $this;
     }
 
+    public function offset(int $offset): static
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
     public function orderBy(string $column, Direction $direction): static
     {
         $column = $this->localAliasingManager->getQualifiedColumnName($column);
@@ -256,8 +288,8 @@ class Repository
         }
 
         // NOTE: this needs to be last (this wraps the query in a subquery to utilise the DENSE_RANK windowing function)
-        if (isset($this->limit)) {
-            $query = $this->applyLimitViaSubquery($query, $this->limit);
+        if (!is_null($this->limit) || !is_null($this->offset)) {
+            $query = $this->applyLimitAndOffset($query, $this->limit, $this->offset);
         }
 
         return $query;
@@ -368,14 +400,27 @@ class Repository
         return $orderBys;
     }
 
-    private function applyLimitViaSubquery(Builder $query, int $limit): Builder
+    private function applyLimitAndOffset(Builder $query, ?int $limit, ?int $offset): Builder
     {
         $query->selectRaw('DENSE_RANK () OVER (ORDER BY '
             . $this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId())
-            . ') AS _dense_rank_number');
-        $query = DB::query()
-            ->fromSub($query, '_limited')
-            ->where('_limited._dense_rank_number', '<=', $limit);
+            . ') AS '
+            . self::LIMIT_OFFSET_COUNTER);
+        $query = DB::query()->fromSub($query, self::LIMIT_OFFSET_SUBQUERY_ALIAS);
+        if (!is_null($limit)) {
+            $query->where(
+                self::LIMIT_OFFSET_SUBQUERY_ALIAS . '.' . self::LIMIT_OFFSET_COUNTER,
+                '<=',
+                $limit
+            );
+        }
+        if (!is_null($offset)) {
+            $query->where(
+                self::LIMIT_OFFSET_SUBQUERY_ALIAS . '.' . self::LIMIT_OFFSET_COUNTER,
+                '>',
+                $offset
+            );
+        }
         return $query;
     }
 }

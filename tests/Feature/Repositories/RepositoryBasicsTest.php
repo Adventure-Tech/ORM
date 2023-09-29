@@ -54,3 +54,38 @@ test('Repositories can get multiple records', function () {
         ->toHaveCount(3)
         ->pluck('name')->toArray()->toEqualCanonicalizing(['A', 'B', 'C']);
 });
+
+test('Repositories can get first of multiple records', function () {
+    DB::table('users')->insert([
+        ['name' => 'A'],
+        ['name' => 'B'],
+        ['name' => 'C'],
+    ]);
+    $repo = Repository::new(User::class);
+    expect($repo->first())
+        ->toBeInstanceOf(User::class)
+        ->name->toBe('A');
+});
+
+test('Repositories can get firstOrFail of multiple records', function () {
+    DB::table('users')->insert([
+        ['name' => 'A'],
+        ['name' => 'B'],
+        ['name' => 'C'],
+    ]);
+    $repo = Repository::new(User::class);
+    expect($repo->firstOrFail())
+        ->toBeInstanceOf(User::class)
+        ->name->toBe('A');
+});
+
+
+test('Trying get the first of a non-existing record set results in null', function () {
+    $repo = Repository::new(User::class);
+    expect($repo->first())->toBeNull();
+});
+
+test('Trying get the firstOrFail of a non-existing record set results in exception', function () {
+    $repo = Repository::new(User::class);
+    expect(fn() => $repo->firstOrFail())->toThrow(EntityNotFoundException::class);
+});

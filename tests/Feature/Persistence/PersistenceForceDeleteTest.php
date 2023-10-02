@@ -2,7 +2,7 @@
 
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
@@ -48,7 +48,7 @@ test('Trying to force-delete entity without ID set leads exception', function ()
     $user = new User();
     $user->name = 'Name';
     expect(fn() => UserPersistence::forceDelete($user))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Must set ID column when deleting'
     );
 });

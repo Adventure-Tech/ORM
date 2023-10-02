@@ -125,7 +125,7 @@ test('Setters take priority over public access', function () {
 
 test('Can set public ID on entity', function () {
     $entity = new #[Entity] class {
-        #[ID] public string $foo = 'value';
+        #[ID] #[Column] public string $foo = 'value';
     };
     EntityAccessorService::setId($entity, 'new value');
     expect($entity->foo)->toBe('new value');
@@ -133,7 +133,7 @@ test('Can set public ID on entity', function () {
 
 test('Can set private ID on entity via setter', function () {
     $entity = new #[Entity] class {
-        #[ID] private string $foo = 'value';
+        #[ID] #[Column] private string $foo = 'value';
 
         public function setFoo(string $foo): void
         {
@@ -146,7 +146,7 @@ test('Can set private ID on entity via setter', function () {
 
 test('Setters for ID take priority over public access', function () {
     $entity = new #[Entity] class {
-        #[ID] public string $foo = 'value';
+        #[ID] #[Column] public string $foo = 'value';
 
         public function setFoo(string $foo): void
         {
@@ -215,19 +215,19 @@ test('Can check if public ID on entity is set', function (object $entity, bool $
     expect(EntityAccessorService::issetId($entity))->toBe($expected);
 })->with([
     'unset' => fn() => [new #[Entity] class {
-        #[ID] public string $foo;
+        #[ID] #[Column] public string $foo;
     }, false],
     'null' => fn() => [new #[Entity] class {
-        #[ID] public ?string $foo = null;
+        #[ID] #[Column] public ?string $foo = null;
     }, false],
     'set' => fn() => [new #[Entity] class {
-        #[ID] public ?string $foo = 'value';
+        #[ID] #[Column] public ?string $foo = 'value';
     }, true],
 ]);
 
 test('Can check if private ID on entity is set via getter', function (?string $value, bool $expected) {
     $entity = new #[Entity] class ($value) {
-        public function __construct(#[ID] private ?string $foo)
+        public function __construct(#[ID] #[Column] private ?string $foo)
         {
         }
 

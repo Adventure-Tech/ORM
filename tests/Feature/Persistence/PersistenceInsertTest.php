@@ -3,7 +3,7 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
@@ -144,7 +144,7 @@ test('Must set ID of owning relation', function () {
     $post->author = new User();
 
     expect(fn() => PostPersistence::insert($post))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Owned linked entity must have valid ID set'
     );
 });

@@ -2,7 +2,7 @@
 
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Factories\Factory;
@@ -49,7 +49,7 @@ test('Trying to update entity without ID set leads exception', function () {
     $user = new User();
     $user->name = 'Name';
     expect(fn() => UserPersistence::update($user))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Must set ID column when updating'
     );
 });
@@ -148,7 +148,7 @@ test('Must set ID of non-nullable owning relation', function () {
     $post->author = $bob;
 
     expect(fn() => PostPersistence::update($post))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Owned linked entity must have valid ID set'
     );
 });

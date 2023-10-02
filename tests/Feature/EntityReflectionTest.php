@@ -3,8 +3,10 @@
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
+use AdventureTech\ORM\Exceptions\MissingIdException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
 use AdventureTech\ORM\Exceptions\UnsupportedReflectionTypeException;
+use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
@@ -175,6 +177,7 @@ test('Properties annotated as relations must have type set', function () {
 test('If entity instantiation fails an appropriate exception is thrown', function () {
     $class = new #[Entity] class ('arg')
     {
+        #[ID] #[Column] public int $id;
         public function __construct($arg)
         {
         }
@@ -186,6 +189,7 @@ test('If entity instantiation fails an appropriate exception is thrown', functio
 
 test('Entity reflection can check if property is nullable', function () {
     $class = new #[Entity] class {
+        #[ID] #[Column] public int $id;
         public string $a;
         public ?string $b;
     };
@@ -196,6 +200,7 @@ test('Entity reflection can check if property is nullable', function () {
 
 test('Entity reflection null-check throws exception if property does not exist', function () {
     $class = new #[Entity] class {
+        #[ID] #[Column] public int $id;
     };
     $entityReflection = EntityReflection::new($class::class);
     expect(fn () => $entityReflection->allowsNull('a'))->toThrow(ReflectionException::class);
@@ -203,11 +208,31 @@ test('Entity reflection null-check throws exception if property does not exist',
 
 test('Entity reflection null-check throws exception for property without type', function () {
     $class = new #[Entity] class {
+        #[ID] #[Column] public int $id;
         public $a;
     };
     $entityReflection = EntityReflection::new($class::class);
     expect(fn () => $entityReflection->allowsNull('a'))->toThrow(
         UnsupportedReflectionTypeException::class,
         'Type hints are mandatory and must not be union or intersection types'
+    );
+});
+
+test('Entity reflection requires ID annotation', function () {
+    $class = new #[Entity] class {
+    };
+    expect(fn () => EntityReflection::new($class::class))->toThrow(
+        MissingIdException::class,
+        'Entity must have an ID column'
+    );
+});
+
+test('Entity reflection requires the ID column to be mapped', function () {
+    $class = new #[Entity] class {
+        #[ID] public int $id;
+    };
+    expect(fn () => EntityReflection::new($class::class))->toThrow(
+        MissingIdException::class,
+        'ID column of an entity must be mapper via a column mapper annotation'
     );
 });

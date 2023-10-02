@@ -10,7 +10,7 @@ use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\InconsistentEntitiesException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
-use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
@@ -86,6 +86,12 @@ class PersistenceManager
         }
     }
 
+    /**
+     * @param  Builder  $query
+     * @param  string  $idColumn
+     * @param  array<mixed,mixed>  $values
+     * @return int|string
+     */
     private static function insertGetId(Builder $query, string $idColumn, array $values): int|string
     {
         $response = $query->connection
@@ -93,9 +99,6 @@ class PersistenceManager
                 $query->grammar->compileInsert($query, $values) . ' RETURNING ' . $idColumn,
                 $query->cleanBindings(Arr::flatten($values, 1))
             );
-        if (count($response) !== 1 || !isset($response[0]->{$idColumn})) {
-            dd($response);
-        }
         return $response[0]->id;
     }
 
@@ -343,7 +346,7 @@ class PersistenceManager
     private static function checkIdIsSet(object $entity, string $message): void
     {
         if (!EntityAccessorService::issetId($entity)) {
-            throw new MissingIdException($message);
+            throw new MissingIdValueException($message);
         }
     }
 

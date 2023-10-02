@@ -4,7 +4,7 @@ use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InconsistentEntitiesException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
-use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
@@ -63,7 +63,7 @@ test('ID must be set on base entity when detaching', function () {
     $user = new User();
     $user->name = 'name';
     expect(fn() => UserPersistence::detach($user, [], 'friends'))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Must set ID column on base entity when detaching'
     );
 });
@@ -75,7 +75,7 @@ test('IDs must be set on entities to be detached', function () {
     $bob = new User();
     $bob->name = 'Bob';
     expect(fn() => UserPersistence::detach($alice, [$bob], 'friends'))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Must set ID columns of all entities when attaching/detaching'
     );
 });
@@ -151,7 +151,7 @@ test('Trying to detach entities without IDs set leads to exception', function ()
     $bob->name = 'Bob';
 
     expect(fn() => UserPersistence::detach($alice, [$bob], 'friends'))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Must set ID columns of all entities when attaching/detaching'
     );
 });

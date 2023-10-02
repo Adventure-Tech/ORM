@@ -2,6 +2,8 @@
 
 namespace AdventureTech\ORM\Exceptions;
 
-class InvalidColumnExpressionException extends \RuntimeException
+use RuntimeException;
+
+class InvalidColumnExpressionException extends RuntimeException
 {
 }

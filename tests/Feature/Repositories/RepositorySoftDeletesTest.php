@@ -34,9 +34,9 @@ test('Getting records via the repository ignores soft deletes', function () {
 test('Can disable soft-delete', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name', 'deleted_at' => now()]);
     $repo = Repository::new(User::class)->includeSoftDeleted();
-    expect($repo->findOrFail($id))->toBeInstanceOf(User::class)->getId()->toBe($id)
-        ->and($repo->find($id))->toBeInstanceOf(User::class)->getId()->toBe($id)
-        ->and($repo->get())->map(fn(User $user) => $user->getId())->toArray()->toEqualCanonicalizing([$id]);
+    expect($repo->findOrFail($id))->toBeInstanceOf(User::class)->getIdentifier()->toBe($id)
+        ->and($repo->find($id))->toBeInstanceOf(User::class)->getIdentifier()->toBe($id)
+        ->and($repo->get())->map(fn(User $user) => $user->getIdentifier())->toArray()->toEqualCanonicalizing([$id]);
 });
 
 test('Soft-deletes are filtered correctly in loaded relations', function () {
@@ -52,7 +52,7 @@ test('Soft-deletes are filtered correctly in loaded relations', function () {
         ->with('posts')
         ->get();
     expect($users)->toHaveCount(1)
-        ->first()->getId()->toBe($authorId)
+        ->first()->getIdentifier()->toBe($authorId)
         ->and($users->first()->posts)->toHaveCount(1)
         ->and($users->first()->posts->first())->id->toBe(1);
 });
@@ -70,7 +70,7 @@ test('Soft-deletes can be deactivated in loaded relations', function () {
         ->with('posts', fn(Repository $repository) => $repository->includeSoftDeleted())
         ->get();
     expect($users)->toHaveCount(1)
-        ->first()->getId()->toBe($authorId)
+        ->first()->getIdentifier()->toBe($authorId)
         ->and($users->first()->posts)->toHaveCount(2)
         ->pluck('id')->toArray()->toEqualCanonicalizing([1,2]);
 });

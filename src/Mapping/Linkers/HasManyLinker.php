@@ -65,7 +65,7 @@ readonly class HasManyLinker implements Linker
                 function (JoinClause $join) use ($filters, $originEntityReflection, $origin, $target) {
                     $join->on(
                         $target->getQualifiedColumnName($this->foreignKey),
-                        $origin->getQualifiedColumnName($originEntityReflection->getId())
+                        $origin->getQualifiedColumnName($originEntityReflection->getIdColumn())
                     );
                     foreach ($filters as $filter) {
                         $filter->applyFilter($join, $target);

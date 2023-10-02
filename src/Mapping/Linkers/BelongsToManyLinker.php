@@ -70,13 +70,13 @@ readonly class BelongsToManyLinker implements Linker, PivotLinker
                 $this->pivotTable . ' as ' . $pivotAlias,
                 $pivotAlias . '.' . $this->originForeignKey,
                 '=',
-                $origin->getQualifiedColumnName($originEntityReflection->getId())
+                $origin->getQualifiedColumnName($originEntityReflection->getIdColumn())
             )
             ->leftJoin(
                 $targetEntityReflection->getTableName() . ' as ' . $target->getAliasedTableName(),
                 function (JoinClause $join) use ($filters, $pivotAlias, $targetEntityReflection, $target) {
                     $join->on(
-                        $target->getQualifiedColumnName($targetEntityReflection->getId()),
+                        $target->getQualifiedColumnName($targetEntityReflection->getIdColumn()),
                         $pivotAlias . '.' . $this->targetForeignKey
                     );
                     foreach ($filters as $filter) {

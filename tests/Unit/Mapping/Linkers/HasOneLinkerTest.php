@@ -13,7 +13,7 @@ uses()
     ->beforeAll(function () {
         $mock = EntityReflection::fake();
         $mock->shouldReceive('getTableName')->andReturn('table_name');
-        $mock->shouldReceive('getId')->andReturn('id_column');
+        $mock->shouldReceive('getIdColumn')->andReturn('id_column');
         $mock->shouldReceive('allowsNull')->andReturn(true);
     })
     ->afterAll(function () {

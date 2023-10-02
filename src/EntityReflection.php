@@ -18,7 +18,6 @@ use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use AdventureTech\ORM\Repository\Repository;
 use ArgumentCountError;
 use Illuminate\Support\Collection;
-use Mockery;
 use Mockery\Mock;
 use ReflectionClass;
 use ReflectionException;
@@ -156,8 +155,18 @@ class EntityReflection
     /**
      * @return string
      */
-    public function getId(): string
+    public function getIdColumn(): string
     {
+        return $this->getMappers()->get($this->getIdProperty())->getColumnNames()[0];
+    }
+    /**
+     * @return string
+     */
+    public function getIdProperty(): string
+    {
+        if (!isset($this->id)) {
+            dd($this->class);
+        }
         return $this->id;
     }
 

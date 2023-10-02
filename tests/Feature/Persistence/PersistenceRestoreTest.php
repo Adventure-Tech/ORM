@@ -71,7 +71,7 @@ test('Trying to restore entity without ID set leads exception', function () {
 
 test('Trying to restore non-existing record leads to exception', function () {
     $user = new User();
-    $user->setId(1);
+    $user->setIdentifier(1);
     expect(fn() => UserPersistence::restore($user))->toThrow(
         RecordNotFoundException::class,
         'Could not restore entity'

@@ -58,7 +58,12 @@ test('Can get table name correctly', function () {
 
 test('Can get id column name correctly', function () {
     $entityReflection = EntityReflection::new(User::class);
-    expect($entityReflection->getId())->toBe('id');
+    expect($entityReflection->getIdColumn())->toBe('id');
+});
+
+test('Can get id property name correctly', function () {
+    $entityReflection = EntityReflection::new(User::class);
+    expect($entityReflection->getIdProperty())->toBe('identifier');
 });
 
 test('Can get list of mappers correctly', function () {

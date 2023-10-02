@@ -1,6 +1,7 @@
 <?php
 
 use AdventureTech\ORM\EntityAccessorService;
+use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
 
@@ -48,14 +49,14 @@ test('Trying to get unset public property leads to null', function () {
 
 test('Can get public ID from entity', function () {
     $entity = new #[Entity] class {
-        #[ID] public string $foo = 'value';
+        #[ID] #[Column]  public string $foo = 'value';
     };
     expect(EntityAccessorService::getId($entity))->toBe('value');
 });
 
 test('Can get private ID from entity via getter', function () {
     $entity = new #[Entity] class {
-        #[ID] private string $foo = 'value';
+        #[ID] #[Column]  private string $foo = 'value';
 
         public function getFoo(): string
         {
@@ -67,7 +68,7 @@ test('Can get private ID from entity via getter', function () {
 
 test('Getters for ID take priority over public access', function () {
     $entity = new #[Entity] class {
-        #[ID] public string $foo = 'value';
+        #[ID] #[Column]  public string $foo = 'value';
 
         public function getFoo(): string
         {
@@ -79,7 +80,7 @@ test('Getters for ID take priority over public access', function () {
 
 test('Trying to get unset public ID leads to null', function () {
     $entity = new #[Entity] class {
-        #[ID] public string $foo;
+        #[ID] #[Column]  public string $foo;
     };
     expect(EntityAccessorService::getId($entity))->toBeNull();
 });

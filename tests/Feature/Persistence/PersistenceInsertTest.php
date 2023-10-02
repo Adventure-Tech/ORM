@@ -44,12 +44,12 @@ test('When inserting entity the id is set on the object', function () {
     $user = new User();
     $user->name = 'Name';
     UserPersistence::insert($user);
-    expect($user->getId())->toBeNumeric();
+    expect($user->getIdentifier())->toBeNumeric();
 });
 
 test('Trying to insert entity with ID already set leads exception', function () {
     $user = new User();
-    $user->setId(1);
+    $user->setIdentifier(1);
     $user->name = 'Name';
     expect(fn() => UserPersistence::insert($user))->toThrow(
         IdSetForInsertException::class,
@@ -120,8 +120,8 @@ test('Can insert owning relations', function () {
     PostPersistence::insert($post);
 
     expect(DB::table('posts')->first())
-        ->author->toBe($author->getId())
-        ->editor->toBe($editor->getId());
+        ->author->toBe($author->getIdentifier())
+        ->editor->toBe($editor->getIdentifier());
 });
 
 test('Must set owning relation', function () {

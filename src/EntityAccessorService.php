@@ -23,7 +23,7 @@ class EntityAccessorService
     {
         // TODO: type check here? Other parts of the ORM rely on IDs being int|string...
         /** @var int|string $id */
-        $id = self::get($entity, EntityReflection::new($entity::class)->getId());
+        $id = self::get($entity, EntityReflection::new($entity::class)->getIdProperty());
         return $id;
     }
 
@@ -39,7 +39,7 @@ class EntityAccessorService
 
     public static function setId(object $entity, mixed $value): void
     {
-        self::set($entity, EntityReflection::new($entity::class)->getId(), $value);
+        self::set($entity, EntityReflection::new($entity::class)->getIdProperty(), $value);
     }
 
     public static function isset(object $entity, string $property): bool
@@ -49,6 +49,6 @@ class EntityAccessorService
 
     public static function issetId(object $entity): bool
     {
-        return self::isset($entity, EntityReflection::new($entity::class)->getId());
+        return self::isset($entity, EntityReflection::new($entity::class)->getIdProperty());
     }
 }

@@ -94,11 +94,11 @@ test('Can attach many-to-many relations', function () {
 
     expect(DB::table('friends')->get())->toHaveCount(2)
         ->map(fn($obj) => (array)$obj)->toArray()->toEqualCanonicalizing([
-            ['a_id' => $alice->getId(), 'b_id' => $bob->getId()],
-            ['a_id' => $alice->getId(), 'b_id' => $claire->getId()],
+            ['a_id' => $alice->getIdentifier(), 'b_id' => $bob->getIdentifier()],
+            ['a_id' => $alice->getIdentifier(), 'b_id' => $claire->getIdentifier()],
         ])
         ->and($alice->friends)->toHaveCount(2)
-        ->map(fn(User $user) => $user->getId())->toArray()->toEqualCanonicalizing([$bob->getId(), $claire->getId()]);
+        ->map(fn(User $user) => $user->getIdentifier())->toArray()->toEqualCanonicalizing([$bob->getIdentifier(), $claire->getIdentifier()]);
 });
 
 test('Attaching ignores and overwrites relation property', function () {
@@ -118,11 +118,11 @@ test('Attaching ignores and overwrites relation property', function () {
 
     expect(DB::table('friends')->get())->toHaveCount(2)
         ->map(fn($obj) => (array)$obj)->toArray()->toEqualCanonicalizing([
-            ['a_id' => $alice->getId(), 'b_id' => $bob->getId()],
-            ['a_id' => $alice->getId(), 'b_id' => $claire->getId()],
+            ['a_id' => $alice->getIdentifier(), 'b_id' => $bob->getIdentifier()],
+            ['a_id' => $alice->getIdentifier(), 'b_id' => $claire->getIdentifier()],
         ])
         ->and($alice->friends)->toHaveCount(2)
-        ->map(fn(User $user) => $user->getId())->toArray()->toEqualCanonicalizing([$bob->getId(), $claire->getId()]);
+        ->map(fn(User $user) => $user->getIdentifier())->toArray()->toEqualCanonicalizing([$bob->getIdentifier(), $claire->getIdentifier()]);
 });
 
 test('Attaching handles already existing links correctly', function () {
@@ -135,17 +135,17 @@ test('Attaching handles already existing links correctly', function () {
     $claire = new User();
     $claire->name = 'Claire';
     UserPersistence::insert($claire);
-    DB::table('friends')->insert(['a_id' => $alice->getId(), 'b_id' => $alice->getId()]);
+    DB::table('friends')->insert(['a_id' => $alice->getIdentifier(), 'b_id' => $alice->getIdentifier()]);
 
     UserPersistence::attach($alice, [$alice, $bob], 'friends');
 
     expect(DB::table('friends')->get())->toHaveCount(2)
         ->map(fn($obj) => (array)$obj)->toArray()->toEqualCanonicalizing([
-            ['a_id' => $alice->getId(), 'b_id' => $alice->getId()],
-            ['a_id' => $alice->getId(), 'b_id' => $bob->getId()],
+            ['a_id' => $alice->getIdentifier(), 'b_id' => $alice->getIdentifier()],
+            ['a_id' => $alice->getIdentifier(), 'b_id' => $bob->getIdentifier()],
         ])
         ->and($alice->friends)->toHaveCount(2)
-        ->map(fn(User $user) => $user->getId())->toArray()->toEqualCanonicalizing([$alice->getId(), $bob->getId()]);
+        ->map(fn(User $user) => $user->getIdentifier())->toArray()->toEqualCanonicalizing([$alice->getIdentifier(), $bob->getIdentifier()]);
 });
 
 test('Trying to attach entities without IDs set leads to exception', function () {

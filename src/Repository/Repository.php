@@ -119,7 +119,7 @@ class Repository
         $this->limit = null;
         $this->offset = null;
         $query = $this->buildQuery()
-            ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId()), $id);
+            ->where($this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getIdColumn()), $id);
         $query = $this->applyLimitAndOffset($query, 1, null);
         return $this->mapToEntities($query->get())->first();
     }
@@ -340,7 +340,7 @@ class Repository
      */
     private function resolve(stdClass $item, bool $reset = false): ?object
     {
-        $id = $item->{$this->localAliasingManager->getSelectedColumnName($this->entityReflection->getId())};
+        $id = $item->{$this->localAliasingManager->getSelectedColumnName($this->entityReflection->getIdColumn())};
         if (is_null($id)) {
             // occurs when filtering out of relation (../../)
             return null;
@@ -411,7 +411,7 @@ class Repository
             $orderBys[] = $column . $sqlDirection;
         }
 
-        $idColumn = $this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId());
+        $idColumn = $this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getIdColumn());
         if (!array_key_exists($idColumn, $orderBys)) {
             $orderBys[] = $idColumn;
         }

@@ -186,7 +186,7 @@ class Factory
     private function addMissingProperties(array &$state): void
     {
         foreach ($this->entityReflection->getMappers() as $property => $mapper) {
-            if ($property !== $this->entityReflection->getId() && !key_exists($property, $state)) {
+            if ($property !== $this->entityReflection->getIdProperty() && !key_exists($property, $state)) {
                 $state[$property] = $this->defaults($property);
             }
         }

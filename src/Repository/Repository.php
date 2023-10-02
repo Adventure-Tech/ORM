@@ -174,7 +174,7 @@ class Repository
      */
     public function dump(): static
     {
-        $this->buildQuery()->dump();
+        $this->buildQuery()->dumpRawSql();
         return $this;
     }
 
@@ -287,7 +287,7 @@ class Repository
             $query->orderBy($column, $direction->value);
         }
 
-        // NOTE: this needs to be last (this wraps the query in a subquery to utilise the DENSE_RANK windowing function)
+        // NOTE: this needs to be last (this wraps the query in a subquery to utilise the DENSE_RANK window function)
         if (!is_null($this->limit) || !is_null($this->offset)) {
             $query = $this->applyLimitAndOffset($query, $this->limit, $this->offset);
         }
@@ -402,8 +402,22 @@ class Repository
 
     private function applyLimitAndOffset(Builder $query, ?int $limit, ?int $offset): Builder
     {
+        $orderBys = [];
+        foreach ($this->orderBys as $column => $direction) {
+            $sqlDirection = match ($direction) {
+                Direction::ASCENDING => '',
+                Direction::DESCENDING => ' DESC',
+            };
+            $orderBys[] = $column . $sqlDirection;
+        }
+
+        $idColumn = $this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId());
+        if (!array_key_exists($idColumn, $orderBys)) {
+            $orderBys[] = $idColumn;
+        }
+
         $query->selectRaw('DENSE_RANK () OVER (ORDER BY '
-            . $this->localAliasingManager->getQualifiedColumnName($this->entityReflection->getId())
+            . implode(', ', $orderBys)
             . ') AS '
             . self::LIMIT_OFFSET_COUNTER);
         $query = DB::query()->fromSub($query, self::LIMIT_OFFSET_SUBQUERY_ALIAS);

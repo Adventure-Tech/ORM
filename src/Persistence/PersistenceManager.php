@@ -99,7 +99,7 @@ class PersistenceManager
                 $query->grammar->compileInsert($query, $values) . ' RETURNING ' . $idColumn,
                 $query->cleanBindings(Arr::flatten($values, 1))
             );
-        return $response[0]->id;
+        return $response[0]->{$idColumn};
     }
 
     /**

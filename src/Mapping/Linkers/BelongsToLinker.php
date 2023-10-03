@@ -60,7 +60,7 @@ readonly class BelongsToLinker implements Linker, OwningLinker
                 $targetEntityReflection->getTableName() . ' as ' . $target->getAliasedTableName(),
                 function (JoinClause $join) use ($origin, $target, $filters, $targetEntityReflection) {
                     $join->on(
-                        $target->getQualifiedColumnName($targetEntityReflection->getId()),
+                        $target->getQualifiedColumnName($targetEntityReflection->getIdColumn()),
                         $origin->getQualifiedColumnName($this->foreignKey)
                     );
                     foreach ($filters as $filter) {

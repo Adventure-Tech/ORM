@@ -1,6 +1,6 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Account;

@@ -4,6 +4,7 @@ namespace AdventureTech\ORM;
 
 use AdventureTech\ORM\Exceptions\EntityInstantiationException;
 use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
+use AdventureTech\ORM\Exceptions\MissingIdException;
 use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
 use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Mapping\Columns\ColumnAnnotation;
@@ -18,7 +19,6 @@ use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use AdventureTech\ORM\Repository\Repository;
 use ArgumentCountError;
 use Illuminate\Support\Collection;
-use Mockery;
 use Mockery\Mock;
 use ReflectionClass;
 use ReflectionException;
@@ -131,6 +131,12 @@ class EntityReflection
                 }
             }
         }
+        if (!isset($this->id)) {
+            throw new MissingIdException('Entity must have an ID column');
+        }
+        if (!$this->mappers->has($this->id)) {
+            throw new MissingIdException('ID column of an entity must be mapper via a column mapper annotation');
+        }
     }
 
     /**
@@ -156,7 +162,16 @@ class EntityReflection
     /**
      * @return string
      */
-    public function getId(): string
+    public function getIdColumn(): string
+    {
+        /** @var Mapper<mixed> $mapper */
+        $mapper = $this->getMappers()->get($this->getIdProperty());
+        return $mapper->getColumnNames()[0];
+    }
+    /**
+     * @return string
+     */
+    public function getIdProperty(): string
     {
         return $this->id;
     }

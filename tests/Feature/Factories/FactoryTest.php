@@ -23,7 +23,7 @@ test('Can set owning relations as instances', function () {
     Factory::new(Post::class)->create([
         'editor' => $editor
     ]);
-    expect(DB::table('posts')->first()->editor)->toBe($editor->getId());
+    expect(DB::table('posts')->first()->editor)->toBe($editor->getIdentifier());
 });
 
 test('Can create entity with enum', function () {
@@ -83,10 +83,10 @@ test('Can reuse factories', function () {
         ->and(DB::table('users')->count())->toBe(4)
         ->and(DB::table('users')->where('name', 'Alice')->count())->toBe(1)
         ->and(DB::table('users')->where('name', 'Bob')->count())->toBe(3)
-        ->and($posts->map(fn(Post $post) => $post->author->getId())->toArray())->toEqualCanonicalizing([
-            $author->getId(),
-            $author->getId(),
-            $author->getId(),
+        ->and($posts->map(fn(Post $post) => $post->author->getIdentifier())->toArray())->toEqualCanonicalizing([
+            $author->getIdentifier(),
+            $author->getIdentifier(),
+            $author->getIdentifier(),
         ]);
 });
 

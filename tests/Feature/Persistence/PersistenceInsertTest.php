@@ -3,7 +3,7 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\IdSetForInsertException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
@@ -44,12 +44,12 @@ test('When inserting entity the id is set on the object', function () {
     $user = new User();
     $user->name = 'Name';
     UserPersistence::insert($user);
-    expect($user->getId())->toBeNumeric();
+    expect($user->getIdentifier())->toBeNumeric();
 });
 
 test('Trying to insert entity with ID already set leads exception', function () {
     $user = new User();
-    $user->setId(1);
+    $user->setIdentifier(1);
     $user->name = 'Name';
     expect(fn() => UserPersistence::insert($user))->toThrow(
         IdSetForInsertException::class,
@@ -120,8 +120,8 @@ test('Can insert owning relations', function () {
     PostPersistence::insert($post);
 
     expect(DB::table('posts')->first())
-        ->author->toBe($author->getId())
-        ->editor->toBe($editor->getId());
+        ->author->toBe($author->getIdentifier())
+        ->editor->toBe($editor->getIdentifier());
 });
 
 test('Must set owning relation', function () {
@@ -144,7 +144,7 @@ test('Must set ID of owning relation', function () {
     $post->author = new User();
 
     expect(fn() => PostPersistence::insert($post))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Owned linked entity must have valid ID set'
     );
 });

@@ -2,16 +2,8 @@
 
 namespace AdventureTech\ORM\Exceptions;
 
-use RuntimeException;
-use Throwable;
+use LogicException;
 
-class MissingIdException extends RuntimeException
+class MissingIdException extends LogicException
 {
-    public function __construct(
-        string $message = 'Must set ID column',
-        int $code = 0,
-        ?Throwable $previous = null
-    ) {
-        parent::__construct($message, $code, $previous);
-    }
 }

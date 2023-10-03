@@ -4,7 +4,7 @@ use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InconsistentEntitiesException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
-use AdventureTech\ORM\Exceptions\MissingIdException;
+use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
@@ -63,7 +63,7 @@ test('ID must be set on base entity when detaching', function () {
     $user = new User();
     $user->name = 'name';
     expect(fn() => UserPersistence::detach($user, [], 'friends'))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Must set ID column on base entity when detaching'
     );
 });
@@ -75,7 +75,7 @@ test('IDs must be set on entities to be detached', function () {
     $bob = new User();
     $bob->name = 'Bob';
     expect(fn() => UserPersistence::detach($alice, [$bob], 'friends'))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Must set ID columns of all entities when attaching/detaching'
     );
 });
@@ -96,10 +96,10 @@ test('Can detach many-to-many relations', function () {
 
     expect(DB::table('friends')->get())->toHaveCount(1)
         ->map(fn($obj) => (array)$obj)->toArray()->toEqualCanonicalizing([
-            ['a_id' => $alice->getId(), 'b_id' => $claire->getId()],
+            ['a_id' => $alice->getIdentifier(), 'b_id' => $claire->getIdentifier()],
         ])
         ->and($alice->friends)->toHaveCount(1)
-        ->map(fn(User $user) => $user->getId())->toArray()->toEqualCanonicalizing([$claire->getId()]);
+        ->map(fn(User $user) => $user->getIdentifier())->toArray()->toEqualCanonicalizing([$claire->getIdentifier()]);
 });
 
 test('Attaching removes detached entities from relation property', function () {
@@ -121,7 +121,7 @@ test('Attaching removes detached entities from relation property', function () {
 
     expect(DB::table('friends')->get())->toHaveCount(1)
         ->map(fn($obj) => (array)$obj)->toArray()->toEqualCanonicalizing([
-            ['a_id' => $alice->getId(), 'b_id' => $bob->getId()],
+            ['a_id' => $alice->getIdentifier(), 'b_id' => $bob->getIdentifier()],
         ])
         ->and($alice->friends)->toHaveCount(1)
         ->first()->toBe($ted);
@@ -134,7 +134,7 @@ test('Detaching handles non-existing links correctly', function () {
     $bob = new User();
     $bob->name = 'Bob';
     UserPersistence::insert($bob);
-    DB::table('friends')->insert(['a_id' => $alice->getId(), 'b_id' => $alice->getId()]);
+    DB::table('friends')->insert(['a_id' => $alice->getIdentifier(), 'b_id' => $alice->getIdentifier()]);
     $alice->friends = collect([$alice, $bob]);
 
     UserPersistence::detach($alice, [$alice, $bob], 'friends');
@@ -151,7 +151,7 @@ test('Trying to detach entities without IDs set leads to exception', function ()
     $bob->name = 'Bob';
 
     expect(fn() => UserPersistence::detach($alice, [$bob], 'friends'))->toThrow(
-        MissingIdException::class,
+        MissingIdValueException::class,
         'Must set ID columns of all entities when attaching/detaching'
     );
 });

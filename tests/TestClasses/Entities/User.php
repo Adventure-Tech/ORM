@@ -19,8 +19,8 @@ class User
     use WithSoftDeletes;
 
     #[Id]
-    #[Column]
-    private int $id;
+    #[Column(name: 'id')]
+    private int $identifier;
 
     #[Column]
     public string $name;
@@ -51,12 +51,12 @@ class User
     )]
     public Collection $friends;
 
-    public function getId(): ?int
+    public function getIdentifier(): ?int
     {
         return $this->id ?? null;
     }
 
-    public function setId(int $id): void
+    public function setIdentifier(int $id): void
     {
         $this->id = $id;
     }

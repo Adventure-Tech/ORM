@@ -81,6 +81,15 @@ class Factory
     }
 
     /**
+     * @param  array<string,mixed>  $state
+     * @return T
+     */
+    public function make(array $state = []): object
+    {
+        return $this->createEntity($state);
+    }
+
+    /**
      * @param  int  $count
      * @return Collection<int,T>
      */

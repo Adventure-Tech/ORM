@@ -8,8 +8,15 @@ use AdventureTech\ORM\Tests\TestClasses\IntEnum;
 use Illuminate\Support\Facades\DB;
 
 test('Can create single entity', function () {
-    Factory::new(User::class)->create();
-    expect(DB::table('users')->count())->toBe(1);
+    $user = Factory::new(User::class)->create();
+    expect(DB::table('users')->count())->toBe(1)
+        ->and($user)->toBeInstanceOf(User::class);
+});
+
+test('Can make single entity', function () {
+    $user = Factory::new(User::class)->make();
+    expect(DB::table('users')->count())->toBe(0)
+    ->and($user)->toBeInstanceOf(User::class);
 });
 
 test('Non-nullable owning relations are automatically created correctly', function () {

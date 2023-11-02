@@ -368,6 +368,11 @@ class PersistenceManager
         return $data;
     }
 
+    /**
+     * @param  T  $entity
+     * @param  CarbonImmutable|null  $deletedAt
+     * @return void
+     */
     protected static function internalDelete(object $entity, CarbonImmutable $deletedAt = null): void
     {
         $entityReflection = self::getEntityReflection($entity);

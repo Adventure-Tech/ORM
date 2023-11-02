@@ -57,6 +57,16 @@ test('When deleting entity with soft-deletes the deletedAt property is set on th
         ->toIso8601String()->toBe(now()->toIso8601String());
 });
 
+test('Can soft-delete entity with custom deleted_at timestamp', function () {
+    $user = new User();
+    $user->name = 'Name';
+    UserPersistence::insert($user);
+    UserPersistence::customDelete($user, CarbonImmutable::parse('2000-01-01 12:00'));
+    expect(DB::table('users')->get())
+        ->toHaveCount(1)
+        ->first()->deleted_at->toStartWith('2000-01-01T12:00:00');
+});
+
 test('Trying to delete entity without ID set leads exception', function () {
     $user = new User();
     $user->name = 'Name';

@@ -17,6 +17,7 @@ use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -158,30 +159,7 @@ class PersistenceManager
      */
     public static function delete(object $entity): void
     {
-        $entityReflection = self::getEntityReflection($entity);
-
-        self::checkIdIsSet($entity, 'Must set ID column when deleting');
-
-        $data = [];
-        foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
-            /** @var Mapper<mixed> $mapper */
-            $mapper = $entityReflection->getMappers()->get($property);
-            $datetime = $softDelete->getDatetime();
-            EntityAccessorService::set($entity, $property, $datetime);
-            $data = array_merge($data, $mapper->serialize($datetime));
-        }
-
-        if ($data) {
-            $int = DB::table($entityReflection->getTableName())
-                ->where($entityReflection->getIdColumn(), '=', EntityAccessorService::getId($entity))
-                ->update($data);
-        } else {
-        // TODO: should this call forceDelete() instead?
-            $int = DB::table($entityReflection->getTableName())
-                ->where($entityReflection->getIdColumn(), '=', EntityAccessorService::getId($entity))
-                ->delete();
-        }
-        self::checkNumberOfRowsAffected($int, 'Could not delete entity');
+        self::internalDelete($entity);
     }
 
     /**
@@ -388,5 +366,32 @@ class PersistenceManager
             ];
         })->toArray();
         return $data;
+    }
+
+    protected static function internalDelete(object $entity, CarbonImmutable $deletedAt = null): void
+    {
+        $entityReflection = self::getEntityReflection($entity);
+
+        self::checkIdIsSet($entity, 'Must set ID column when deleting');
+
+        $data = [];
+        foreach ($entityReflection->getSoftDeletes() as $property => $softDelete) {
+            /** @var Mapper<mixed> $mapper */
+            $mapper = $entityReflection->getMappers()->get($property);
+            $deletedAt = $deletedAt ?? $softDelete->getDatetime();
+            EntityAccessorService::set($entity, $property, $deletedAt);
+            $data = array_merge($data, $mapper->serialize($deletedAt));
+        }
+
+        if ($data) {
+            $int = DB::table($entityReflection->getTableName())
+                ->where($entityReflection->getIdColumn(), '=', EntityAccessorService::getId($entity))
+                ->update($data);
+        } else {
+            $int = DB::table($entityReflection->getTableName())
+                ->where($entityReflection->getIdColumn(), '=', EntityAccessorService::getId($entity))
+                ->delete();
+        }
+        self::checkNumberOfRowsAffected($int, 'Could not delete entity');
     }
 }

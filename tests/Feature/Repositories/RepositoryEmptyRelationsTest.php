@@ -1,5 +1,6 @@
 <?php
 
+use AdventureTech\ORM\Exceptions\EntityNotFoundException;
 use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Repository\Filters\IS;
 use AdventureTech\ORM\Repository\Filters\WhereNot;
@@ -24,16 +25,13 @@ test('Loading an empty HasMany relationship', function () {
 
 test('Loading an empty BelongsTo relationship', function () {
     Factory::new(Post::class)->create();
-    $post = Repository::new(Post::class)
+    expect(fn () => Repository::new(Post::class)
         ->with('author', function (Repository $repository) {
             $repository->filter(new WhereNot('name', IS::LIKE, '%'));
         })
         ->get()
-        ->first();
-
-    expect(isset($post->author))->toBeFalse()
-        ->and(fn() => $post->author)->toThrow(
-            Error::class,
-            'Typed property AdventureTech\ORM\Tests\TestClasses\Entities\Post::$author must not be accessed before initialization'
+        ->first())->toThrow(
+            EntityNotFoundException::class,
+            'Entity not found on the DB [class: "AdventureTech\ORM\Tests\TestClasses\Entities\Post"", id: "1"] - Could not load relation "author"'
         );
 });

@@ -5,6 +5,8 @@ namespace AdventureTech\ORM\Factories;
 use AdventureTech\ORM\ColumnPropertyService;
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
+use AdventureTech\ORM\Exceptions\InvalidRelationException;
+use AdventureTech\ORM\Mapping\Linkers\Linker;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use Carbon\CarbonImmutable;
@@ -27,6 +29,11 @@ class Factory
      * @var array<string,mixed>
      */
     private array $state = [];
+
+    /**
+     * @var array<string,array<int,Factory<object>>>
+     */
+    private array $has = [];
 
     /**
      * @template E of object
@@ -63,7 +70,7 @@ class Factory
      * @param  EntityReflection<T>  $entityReflection
      * @param  Generator  $faker
      */
-    private function __construct(
+    protected function __construct(
         private readonly EntityReflection $entityReflection,
         protected readonly Generator $faker
     ) {
@@ -77,10 +84,12 @@ class Factory
     {
         $entity = $this->createEntity($state);
         $this->insert($entity);
+        $this->createdHasEntities($entity);
         return $entity;
     }
 
     /**
+     *
      * @param  array<string,mixed>  $state
      * @return T
      */
@@ -108,6 +117,29 @@ class Factory
     public function state(array $state = []): static
     {
         $this->state = $state;
+        return $this;
+    }
+
+    /**
+     * @param  string  $relation
+     * @param  Factory<object>|null  $factory
+     */
+    public function has(string $relation, Factory $factory = null): static
+    {
+        if (!isset($factory)) {
+            $linkers = $this->entityReflection->getLinkers();
+            if (!$linkers->has($relation)) {
+                throw new InvalidRelationException('Invalid relation used in "has" method [' . $relation . ']');
+            }
+            $factory = Factory::new($linkers[$relation]->getTargetEntity());
+        }
+        $this->has[$relation][] = $factory;
+        return $this;
+    }
+
+    public function without(string $relation): static
+    {
+        unset($this->has[$relation]);
         return $this;
     }
 
@@ -225,6 +257,20 @@ class Factory
         foreach ($state as $property => $item) {
             if ($item instanceof Factory) {
                 $state[$property] = $item->create();
+            }
+        }
+    }
+
+    /**
+     * @param  T  $entity
+     */
+    private function createdHasEntities(object $entity): void
+    {
+        foreach ($this->has as $relation => $factories) {
+            $linker = $this->entityReflection->getLinkers()[$relation];
+            foreach ($factories as $factory) {
+                $linkedEntity = $factory->create();
+                $linker->link($entity, $linkedEntity);
             }
         }
     }

@@ -6,6 +6,10 @@ use Closure;
 use Illuminate\Database\DatabaseTransactionsManager;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @codeCoverageIgnore
+ */
+
 final class Transaction
 {
     public static function wrap(Closure $callback, int $attempts = 1): mixed

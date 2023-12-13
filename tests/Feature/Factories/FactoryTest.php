@@ -1,6 +1,7 @@
 <?php
 
 use AdventureTech\ORM\Factories\Factory;
+use AdventureTech\ORM\Tests\TestClasses\Entities\Comment;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;

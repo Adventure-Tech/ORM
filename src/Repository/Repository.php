@@ -92,7 +92,7 @@ class Repository
      * @param  AliasingManager  $aliasingManager
      * @param  string  $localRoot
      */
-    private function __construct(
+    protected function __construct(
         private readonly EntityReflection $entityReflection,
         private readonly AliasingManager $aliasingManager,
         private readonly string $localRoot

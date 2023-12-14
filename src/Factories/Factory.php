@@ -279,7 +279,8 @@ class Factory
     private function getPersistenceManager(): PersistenceManager
     {
         // some reflection dark magic, but it's okay as factories are for test only
-        return new class ($this->entityReflection->getClass()) extends PersistenceManager {
+        /** @var PersistenceManager<T> $persistenceManager */
+        $persistenceManager = new class ($this->entityReflection->getClass()) extends PersistenceManager {
             protected static string $entity;
 
             /**
@@ -290,5 +291,6 @@ class Factory
                 self::$entity = $entityClassName;
             }
         };
+        return $persistenceManager;
     }
 }

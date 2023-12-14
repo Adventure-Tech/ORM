@@ -6,8 +6,8 @@ use AdventureTech\ORM\ColumnPropertyService;
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
-use AdventureTech\ORM\Mapping\Linkers\Linker;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
+use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use Carbon\CarbonImmutable;
 use Faker\Generator;
@@ -33,7 +33,11 @@ class Factory
     /**
      * @var array<string,array<int,Factory<object>>>
      */
-    private array $has = [];
+    private array $hasFactories = [];
+    /**
+     * @var array<string,array<int,string>>
+     */
+    private mixed $hasReverseRelations = [];
 
     /**
      * @template E of object
@@ -83,7 +87,7 @@ class Factory
     public function create(array $state = []): object
     {
         $entity = $this->createEntity($state);
-        $this->insert($entity);
+        $this->getPersistenceManager()->insert($entity);
         $this->createdHasEntities($entity);
         return $entity;
     }
@@ -124,7 +128,7 @@ class Factory
      * @param  string  $relation
      * @param  Factory<object>|null  $factory
      */
-    public function has(string $relation, Factory $factory = null): static
+    public function has(string $relation, string $reverseRelation, Factory $factory = null): static
     {
         if (!isset($factory)) {
             $linkers = $this->entityReflection->getLinkers();
@@ -132,14 +136,20 @@ class Factory
                 throw new InvalidRelationException('Invalid relation used in "has" method [' . $relation . ']');
             }
             $factory = Factory::new($linkers[$relation]->getTargetEntity());
+            if (!$factory->entityReflection->getLinkers()->has($reverseRelation)) {
+                throw new InvalidRelationException('Invalid reverse relation used in "has" method [' . $reverseRelation . ']');
+            }
         }
-        $this->has[$relation][] = $factory;
+        // always incrementing arrays at same time => can rely on indexes to be synced
+        $this->hasFactories[$relation][] = $factory;
+        $this->hasReverseRelations[$relation][] = $reverseRelation;
         return $this;
     }
 
     public function without(string $relation): static
     {
-        unset($this->has[$relation]);
+        unset($this->hasFactories[$relation]);
+        unset($this->hasReverseRelations[$relation]);
         return $this;
     }
 
@@ -198,29 +208,6 @@ class Factory
     }
 
     /**
-     * @param  T  $entity
-     * @return void
-     */
-    private function insert(object $entity): void
-    {
-        // some reflection dark magic, but it's okay as factories are for test only
-        /** @var PersistenceManager<T> $persistenceManager */
-        $persistenceManager = new class ($this->entityReflection->getClass()) extends PersistenceManager {
-            protected static string $entity;
-
-            /**
-             * @param  class-string<T>  $entityClassName
-             */
-            public function __construct(string $entityClassName)
-            {
-                self::$entity = $entityClassName;
-            }
-        };
-
-        $persistenceManager::insert($entity);
-    }
-
-    /**
      * @param  array<string,mixed>  $state
      * @return void
      */
@@ -266,12 +253,44 @@ class Factory
      */
     private function createdHasEntities(object $entity): void
     {
-        foreach ($this->has as $relation => $factories) {
-            $linker = $this->entityReflection->getLinkers()[$relation];
-            foreach ($factories as $factory) {
-                $linkedEntity = $factory->create();
-                $linker->link($entity, $linkedEntity);
+        foreach ($this->hasFactories as $relation => $factories) {
+            $toBeAttached = [];
+            foreach ($factories as $index => $factory) {
+                $linker = $this->entityReflection->getLinkers()[$relation];
+                if ($linker instanceof PivotLinker) {
+                    $toBeAttached[] = $factory->create();
+                } else {
+                    $reverseRelation = $this->hasReverseRelations[$relation][$index];
+                    $linkedEntity = $factory->create([
+                        $reverseRelation => $entity
+                    ]);
+                    $linker->link($entity, $linkedEntity);
+                }
+            }
+            if (count($toBeAttached) > 0) {
+                $this->getPersistenceManager()->attach($entity, $toBeAttached, $relation);
             }
         }
+    }
+
+    /**
+     * @return PersistenceManager<T>
+     */
+    private function getPersistenceManager(): PersistenceManager
+    {
+        // some reflection dark magic, but it's okay as factories are for test only
+        /** @var PersistenceManager<T> $persistenceManager */
+        $persistenceManager = new class ($this->entityReflection->getClass()) extends PersistenceManager {
+            protected static string $entity;
+
+            /**
+             * @param  class-string<T>  $entityClassName
+             */
+            public function __construct(string $entityClassName)
+            {
+                self::$entity = $entityClassName;
+            }
+        };
+        return $persistenceManager;
     }
 }

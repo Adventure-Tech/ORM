@@ -6,7 +6,6 @@ use AdventureTech\ORM\ColumnPropertyService;
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
-use AdventureTech\ORM\Mapping\Linkers\Linker;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use Carbon\CarbonImmutable;
@@ -33,7 +32,11 @@ class Factory
     /**
      * @var array<string,array<int,Factory<object>>>
      */
-    private array $has = [];
+    private array $hasFactories = [];
+    /**
+     * @var array<string,array<int,string>>
+     */
+    private mixed $hasReverseRelations = [];
 
     /**
      * @template E of object
@@ -124,7 +127,7 @@ class Factory
      * @param  string  $relation
      * @param  Factory<object>|null  $factory
      */
-    public function has(string $relation, Factory $factory = null): static
+    public function has(string $relation, string $reverseRelation, Factory $factory = null): static
     {
         if (!isset($factory)) {
             $linkers = $this->entityReflection->getLinkers();
@@ -132,14 +135,20 @@ class Factory
                 throw new InvalidRelationException('Invalid relation used in "has" method [' . $relation . ']');
             }
             $factory = Factory::new($linkers[$relation]->getTargetEntity());
+            if (!$factory->entityReflection->getLinkers()->has($reverseRelation)) {
+                throw new InvalidRelationException('Invalid reverse relation used in "has" method [' . $reverseRelation . ']');
+            }
         }
-        $this->has[$relation][] = $factory;
+        // always incrementing arrays at same time => can rely on indexes to be synced
+        $this->hasFactories[$relation][] = $factory;
+        $this->hasReverseRelations[$relation][] = $reverseRelation;
         return $this;
     }
 
     public function without(string $relation): static
     {
-        unset($this->has[$relation]);
+        unset($this->hasFactories[$relation]);
+        unset($this->hasReverseRelations[$relation]);
         return $this;
     }
 
@@ -266,10 +275,14 @@ class Factory
      */
     private function createdHasEntities(object $entity): void
     {
-        foreach ($this->has as $relation => $factories) {
-            $linker = $this->entityReflection->getLinkers()[$relation];
-            foreach ($factories as $factory) {
-                $linkedEntity = $factory->create();
+        foreach ($this->hasFactories as $relation => $factories) {
+            foreach ($factories as $index => $factory) {
+                $reverseRelation = $this->hasReverseRelations[$relation][$index];
+                $linkedEntity = $factory->createEntity([
+                    $reverseRelation => $entity
+                ]);
+                $factory->insert($linkedEntity);
+                $linker = $this->entityReflection->getLinkers()[$relation];
                 $linker->link($entity, $linkedEntity);
             }
         }

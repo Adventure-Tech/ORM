@@ -7,6 +7,7 @@ use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
+use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use Carbon\CarbonImmutable;
 use Faker\Generator;
@@ -86,7 +87,7 @@ class Factory
     public function create(array $state = []): object
     {
         $entity = $this->createEntity($state);
-        $this->insert($entity);
+        $this->getPersistenceManager()->insert($entity);
         $this->createdHasEntities($entity);
         return $entity;
     }
@@ -207,29 +208,6 @@ class Factory
     }
 
     /**
-     * @param  T  $entity
-     * @return void
-     */
-    private function insert(object $entity): void
-    {
-        // some reflection dark magic, but it's okay as factories are for test only
-        /** @var PersistenceManager<T> $persistenceManager */
-        $persistenceManager = new class ($this->entityReflection->getClass()) extends PersistenceManager {
-            protected static string $entity;
-
-            /**
-             * @param  class-string<T>  $entityClassName
-             */
-            public function __construct(string $entityClassName)
-            {
-                self::$entity = $entityClassName;
-            }
-        };
-
-        $persistenceManager::insert($entity);
-    }
-
-    /**
      * @param  array<string,mixed>  $state
      * @return void
      */
@@ -276,15 +254,41 @@ class Factory
     private function createdHasEntities(object $entity): void
     {
         foreach ($this->hasFactories as $relation => $factories) {
+            $toBeAttached = [];
             foreach ($factories as $index => $factory) {
-                $reverseRelation = $this->hasReverseRelations[$relation][$index];
-                $linkedEntity = $factory->createEntity([
-                    $reverseRelation => $entity
-                ]);
-                $factory->insert($linkedEntity);
                 $linker = $this->entityReflection->getLinkers()[$relation];
-                $linker->link($entity, $linkedEntity);
+                if ($linker instanceof PivotLinker) {
+                    $toBeAttached[] = $factory->create();
+                } else {
+                    $reverseRelation = $this->hasReverseRelations[$relation][$index];
+                    $linkedEntity = $factory->create([
+                        $reverseRelation => $entity
+                    ]);
+                    $linker->link($entity, $linkedEntity);
+                }
+            }
+            if (count($toBeAttached) > 0) {
+                $this->getPersistenceManager()->attach($entity, $toBeAttached, $relation);
             }
         }
+    }
+
+    /**
+     * @return PersistenceManager<T>
+     */
+    private function getPersistenceManager(): PersistenceManager
+    {
+        // some reflection dark magic, but it's okay as factories are for test only
+        return new class ($this->entityReflection->getClass()) extends PersistenceManager {
+            protected static string $entity;
+
+            /**
+             * @param  class-string<T>  $entityClassName
+             */
+            public function __construct(string $entityClassName)
+            {
+                self::$entity = $entityClassName;
+            }
+        };
     }
 }

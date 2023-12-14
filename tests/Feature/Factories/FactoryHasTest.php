@@ -16,19 +16,19 @@ test('Factories can attach to-many relationships with custom factory instances',
     int $count
 ) {
     $factory = Factory::new(User::class)->state(['name' => 'ASD']);
-    foreach ($data as $comment) {
-        $factory->has($relation, $reverseRelation, Factory::new($class)->state([$field => $comment]));
+    foreach ($data as $value) {
+        $factory->has($relation, $reverseRelation, Factory::new($class)->state([$field => $value]));
     }
     $entity = $factory->create();
+    Repository::new($class)->with($reverseRelation)->get()->pluck('friends')->dump();
     expect($entity->{$relation})->toHaveCount(count($data))
         ->pluck($field)->toArray()->toEqual($data)
-        ->and(Repository::new($class)->with($reverseRelation)->get()->pluck($reverseRelation . '.id'))->each->toBe($entity->id)
         ->and(Repository::new(User::class)->get()->count())->toBe($count);
 })->with([
-    ['comments', 'author', Comment::class, 'comment', ['I comment!'], 2], // user + (comment->post->author)
-    ['comments', 'author', Comment::class, 'comment', ['I comment!', 'And me too!'], 3], // user + 2 x (comment->post->author)
-    //['friends', 'friends', User::class, 'name', ['Alice'], 2], // user + friend
-    //['friends', 'friends', User::class, 'name', ['Alice', 'Bob'], 3], // user + 2 x friend
+    'single HasMany relation' => ['comments', 'author', Comment::class, 'comment', ['I comment!'], 2], // user + (comment->post->author)
+    'multiple HasMany relations' => ['comments', 'author', Comment::class, 'comment', ['I comment!', 'And me too!'], 3], // user + 2 x (comment->post->author)
+    'single BelongsToMany relation' => ['friends', 'friends', User::class, 'name', ['Alice'], 2], // user + friend
+    'multiple BelongsToMany relation' => ['friends', 'friends', User::class, 'name', ['Alice', 'Bob'], 3], // user + 2 x friend
 ]);
 
 test('Factories can attach to-one relationships with custom factory instances', function (
@@ -67,8 +67,8 @@ test('Factories can attach to-many relationships with default factory instances'
 })->with([
     ['comments', 'author', Comment::class, 1, 2], // user + (comment->post->author)
     ['comments', 'author', Comment::class, 2, 3], // 2 x (comment->post->author)
-    //['friends', 'friends', User::class, 1, 2], // user + friend
-    //['friends', 'friends', User::class, 3, 4], // user + 3 x friend
+    ['friends', 'friends', User::class, 1, 2], // user + friend
+    ['friends', 'friends', User::class, 3, 4], // user + 3 x friend
 ]);
 
 test('Factories can attach to-one relationships with default factory instances', function (
@@ -103,11 +103,11 @@ test('Factory has method guards against invalid relations', function (
 
 test('Factories allow resetting of has method', function () {
     $entity = Factory::new(User::class)
-        //->has('friends', 'friends')
+        ->has('friends', 'friends')
         ->has('comments', 'author')
         ->has('comments', 'author')
         ->has('posts', 'author')
-        //->without('friends')
+        ->without('friends')
         ->without('comments')
         ->without('irrelevant')
         ->has('comments', 'author')

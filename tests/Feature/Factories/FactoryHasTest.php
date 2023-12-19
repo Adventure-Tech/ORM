@@ -17,7 +17,7 @@ test('Factories can attach to-many relationships with custom factory instances',
 ) {
     $factory = Factory::new(User::class)->state(['name' => 'ASD']);
     foreach ($data as $value) {
-        $factory->has($relation, $reverseRelation, Factory::new($class)->state([$field => $value]));
+        $factory->with($relation, $reverseRelation, Factory::new($class)->state([$field => $value]));
     }
     $entity = $factory->create();
     Repository::new($class)->with($reverseRelation)->get()->pluck('friends')->dump();
@@ -40,8 +40,8 @@ test('Factories can attach to-one relationships with custom factory instances', 
     int $count
 ) {
     $entity = Factory::new(User::class)
-        ->has($relation, $reverseRelation, Factory::new($class)->state([$field => 'will be overridden']))
-        ->has($relation, $reverseRelation, Factory::new($class)->state([$field => $value]))
+        ->with($relation, $reverseRelation, Factory::new($class)->state([$field => 'will be overridden']))
+        ->with($relation, $reverseRelation, Factory::new($class)->state([$field => $value]))
         ->create();
     expect($entity->{$relation})->toBeInstanceOf($class)
         ->{$field}->toBe($value)
@@ -59,7 +59,7 @@ test('Factories can attach to-many relationships with default factory instances'
 ) {
     $factory = Factory::new(User::class);
     for ($i = 0; $i < $count; $i++) {
-        $factory->has($relation, $reverseRelation);
+        $factory->with($relation, $reverseRelation);
     }
     $entity = $factory->create();
     expect($entity->{$relation})->toHaveCount($count)
@@ -79,8 +79,8 @@ test('Factories can attach to-one relationships with default factory instances',
     int $count
 ) {
     $entity = Factory::new(User::class)
-        ->has($relation, $reverseRelation, Factory::new($class)->state([$field => 'will be overridden']))
-        ->has($relation, $reverseRelation, Factory::new($class)->state())
+        ->with($relation, $reverseRelation, Factory::new($class)->state([$field => 'will be overridden']))
+        ->with($relation, $reverseRelation, Factory::new($class)->state())
         ->create();
     expect($entity->{$relation})->toBeInstanceOf($class)
         ->{$field}->not->toBe('will be overridden')
@@ -89,30 +89,30 @@ test('Factories can attach to-one relationships with default factory instances',
     ['personalDetails', 'user', PersonalDetails::class, 'email', 1],
 ]);
 
-test('Factory has method guards against invalid relations', function (
+test('Factory with method guards against invalid relations', function (
     string $relation,
     string $reverseRelations,
     string $message
 ) {
-    expect(fn() => Factory::new(User::class)->has($relation, $reverseRelations))
+    expect(fn() => Factory::new(User::class)->with($relation, $reverseRelations))
         ->toThrow(InvalidRelationException::class, $message);
 })->with([
-    ['invalid', 'user', 'Invalid relation used in "has" method [invalid]'],
-    ['comments', 'user', 'Invalid reverse relation used in "has" method [user]'],
+    ['invalid', 'user', 'Invalid relation used in "with" method [invalid]'],
+    ['comments', 'user', 'Invalid reverse relation used in "with" method [user]'],
 ]);
 
-test('Factories allow resetting of has method', function () {
+test('Factories allow resetting of with method', function () {
     $entity = Factory::new(User::class)
-        ->has('friends', 'friends')
-        ->has('comments', 'author')
-        ->has('comments', 'author')
-        ->has('posts', 'author')
+        ->with('friends', 'friends')
+        ->with('comments', 'author')
+        ->with('comments', 'author')
+        ->with('posts', 'author')
         ->without('friends')
         ->without('comments')
         ->without('irrelevant')
-        ->has('comments', 'author')
-        ->has('comments', 'author')
-        ->has('comments', 'author')
+        ->with('comments', 'author')
+        ->with('comments', 'author')
+        ->with('comments', 'author')
         ->create();
     expect(isset($entity->friends))->toBe(false)
         ->and($entity->posts)->toHaveCount(1)

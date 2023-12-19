@@ -33,11 +33,11 @@ class Factory
     /**
      * @var array<string,array<int,Factory<object>>>
      */
-    private array $hasFactories = [];
+    private array $withFactories = [];
     /**
      * @var array<string,array<int,string>>
      */
-    private mixed $hasReverseRelations = [];
+    private mixed $withReverseRelations = [];
 
     /**
      * @template E of object
@@ -104,7 +104,7 @@ class Factory
 
     /**
      * @param  int  $count
-     * @return Collection<int,T>
+     * @return Collection<int|string,T>
      */
     public function createMultiple(int $count): Collection
     {
@@ -126,30 +126,32 @@ class Factory
 
     /**
      * @param  string  $relation
+     * @param  string  $reverseRelation
      * @param  Factory<object>|null  $factory
+     * @return static
      */
-    public function has(string $relation, string $reverseRelation, Factory $factory = null): static
+    public function with(string $relation, string $reverseRelation, Factory $factory = null): static
     {
         if (!isset($factory)) {
             $linkers = $this->entityReflection->getLinkers();
             if (!$linkers->has($relation)) {
-                throw new InvalidRelationException('Invalid relation used in "has" method [' . $relation . ']');
+                throw new InvalidRelationException('Invalid relation used in "with" method [' . $relation . ']');
             }
             $factory = Factory::new($linkers[$relation]->getTargetEntity());
             if (!$factory->entityReflection->getLinkers()->has($reverseRelation)) {
-                throw new InvalidRelationException('Invalid reverse relation used in "has" method [' . $reverseRelation . ']');
+                throw new InvalidRelationException('Invalid reverse relation used in "with" method [' . $reverseRelation . ']');
             }
         }
         // always incrementing arrays at same time => can rely on indexes to be synced
-        $this->hasFactories[$relation][] = $factory;
-        $this->hasReverseRelations[$relation][] = $reverseRelation;
+        $this->withFactories[$relation][] = $factory;
+        $this->withReverseRelations[$relation][] = $reverseRelation;
         return $this;
     }
 
     public function without(string $relation): static
     {
-        unset($this->hasFactories[$relation]);
-        unset($this->hasReverseRelations[$relation]);
+        unset($this->withFactories[$relation]);
+        unset($this->withReverseRelations[$relation]);
         return $this;
     }
 
@@ -253,14 +255,14 @@ class Factory
      */
     private function createdHasEntities(object $entity): void
     {
-        foreach ($this->hasFactories as $relation => $factories) {
+        foreach ($this->withFactories as $relation => $factories) {
             $toBeAttached = [];
             foreach ($factories as $index => $factory) {
                 $linker = $this->entityReflection->getLinkers()[$relation];
                 if ($linker instanceof PivotLinker) {
                     $toBeAttached[] = $factory->create();
                 } else {
-                    $reverseRelation = $this->hasReverseRelations[$relation][$index];
+                    $reverseRelation = $this->withReverseRelations[$relation][$index];
                     $linkedEntity = $factory->create([
                         $reverseRelation => $entity
                     ]);

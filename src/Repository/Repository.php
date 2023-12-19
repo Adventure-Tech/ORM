@@ -102,7 +102,7 @@ class Repository
     }
 
     /**
-     * @return Collection<int,T>
+     * @return Collection<int|string,T>
      */
     public function get(): Collection
     {
@@ -316,7 +316,7 @@ class Repository
 
     /**
      * @param  Collection<int|string,stdClass>  $data
-     * @return Collection<int,T>
+     * @return Collection<int|string,T>
      */
     private function mapToEntities(Collection $data): Collection
     {

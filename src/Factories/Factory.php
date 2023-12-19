@@ -104,7 +104,7 @@ class Factory
 
     /**
      * @param  int  $count
-     * @return Collection<int,T>
+     * @return Collection<int|string,T>
      */
     public function createMultiple(int $count): Collection
     {
@@ -128,7 +128,7 @@ class Factory
      * @param  string  $relation
      * @param  string  $reverseRelation
      * @param  Factory<object>|null  $factory
-     * @return Factory
+     * @return static
      */
     public function with(string $relation, string $reverseRelation, Factory $factory = null): static
     {

@@ -5,7 +5,7 @@ use AdventureTech\ORM\Tests\TestClasses\Entities\Comment;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
-use AdventureTech\ORM\Tests\TestClasses\IntEnum;
+use AdventureTech\ORM\Tests\TestClasses\BackedEnum;
 use Illuminate\Support\Facades\DB;
 
 test('Can create single entity', function () {
@@ -37,7 +37,7 @@ test('Can set owning relations as instances', function () {
 test('Can create entity with enum', function () {
     $number = Factory::new(Post::class)->create();
 
-    expect($number->number)->toBeIn(IntEnum::cases());
+    expect($number->number)->toBeIn(BackedEnum::cases());
 });
 
 test('Can set owning relations as factories', function () {

@@ -3,19 +3,19 @@
 use AdventureTech\ORM\AliasingManagement\AliasingManager;
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\Exceptions\EnumSerializationException;
-use AdventureTech\ORM\Mapping\Mappers\EnumMapper;
-use AdventureTech\ORM\Tests\TestClasses\IntEnum;
+use AdventureTech\ORM\Mapping\Mappers\UnitEnumMapper;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
+use AdventureTech\ORM\Tests\TestClasses\UnitEnum;
 
-test('The enum mapper has a single column', function (EnumMapper $mapper) {
+it('has a single column', function (UnitEnumMapper $mapper) {
     expect($mapper->getColumnNames())
         ->toBeArray()
         ->toEqualCanonicalizing(['db_column_name']);
 })->with('mapper');
 
-test('The enum mapper can serialize an entity', function (
-    EnumMapper $mapper,
-    ?IntEnum $value,
+it('can serialize an entity', function (
+    UnitEnumMapper $mapper,
+    ?UnitEnum $value,
     array $expected
 ) {
     expect($mapper->serialize($value))
@@ -25,11 +25,11 @@ test('The enum mapper can serialize an entity', function (
     ->with('mapper')
     ->with([
         'null' => [null, ['db_column_name' => null]],
-        'enum value' => [IntEnum::ONE, ['db_column_name' => 1]],
+        'enum value' => [UnitEnum::A, ['db_column_name' => 'A']],
     ]);
 
-test('The enum mapper throws error when trying to serialize value that is not enum', function (
-    EnumMapper $mapper,
+it('throws error when trying to serialize value that is not backed enum', function (
+    UnitEnumMapper $mapper,
     mixed $value,
     array $expected
 ) {
@@ -43,8 +43,8 @@ test('The enum mapper throws error when trying to serialize value that is not en
         'object value' => [(object) ['foo' => 'bar'], ['db_column_name' => null]],
     ])->throws(EnumSerializationException::class);
 
-test('The enum mapper can deserialize an item with a null value', function (
-    EnumMapper $mapper,
+it('can deserialize an item with a null value', function (
+    UnitEnumMapper $mapper,
     LocalAliasingManager $manager,
     stdClass $item,
 ) {
@@ -56,26 +56,24 @@ test('The enum mapper can deserialize an item with a null value', function (
         'null' => [(object) ['db_column_name' => null]],
     ]);
 
-test('The json mapper can deserialize an item with a non-null value', function (
-    EnumMapper $mapper,
+it('can deserialize an item with a non-null value', function (
+    UnitEnumMapper $mapper,
     LocalAliasingManager $manager,
     stdClass $item,
-    IntEnum $result
+    UnitEnum $result
 ) {
-    expect($mapper->deserialize($item, $manager))
-        ->toEqualCanonicalizing($result);
+    expect($mapper->deserialize($item, $manager))->toEqualCanonicalizing($result);
 })
     ->with('mapper')
     ->with('aliasing manager')
     ->with([
-        'string value' => [(object) ['db_column_name' => '1'], IntEnum::ONE],
-        'int value' => [(object) ['db_column_name' => 1], IntEnum::ONE],
+        [(object) ['db_column_name' => 'A'], UnitEnum::A],
     ]);
 
 
 dataset('mapper', function () {
-    $property = new ReflectionProperty(MapperTestClass::class, 'enumProperty');
-    yield new EnumMapper('db_column_name', $property);
+    $property = new ReflectionProperty(MapperTestClass::class, 'unitEnumProperty');
+    yield new UnitEnumMapper('db_column_name', $property);
 });
 
 dataset('aliasing manager', function () {

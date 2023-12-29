@@ -9,15 +9,15 @@ namespace AdventureTech\ORM\Mapping\Mappers;
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\ColumnPropertyService;
 use AdventureTech\ORM\Exceptions\EnumSerializationException;
+use BackedEnum;
 use ReflectionProperty;
 use stdClass;
-use UnitEnum;
 
 /**
  * @implements Mapper<array>
  */
 
-readonly class EnumMapper implements Mapper
+readonly class BackedEnumMapper implements Mapper
 {
     private string $enumClassName;
 
@@ -33,8 +33,8 @@ readonly class EnumMapper implements Mapper
     }
 
     /**
-     * @param  null|UnitEnum  $value
-     * @return null[]
+     * @param  null|BackedEnum  $value
+     * @return array<string,mixed>
      */
     public function serialize(mixed $value): array
     {
@@ -47,9 +47,9 @@ readonly class EnumMapper implements Mapper
     /**
      * @param  stdClass  $item
      * @param  LocalAliasingManager  $aliasingManager
-     * @return UnitEnum|null
+     * @return BackedEnum|null
      */
-    public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): mixed
+    public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): ?BackedEnum
     {
         $value = $item->{$aliasingManager->getSelectedColumnName($this->name)};
 

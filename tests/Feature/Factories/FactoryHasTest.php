@@ -20,7 +20,6 @@ test('Factories can attach to-many relationships with custom factory instances',
         $factory->with($relation, $reverseRelation, Factory::new($class)->state([$field => $value]));
     }
     $entity = $factory->create();
-    Repository::new($class)->with($reverseRelation)->get()->pluck('friends')->dump();
     expect($entity->{$relation})->toHaveCount(count($data))
         ->pluck($field)->toArray()->toEqual($data)
         ->and(Repository::new(User::class)->get()->count())->toBe($count);

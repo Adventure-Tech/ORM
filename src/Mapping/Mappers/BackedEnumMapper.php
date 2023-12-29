@@ -38,7 +38,7 @@ readonly class BackedEnumMapper implements Mapper
      */
     public function serialize(mixed $value): array
     {
-        if (!is_null($value) && (!is_object($value) || !enum_exists($value::class))) {
+        if (!is_null($value) && !($value instanceof BackedEnum)) {
             throw new EnumSerializationException();
         }
         return [$this->name => $value->value ?? null];

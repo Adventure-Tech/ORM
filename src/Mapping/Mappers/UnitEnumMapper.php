@@ -38,7 +38,7 @@ readonly class UnitEnumMapper implements Mapper
      */
     public function serialize(mixed $value): array
     {
-        if (!is_null($value) && (!is_object($value) || !enum_exists($value::class))) {
+        if (!is_null($value) && !($value instanceof UnitEnum)) {
             throw new EnumSerializationException();
         }
         return [$this->name => $value->name ?? null];

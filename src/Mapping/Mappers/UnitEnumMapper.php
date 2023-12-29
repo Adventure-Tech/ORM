@@ -14,7 +14,7 @@ use stdClass;
 use UnitEnum;
 
 /**
- * @implements Mapper<array>
+ * @implements Mapper<null|UnitEnum>
  */
 
 readonly class UnitEnumMapper implements Mapper
@@ -53,7 +53,9 @@ readonly class UnitEnumMapper implements Mapper
     {
         $value = $item->{$aliasingManager->getSelectedColumnName($this->name)};
 
-        return is_null($value) ? $value : constant($this->enumClassName . '::' . $value);
+        /** @var ?UnitEnum $unitEnum */
+        $unitEnum = is_null($value) ? $value : constant($this->enumClassName . '::' . $value);
+        return $unitEnum;
     }
 
     /**

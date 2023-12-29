@@ -14,7 +14,7 @@ use ReflectionProperty;
 use stdClass;
 
 /**
- * @implements Mapper<array>
+ * @implements Mapper<null|BackedEnum>
  */
 
 readonly class BackedEnumMapper implements Mapper

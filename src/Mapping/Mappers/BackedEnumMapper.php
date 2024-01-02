@@ -33,7 +33,7 @@ readonly class BackedEnumMapper implements Mapper
     }
 
     /**
-     * @param  null|BackedEnum  $value
+     * @param  mixed  $value
      * @return array<string,mixed>
      */
     public function serialize(mixed $value): array

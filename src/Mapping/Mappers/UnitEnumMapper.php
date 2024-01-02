@@ -33,7 +33,7 @@ readonly class UnitEnumMapper implements Mapper
     }
 
     /**
-     * @param  null|UnitEnum  $value
+     * @param  mixed  $value
      * @return array<string,mixed>
      */
     public function serialize(mixed $value): array

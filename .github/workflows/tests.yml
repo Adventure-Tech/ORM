@@ -25,6 +25,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
+          coverage: xdebug
       - name: Install Dependencies
         run: |
           composer config "http-basic.nova.laravel.com" "${{ secrets.NOVA_USERNAME }}" "${{ secrets.NOVA_PASSWORD }}"
@@ -42,4 +43,6 @@ jobs:
         run: php --version
 
       - name: Execute tests (Unit and Feature tests) via PestPHP
-        run: vendor/bin/pest
+        env:
+          XDEBUG_MODE: coverage
+        run: vendor/bin/pest --coverage --min=100

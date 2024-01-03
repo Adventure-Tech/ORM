@@ -2,8 +2,8 @@
 
 namespace AdventureTech\ORM\Tests\TestClasses;
 
-enum IntEnum: int
+enum UnitEnum
 {
-    case ONE = 1;
-    case TWO = 2;
+    case A;
+    case B;
 }

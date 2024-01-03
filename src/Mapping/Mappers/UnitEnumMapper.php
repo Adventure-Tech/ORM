@@ -14,10 +14,10 @@ use stdClass;
 use UnitEnum;
 
 /**
- * @implements Mapper<array>
+ * @implements Mapper<null|UnitEnum>
  */
 
-readonly class EnumMapper implements Mapper
+readonly class UnitEnumMapper implements Mapper
 {
     private string $enumClassName;
 
@@ -33,15 +33,15 @@ readonly class EnumMapper implements Mapper
     }
 
     /**
-     * @param  null|UnitEnum  $value
-     * @return null[]
+     * @param  mixed  $value
+     * @return array<string,mixed>
      */
     public function serialize(mixed $value): array
     {
-        if (!is_null($value) && (!is_object($value) || !enum_exists($value::class))) {
+        if (!is_null($value) && !($value instanceof UnitEnum)) {
             throw new EnumSerializationException();
         }
-        return [$this->name => $value->value ?? null];
+        return [$this->name => $value->name ?? null];
     }
 
     /**
@@ -49,11 +49,13 @@ readonly class EnumMapper implements Mapper
      * @param  LocalAliasingManager  $aliasingManager
      * @return UnitEnum|null
      */
-    public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): mixed
+    public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): ?UnitEnum
     {
         $value = $item->{$aliasingManager->getSelectedColumnName($this->name)};
 
-        return is_null($value) ? $value : $this->enumClassName::from($value);
+        /** @var ?UnitEnum $unitEnum */
+        $unitEnum = is_null($value) ? $value : constant($this->enumClassName . '::' . $value);
+        return $unitEnum;
     }
 
     /**

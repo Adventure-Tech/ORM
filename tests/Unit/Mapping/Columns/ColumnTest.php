@@ -2,54 +2,31 @@
 
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\Mapping\Columns\Column;
+use AdventureTech\ORM\Mapping\Mappers\BackedEnumMapper;
 use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
 use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
 use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
 use AdventureTech\ORM\Mapping\Mappers\SimpleMapper;
+use AdventureTech\ORM\Mapping\Mappers\UnitEnumMapper;
 use AdventureTech\ORM\Mapping\Mappers\WithDefaultMapperMethods;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 
-test('The column annotation returns the default mapper for a bool property', function () {
+it('returns the correct mappers', function (string $propertyName, string $mapperClass) {
     $column = new Column();
-    $property = new ReflectionProperty(MapperTestClass::class, 'boolProperty');
+    $property = new ReflectionProperty(MapperTestClass::class, $propertyName);
     $mapper = $column->getMapper($property);
+    expect($mapper)->toBeInstanceOf($mapperClass);
+})->with([
+    ['unitEnumProperty', UnitEnumMapper::class],
+    ['backedEnumProperty', BackedEnumMapper::class],
+    ['boolProperty', DefaultMapper::class],
+    ['stringProperty', DefaultMapper::class],
+    ['intProperty', DefaultMapper::class],
+    ['datetimeProperty', DatetimeMapper::class],
+    ['jsonProperty', JSONMapper::class],
+]);
 
-    expect($mapper)->toBeInstanceOf(DefaultMapper::class);
-});
-
-test('The column annotation returns the default mapper for a string property', function () {
-    $column = new Column();
-    $property = new ReflectionProperty(MapperTestClass::class, 'stringProperty');
-    $mapper = $column->getMapper($property);
-
-    expect($mapper)->toBeInstanceOf(DefaultMapper::class);
-});
-
-test('The column annotation returns the default mapper for an int property', function () {
-    $column = new Column();
-    $property = new ReflectionProperty(MapperTestClass::class, 'intProperty');
-    $mapper = $column->getMapper($property);
-
-    expect($mapper)->toBeInstanceOf(DefaultMapper::class);
-});
-
-test('The column annotation returns the datetime mapper for an CarbonImmutable property', function () {
-    $column = new Column();
-    $property = new ReflectionProperty(MapperTestClass::class, 'datetimeProperty');
-    $mapper = $column->getMapper($property);
-
-    expect($mapper)->toBeInstanceOf(DatetimeMapper::class);
-});
-
-test('The column annotation returns the json mapper for an array property', function () {
-    $column = new Column();
-    $property = new ReflectionProperty(MapperTestClass::class, 'jsonProperty');
-    $mapper = $column->getMapper($property);
-
-    expect($mapper)->toBeInstanceOf(JSONMapper::class);
-});
-
-test('The column annotation correctly infers the DB column name from the property name', function () {
+it('correctly infers the DB column name from the property name', function () {
     $column = new Column();
     $property = new ReflectionProperty(MapperTestClass::class, 'boolProperty');
     $mapper = $column->getMapper($property);
@@ -59,7 +36,7 @@ test('The column annotation correctly infers the DB column name from the propert
         ->toEqualCanonicalizing(['bool_property']);
 });
 
-test('The column annotation allows the DB column name to be customized', function () {
+it('allows the DB column name to be customized', function () {
     $column = new Column(name: 'custom_column_name');
     $property = new ReflectionProperty(MapperTestClass::class, 'boolProperty');
     $mapper = $column->getMapper($property);
@@ -69,7 +46,7 @@ test('The column annotation allows the DB column name to be customized', functio
         ->toEqualCanonicalizing(['custom_column_name']);
 });
 
-test('The column annotation allows a custom SimpleMapper to be specified', function () {
+it('allows a custom SimpleMapper to be specified', function () {
     $mapper = new class ('') implements SimpleMapper {
         use WithDefaultMapperMethods;
 

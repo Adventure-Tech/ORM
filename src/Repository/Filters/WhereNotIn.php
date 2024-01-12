@@ -3,6 +3,7 @@
 namespace AdventureTech\ORM\Repository\Filters;
 
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
+use ArrayAccess;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
@@ -13,9 +14,9 @@ readonly class WhereNotIn implements Filter
 
     /**
      * @param  string  $column
-     * @param  mixed  $values
+     * @param  iterable<mixed>&ArrayAccess<mixed,mixed>  $values
      */
-    public function __construct(private string $column, mixed $values)
+    public function __construct(private string $column, iterable $values)
     {
         foreach ($values as $index => $value) {
             if ($value instanceof CarbonInterface) {

@@ -8,12 +8,11 @@ namespace AdventureTech\ORM\Mapping\Columns;
 
 use AdventureTech\ORM\ColumnPropertyService;
 use AdventureTech\ORM\DefaultNamingService;
-use AdventureTech\ORM\Mapping\Mappers\BackedEnumMapper;
 use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
 use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
 use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
 use AdventureTech\ORM\Mapping\Mappers\SimpleMapper;
-use AdventureTech\ORM\Mapping\Mappers\UnitEnumMapper;
+use AdventureTech\ORM\Mapping\Mappers\EnumMapper;
 use Attribute;
 use Carbon\CarbonImmutable;
 use ReflectionException;
@@ -35,10 +34,10 @@ readonly class Column implements ColumnAnnotation
 
     /**
      * @param  ReflectionProperty  $property
-     * @return SimpleMapper<mixed>|BackedEnumMapper|UnitEnumMapper|JSONMapper|DatetimeMapper|DefaultMapper
+     * @return SimpleMapper<mixed>|EnumMapper|JSONMapper|DatetimeMapper|DefaultMapper
      * @throws ReflectionException
      */
-    public function getMapper(ReflectionProperty $property): SimpleMapper|BackedEnumMapper|UnitEnumMapper|JSONMapper|DatetimeMapper|DefaultMapper
+    public function getMapper(ReflectionProperty $property): SimpleMapper|EnumMapper|JSONMapper|DatetimeMapper|DefaultMapper
     {
         $name = $this->name ?? DefaultNamingService::columnFromProperty($property->getName());
 
@@ -49,11 +48,8 @@ readonly class Column implements ColumnAnnotation
         /** @var ReflectionNamedType $reflectionNamedType */
         $reflectionNamedType = $property->getType();
 
-        if (ColumnPropertyService::isBackedEnum($property)) {
-            return new BackedEnumMapper($name, $property);
-        }
         if (ColumnPropertyService::isEnum($property)) {
-            return new UnitEnumMapper($name, $property);
+            return new EnumMapper($name, $property);
         }
         return match ($reflectionNamedType->getName()) {
             CarbonImmutable::class => new DatetimeMapper($name),

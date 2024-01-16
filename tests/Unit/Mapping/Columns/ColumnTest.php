@@ -2,12 +2,11 @@
 
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\Mapping\Columns\Column;
-use AdventureTech\ORM\Mapping\Mappers\BackedEnumMapper;
 use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
 use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
 use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
 use AdventureTech\ORM\Mapping\Mappers\SimpleMapper;
-use AdventureTech\ORM\Mapping\Mappers\UnitEnumMapper;
+use AdventureTech\ORM\Mapping\Mappers\EnumMapper;
 use AdventureTech\ORM\Mapping\Mappers\WithDefaultMapperMethods;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 
@@ -17,8 +16,8 @@ it('returns the correct mappers', function (string $propertyName, string $mapper
     $mapper = $column->getMapper($property);
     expect($mapper)->toBeInstanceOf($mapperClass);
 })->with([
-    ['unitEnumProperty', UnitEnumMapper::class],
-    ['backedEnumProperty', BackedEnumMapper::class],
+    ['unitEnumProperty', EnumMapper::class],
+    ['backedEnumProperty', EnumMapper::class],
     ['boolProperty', DefaultMapper::class],
     ['stringProperty', DefaultMapper::class],
     ['intProperty', DefaultMapper::class],

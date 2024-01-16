@@ -3,18 +3,18 @@
 use AdventureTech\ORM\AliasingManagement\AliasingManager;
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\Exceptions\EnumSerializationException;
-use AdventureTech\ORM\Mapping\Mappers\UnitEnumMapper;
+use AdventureTech\ORM\Mapping\Mappers\EnumMapper;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 use AdventureTech\ORM\Tests\TestClasses\UnitEnum;
 
-it('has a single column', function (UnitEnumMapper $mapper) {
+it('has a single column', function (EnumMapper $mapper) {
     expect($mapper->getColumnNames())
         ->toBeArray()
         ->toEqualCanonicalizing(['db_column_name']);
 })->with('mapper');
 
 it('can serialize an entity', function (
-    UnitEnumMapper $mapper,
+    EnumMapper $mapper,
     ?UnitEnum $value,
     array $expected
 ) {
@@ -29,7 +29,7 @@ it('can serialize an entity', function (
     ]);
 
 it('throws error when trying to serialize value that is not backed enum', function (
-    UnitEnumMapper $mapper,
+    EnumMapper $mapper,
     mixed $value,
     array $expected
 ) {
@@ -44,7 +44,7 @@ it('throws error when trying to serialize value that is not backed enum', functi
     ])->throws(EnumSerializationException::class);
 
 it('can deserialize an item with a null value', function (
-    UnitEnumMapper $mapper,
+    EnumMapper $mapper,
     LocalAliasingManager $manager,
     stdClass $item,
 ) {
@@ -57,7 +57,7 @@ it('can deserialize an item with a null value', function (
     ]);
 
 it('can deserialize an item with a non-null value', function (
-    UnitEnumMapper $mapper,
+    EnumMapper $mapper,
     LocalAliasingManager $manager,
     stdClass $item,
     UnitEnum $result
@@ -73,7 +73,7 @@ it('can deserialize an item with a non-null value', function (
 
 dataset('mapper', function () {
     $property = new ReflectionProperty(MapperTestClass::class, 'unitEnumProperty');
-    yield new UnitEnumMapper('db_column_name', $property);
+    yield new EnumMapper('db_column_name', $property);
 });
 
 dataset('aliasing manager', function () {

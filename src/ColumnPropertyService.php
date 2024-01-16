@@ -3,7 +3,6 @@
 namespace AdventureTech\ORM;
 
 use AdventureTech\ORM\Exceptions\UnsupportedReflectionTypeException;
-use BackedEnum;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -63,27 +62,6 @@ class ColumnPropertyService
         $reflectionClass = new ReflectionClass($className);
 
         return $reflectionClass->isEnum();
-    }
-
-    /**
-     * Check if the Property is a backed enum
-     *
-     * @param  ReflectionProperty  $property
-     * @return bool
-     * @throws ReflectionException
-     */
-    public static function isBackedEnum(ReflectionProperty $property): bool
-    {
-        $type = self::getReflectionType($property);
-        if ($type->isBuiltin()) {
-            return false;
-        }
-
-        /** @var class-string $className */
-        $className = $type->getName();
-        $reflectionClass = new ReflectionClass($className);
-
-        return $reflectionClass->implementsInterface(BackedEnum::class);
     }
 
     private static function getReflectionType(ReflectionProperty $property): ReflectionNamedType

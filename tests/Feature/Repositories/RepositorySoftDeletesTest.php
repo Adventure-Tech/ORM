@@ -43,10 +43,10 @@ test('Soft-deletes are filtered correctly in loaded relations', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'FOO']);
     $deletedAuthorId = DB::table('users')->insertGetId(['name' => 'FOO', 'deleted_at' => now()]);
     DB::table('posts')->insert([
-        ['id' => 1, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => null],
-        ['id' => 2, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => now()],
-        ['id' => 3, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $deletedAuthorId, 'deleted_at' => null],
-        ['id' => 4, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $deletedAuthorId, 'deleted_at' => now()],
+        ['id' => 1, 'title' => 'Title', 'content' => 'Content', 'number' => 'ONE', 'author' => $authorId, 'deleted_at' => null],
+        ['id' => 2, 'title' => 'Title', 'content' => 'Content', 'number' => 'ONE', 'author' => $authorId, 'deleted_at' => now()],
+        ['id' => 3, 'title' => 'Title', 'content' => 'Content', 'number' => 'ONE', 'author' => $deletedAuthorId, 'deleted_at' => null],
+        ['id' => 4, 'title' => 'Title', 'content' => 'Content', 'number' => 'ONE', 'author' => $deletedAuthorId, 'deleted_at' => now()],
     ]);
     $users = Repository::new(User::class)
         ->with('posts')
@@ -61,10 +61,10 @@ test('Soft-deletes can be deactivated in loaded relations', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'FOO']);
     $deletedAuthorId = DB::table('users')->insertGetId(['name' => 'FOO', 'deleted_at' => now()]);
     DB::table('posts')->insert([
-        ['id' => 1, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => null],
-        ['id' => 2, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $authorId, 'deleted_at' => now()],
-        ['id' => 3, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $deletedAuthorId, 'deleted_at' => null],
-        ['id' => 4, 'title' => 'Title', 'content' => 'Content', 'number' => 1, 'author' => $deletedAuthorId, 'deleted_at' => now()],
+        ['id' => 1, 'title' => 'Title', 'content' => 'Content', 'number' => 'ONE', 'author' => $authorId, 'deleted_at' => null],
+        ['id' => 2, 'title' => 'Title', 'content' => 'Content', 'number' => 'ONE', 'author' => $authorId, 'deleted_at' => now()],
+        ['id' => 3, 'title' => 'Title', 'content' => 'Content', 'number' => 'ONE', 'author' => $deletedAuthorId, 'deleted_at' => null],
+        ['id' => 4, 'title' => 'Title', 'content' => 'Content', 'number' => 'ONE', 'author' => $deletedAuthorId, 'deleted_at' => now()],
     ]);
     $users = Repository::new(User::class)
         ->with('posts', fn(Repository $repository) => $repository->includeSoftDeleted())

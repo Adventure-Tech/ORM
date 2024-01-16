@@ -17,7 +17,7 @@ use UnitEnum;
  * @implements Mapper<null|UnitEnum>
  */
 
-readonly class UnitEnumMapper implements Mapper
+readonly class EnumMapper implements Mapper
 {
     private string $enumClassName;
 

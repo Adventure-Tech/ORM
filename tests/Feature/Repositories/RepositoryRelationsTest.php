@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 test('Can load relations', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'Name']);
-    $postId = DB::table('posts')->insertGetId(['title' => 'Title', 'content' => 'Content', 'author' => $authorId, 'number' => 1]);
+    $postId = DB::table('posts')->insertGetId(['title' => 'Title', 'content' => 'Content', 'author' => $authorId, 'number' => 'ONE']);
     $user = Repository::new(User::class)
         ->with('posts')
         ->find($authorId);
@@ -21,14 +21,14 @@ test('Can load relations', function () {
 
 test('Not loaded relations are not set in the entity', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'Name']);
-    DB::table('posts')->insertGetId(['title' => 'Title', 'content' => 'Content', 'author' => $authorId, 'number' => 1]);
+    DB::table('posts')->insertGetId(['title' => 'Title', 'content' => 'Content', 'author' => $authorId, 'number' => 'ONE']);
     $user = Repository::new(User::class)->find($authorId);
     expect(fn() =>$user->posts)->toThrow(Error::class);
 });
 
 test('Can load relations within relations', function () {
     $authorId = DB::table('users')->insertGetId(['name' => 'Name']);
-    DB::table('posts')->insertGetId(['title' => 'Title', 'content' => 'Content', 'author' => $authorId, 'number' => 1]);
+    DB::table('posts')->insertGetId(['title' => 'Title', 'content' => 'Content', 'author' => $authorId, 'number' => 'ONE']);
     $user = Repository::new(User::class)
         ->with('posts', function (PostRepository $repository) {
             $repository->with('author');
@@ -55,7 +55,7 @@ test('Can use shorthand to load nested relations', function () {
         'content' => 'Content',
         'author' => $authorId,
         'editor' => $editorId,
-        'number' => 1
+        'number' => 'ONE'
     ]);
     $user = Repository::new(User::class)
         ->with('posts/editor/posts')
@@ -73,7 +73,7 @@ test('Second with() statement overrides shorthand loaded relations', function ()
         'content' => 'Content',
         'author' => $authorId,
         'editor' => $editorId,
-        'number' => 1
+        'number' => 'ONE'
     ]);
     $user = Repository::new(User::class)
         ->with('posts/editor/posts')

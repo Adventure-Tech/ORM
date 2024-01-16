@@ -53,15 +53,15 @@ test('can sort within loaded relation', function (
     shuffle($userData);
     DB::table('users')->insert($userData);
     $postData = [
-        ['title' => 'a1', 'content' => 'content', 'number' => 1, 'author' => 1],
-        ['title' => 'a2', 'content' => 'content', 'number' => 1, 'author' => 1],
-        ['title' => 'a3', 'content' => 'content', 'number' => 1, 'author' => 1],
-        ['title' => 'b1', 'content' => 'content', 'number' => 1, 'author' => 2],
-        ['title' => 'b2', 'content' => 'content', 'number' => 1, 'author' => 2],
-        ['title' => 'b3', 'content' => 'content', 'number' => 1, 'author' => 2],
-        ['title' => 'c1', 'content' => 'content', 'number' => 1, 'author' => 3],
-        ['title' => 'c2', 'content' => 'content', 'number' => 1, 'author' => 3],
-        ['title' => 'c3', 'content' => 'content', 'number' => 1, 'author' => 3],
+        ['title' => 'a1', 'content' => 'content', 'number' => 'ONE', 'author' => 1],
+        ['title' => 'a2', 'content' => 'content', 'number' => 'ONE', 'author' => 1],
+        ['title' => 'a3', 'content' => 'content', 'number' => 'ONE', 'author' => 1],
+        ['title' => 'b1', 'content' => 'content', 'number' => 'ONE', 'author' => 2],
+        ['title' => 'b2', 'content' => 'content', 'number' => 'ONE', 'author' => 2],
+        ['title' => 'b3', 'content' => 'content', 'number' => 'ONE', 'author' => 2],
+        ['title' => 'c1', 'content' => 'content', 'number' => 'ONE', 'author' => 3],
+        ['title' => 'c2', 'content' => 'content', 'number' => 'ONE', 'author' => 3],
+        ['title' => 'c3', 'content' => 'content', 'number' => 'ONE', 'author' => 3],
     ];
     shuffle($postData);
     DB::table('posts')->insert($postData);

@@ -10,6 +10,7 @@ use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use Illuminate\Support\Collection;
 
 test('Loading an empty HasMany relationship', function () {
+    Factory::resetFakers(Post::class);
     Factory::new(Post::class)->createMultiple(5);
     $user = Repository::new(User::class)
         ->with('posts', function (Repository $repository) {
@@ -24,6 +25,7 @@ test('Loading an empty HasMany relationship', function () {
 });
 
 test('Loading an empty BelongsTo relationship', function () {
+    Factory::resetFakers(Post::class);
     Factory::new(Post::class)->create();
     expect(fn () => Repository::new(Post::class)
         ->with('author', function (Repository $repository) {

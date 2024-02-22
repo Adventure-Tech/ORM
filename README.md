@@ -126,7 +126,7 @@ There are built-in annotations for the managed datetime columns `#[CreatedAt]` a
 
 There is also a `#[DeletedAt]` annotation, which marks the object property as a deleted-at timestamp. Once the annotation is present on an entity, the ORM will treat all entities with non-null deleted-at columns as deleted. In the repository such soft-deleted entities are automatically excluded unless explicitly included via `->includeSoftDeleted()`, and the persistence manager's `->delete()` method will set the deleted at column instead of actually deleted the database record. Soft-deleted entities can be restored via the `->restore()` method of the persistence manager.
 
-The ORM provides two traits for convenience: `WithDatetimes` and `WithSoftDeletes`, which mirror Laravel's `->timestamps()` and `->softDeletes()` methods.
+The ORM provides two traits for convenience: `WithDatetimes` and `WithSoftDeletes`, which mirror Laravel's `->timestampsTz()` and `->softDeletesTz()` methods.
 
 ### Relation Attributes
 An important part of any ORM is the ability to map relations between entities. This is done via relation attributes which are named in line with Eloquent's relations.

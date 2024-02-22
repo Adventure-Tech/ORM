@@ -7,9 +7,10 @@ use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\MissingOwningRelationException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
+use AdventureTech\ORM\Tests\TestCase;
+use AdventureTech\ORM\Tests\TestClasses\BackedEnum;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
-use AdventureTech\ORM\Tests\TestClasses\BackedEnum;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Carbon\CarbonImmutable;
@@ -72,8 +73,8 @@ test('Managed columns cannot be overridden', function () {
     $user->updatedAt = null;
     UserPersistence::insert($user);
     expect(DB::table('users')->first())
-        ->created_at->toBe(now()->toIso8601String())
-        ->updated_at->toBe(now()->toIso8601String());
+        ->created_at->toStartWith(now()->format(TestCase::DATETIME_FORMAT))
+        ->updated_at->toStartWith(now()->format(TestCase::DATETIME_FORMAT));
 });
 
 test('When inserting entity managed columns are set on the object', function () {

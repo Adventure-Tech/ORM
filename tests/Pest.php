@@ -1,13 +1,11 @@
 <?php
 
-use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 function getProperty(object $object, string $property)
 {
     return (new RefLectionClass($object))->getProperty($property)->getValue($object);
 }
 
-uses(TestCase::class)
-    ->beforeEach(fn() => Factory::resetFakers())
-    ->in('Unit', 'Feature');
+uses(TestCase::class, RefreshDatabase::class)->in('Unit', 'Feature');

@@ -35,6 +35,6 @@ readonly class DatetimeMapper implements SimpleMapper
     public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): ?CarbonImmutable
     {
         $datetimeString = $item->{$aliasingManager->getSelectedColumnName($this->name)};
-        return is_null($datetimeString) ? null : CarbonImmutable::parse($datetimeString);
+        return is_null($datetimeString) ? null : CarbonImmutable::parse($datetimeString)->setTimezone(config('app.timezone'));
     }
 }

@@ -20,7 +20,7 @@ test('Filter gets applied correctly', function (mixed $value, string $expected) 
 
     $filter->applyFilter($query, new LocalAliasingManager($mock, 'root'));
     expect($query)
-        ->toSql()->toBe('select * where "qualified"."column" like ?')
+        ->toSql()->toBe('select * where "qualified"."column"::text like ?')
         ->getBindings()->toEqualCanonicalizing([$expected]);
 })->with([
     ['value', 'value'],

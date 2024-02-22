@@ -66,8 +66,8 @@ test('Attempting partial updates throws exception', function () {
 });
 
 test('Managed columns cannot be overridden', function () {
-    $createdAt = CarbonImmutable::parse('2023-01-01 12:00')->toIso8601String();
-    $updatedAt = CarbonImmutable::parse('2023-01-02 12:00')->toIso8601String();
+    $createdAt = CarbonImmutable::parse('2023-01-01 12:00')->format(\AdventureTech\ORM\Tests\TestCase::DATETIME_FORMAT);
+    $updatedAt = CarbonImmutable::parse('2023-01-02 12:00')->format(\AdventureTech\ORM\Tests\TestCase::DATETIME_FORMAT);
     $id = DB::table('users')->insertGetId(['name' => 'Name', 'created_at' => $createdAt, 'updated_at' => $updatedAt]);
     $user = new User();
     $user->setIdentifier($id);
@@ -75,8 +75,8 @@ test('Managed columns cannot be overridden', function () {
     $user->updatedAt = null;
     UserPersistence::update($user);
     expect(DB::table('users')->first())
-        ->created_at->toBe($createdAt)
-        ->updated_at->toBe(now()->toIso8601String());
+        ->created_at->toStartWith($createdAt)
+        ->updated_at->toStartWith(now()->format(\AdventureTech\ORM\Tests\TestCase::DATETIME_FORMAT));
 });
 
 test('When updating entity managed columns are set on the object', function () {

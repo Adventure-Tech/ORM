@@ -58,10 +58,15 @@ test('The datetime mapper can deserialize an item with a non-null value', functi
     ->with('mapper')
     ->with('aliasing manager')
     ->with([
-        'with UTC timezone' => [(object) ['db_column_name' => '2023-01-01T12:00:00+00:00'], '2023-01-01T12:00:00+00:00'],
-        'with non-UTC timezone' => [(object) ['db_column_name' => '2023-01-01T12:00:00+01:00'],'2023-01-01T12:00:00+01:00'],
+        'with UTC timezone' => [
+            (object) ['db_column_name' => '2023-01-01T12:00:00+00:00'],
+            '2023-01-01T12:00:00+00:00',
+        ],
+        'with non-UTC timezone' => [
+            (object) ['db_column_name' => '2023-01-01T12:00:00+01:00'],
+            '2023-01-01T11:00:00+00:00', // app is set to UTC
+        ],
     ]);
-
 
 
 dataset('mapper', function () {

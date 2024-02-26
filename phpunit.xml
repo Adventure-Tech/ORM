@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.1/phpunit.xsd" bootstrap="vendor/autoload.php" colors="true">
   <php>
-    <env name="DB_CONNECTION" value="testing"/>
+    <env name="DB_CONNECTION" value="pgsql"/>
+    <env name="DB_HOST" value="127.0.0.1" />
+    <env name="DB_PORT" value="5432" />
+    <env name="DB_USERNAME" value="postgres" />
+    <env name="DB_PASSWORD" value="postgres" />
+    <env name="DB_DATABASE" value="orm_testing" />
   </php>
   <testsuites>
     <testsuite name="Test Suite">

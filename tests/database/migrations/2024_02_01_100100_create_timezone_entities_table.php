@@ -5,15 +5,14 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class () extends Migration {
-    private const TABLE_NAME = 'users';
+    private const TABLE_NAME = 'timezone_entities';
     public function up(): void
     {
         Schema::create(self::TABLE_NAME, function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('favourite_color')->nullable();
-            $table->timestampsTz();
-            $table->softDeletesTz();
+            $table->timestampTz('datetime_without_tz');
+            $table->timestampTz('datetime_with_tz');
+            $table->string('timezone');
         });
     }
 

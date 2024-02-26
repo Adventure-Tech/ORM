@@ -11,6 +11,7 @@ use AdventureTech\ORM\Tests\TestClasses\Persistence\PersonalDetailPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 test('Cannot use base persistence manager to delete entities', function () {
@@ -64,7 +65,7 @@ test('Can soft-delete entity with custom deleted_at timestamp', function () {
     UserPersistence::customDelete($user, CarbonImmutable::parse('2000-01-01 12:00'));
     expect(DB::table('users')->get())
         ->toHaveCount(1)
-        ->first()->deleted_at->toStartWith('2000-01-01T12:00:00');
+        ->first()->deleted_at->toBe('2000-01-01 12:00:00+00');
 });
 
 test('Trying to delete entity without ID set leads exception', function () {

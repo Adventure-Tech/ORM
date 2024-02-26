@@ -1,10 +1,10 @@
 <?php
 
 use AdventureTech\ORM\Factories\Factory;
+use AdventureTech\ORM\Tests\TestClasses\BackedEnum;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
-use AdventureTech\ORM\Tests\TestClasses\BackedEnum;
 use Illuminate\Support\Facades\DB;
 
 test('Can create single entity', function () {
@@ -98,6 +98,7 @@ test('Can reuse factories', function () {
 });
 
 test('Can generate unique values via faker in factories', function () {
+    Factory::resetFakers(Post::class);
     $underLimit = fn() => Factory::new(Post::class)->createMultiple(91);
     $overLimit = fn() => Factory::new(Post::class)->createMultiple(1);
     expect($underLimit)->not->toThrow(OverflowException::class)

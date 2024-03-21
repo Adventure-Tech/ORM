@@ -5,14 +5,13 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class () extends Migration {
-    private const TABLE_NAME = 'es_accounts';
+    private const TABLE_NAME = 'notes';
 
     public function up(): void
     {
         Schema::create(self::TABLE_NAME, function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->string('name');
-            $table->bigInteger('amount');
+            $table->text('text');
         });
     }
 

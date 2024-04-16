@@ -3,6 +3,7 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdValueException;
+use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
@@ -23,8 +24,8 @@ test('Cannot use base persistence manager to force-delete entities', function ()
 test('Cannot delete non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::forceDelete($user))->toThrow(
-        InvalidEntityTypeException::class,
-        'Invalid entity type used in persistence manager'
+        PersistenceException::class,
+        'Tried to use entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User in persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
     );
 });
 
@@ -48,7 +49,7 @@ test('Trying to force-delete entity without ID set leads exception', function ()
     $user = new User();
     $user->name = 'Name';
     expect(fn() => UserPersistence::forceDelete($user))->toThrow(
-        MissingIdValueException::class,
+        PersistenceException::class,
         'Must set ID column when deleting'
     );
 });
@@ -57,8 +58,8 @@ test('Trying to force-delete non-existing record leads to exception for entity w
     $user = new User();
     $user->setIdentifier(1);
     expect(fn() => UserPersistence::forceDelete($user))->toThrow(
-        RecordNotFoundException::class,
-        'Could not force-delete entity'
+        PersistenceException::class,
+        'Could not delete all entities. Deleted 0 out of 1.'
     );
 });
 
@@ -66,7 +67,7 @@ test('Trying to force-delete non-existing record leads to exception for entity w
     $personalDetails = new PersonalDetails();
     $personalDetails->id = 1;
     expect(fn() => PersonalDetailPersistence::forceDelete($personalDetails))->toThrow(
-        RecordNotFoundException::class,
-        'Could not force-delete entity'
+        PersistenceException::class,
+        'Could not delete all entities. Deleted 0 out of 1.'
     );
 });

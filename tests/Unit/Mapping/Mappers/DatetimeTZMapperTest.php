@@ -42,15 +42,14 @@ test('The datetimeTz mapper can deserialize an item with a null value', function
     DatetimeTZMapper $mapper,
     LocalAliasingManager $manager,
     stdClass $item,
-    string $alias,
 ) {
     expect($mapper->deserialize($item, $manager))->toBeNull();
 })
     ->with('mapper')
     ->with('aliasing manager')
     ->with([
-        'datetime and timezone null' => [(object) ['datetime_db_column' => null, 'tz_db_column' => null], ''],
-        'datetime column null' => [(object) ['datetime_db_column' => null, 'tz_db_column' => 'Europe/Oslo'], ''],
+        'datetime and timezone null' => [(object) ['datetime_db_column' => null, 'tz_db_column' => null]],
+        'datetime column null' => [(object) ['datetime_db_column' => null, 'tz_db_column' => 'Europe/Oslo']],
     ]);
 
 test('The datetimeTz mapper can deserialize an item with a non-null value', function (

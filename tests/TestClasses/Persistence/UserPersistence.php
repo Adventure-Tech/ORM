@@ -12,6 +12,6 @@ class UserPersistence extends PersistenceManager
 
     public static function customDelete(User $user, CarbonImmutable $deletedAt): void
     {
-        self::internalDelete($user, $deletedAt);
+        self::new()->registerDelete($user, deletedAt: $deletedAt)->persist();
     }
 }

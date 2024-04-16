@@ -13,6 +13,8 @@ use Carbon\CarbonImmutable;
 use Faker\Generator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use ReflectionClass;
+use ReflectionException;
 use ReflectionProperty;
 
 /**
@@ -277,22 +279,28 @@ class Factory
 
     /**
      * @return PersistenceManager<T>
+     * @throws ReflectionException
      */
     private function getPersistenceManager(): PersistenceManager
     {
         // some reflection dark magic, but it's okay as factories are for test only
-        /** @var PersistenceManager<T> $persistenceManager */
-        $persistenceManager = new class ($this->entityReflection->getClass()) extends PersistenceManager {
-            protected static string $entity;
+        $reflectionClass = new ReflectionClass(PersistenceManager::class);
+        $persistenceManager = ($reflectionClass)->newInstanceWithoutConstructor();
+        (new ReflectionProperty($persistenceManager, 'entity'))->setValue($this->entityReflection->getClass());
+        $reflectionClass->getConstructor()->invoke($persistenceManager);
 
-            /**
-             * @param  class-string<T>  $entityClassName
-             */
-            public function __construct(string $entityClassName)
-            {
-                self::$entity = $entityClassName;
-            }
-        };
+//        /** @var NewPersistenceManager<T> $persistenceManager */
+//        $persistenceManager = new class ($this->entityReflection->getClass()) extends NewPersistenceManager {
+//            protected static string $entity;
+//            /**
+//             * @param  class-string<T>  $entityClassName
+//             */
+//            public function __construct(string $entityClassName)
+//            {
+//                self::$entity = $entityClassName;
+//                parent::__construct();
+//            }
+//        };
         return $persistenceManager;
     }
 }

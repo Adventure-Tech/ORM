@@ -3,6 +3,7 @@
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdValueException;
+use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
@@ -11,7 +12,6 @@ use AdventureTech\ORM\Tests\TestClasses\Persistence\PersonalDetailPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 test('Cannot use base persistence manager to delete entities', function () {
@@ -25,8 +25,8 @@ test('Cannot use base persistence manager to delete entities', function () {
 test('Cannot delete non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::delete($user))->toThrow(
-        InvalidEntityTypeException::class,
-        'Invalid entity type used in persistence manager'
+        PersistenceException::class,
+        'Tried to use entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User in persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
     );
 });
 
@@ -72,7 +72,7 @@ test('Trying to delete entity without ID set leads exception', function () {
     $user = new User();
     $user->name = 'Name';
     expect(fn() => UserPersistence::delete($user))->toThrow(
-        MissingIdValueException::class,
+        PersistenceException::class,
         'Must set ID column when deleting'
     );
 });

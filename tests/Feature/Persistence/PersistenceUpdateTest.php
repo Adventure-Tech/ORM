@@ -1,16 +1,16 @@
 <?php
 
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
-use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
 use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
-use AdventureTech\ORM\Exceptions\RecordNotFoundException;
+use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Repository\Repository;
+use AdventureTech\ORM\Tests\TestCase;
+use AdventureTech\ORM\Tests\TestClasses\BackedEnum;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
-use AdventureTech\ORM\Tests\TestClasses\BackedEnum;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Carbon\CarbonImmutable;
@@ -27,8 +27,8 @@ test('Cannot use base persistence manager to update entities', function () {
 test('Cannot update non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::update($user))->toThrow(
-        InvalidEntityTypeException::class,
-        'Invalid entity type used in persistence manager'
+        PersistenceException::class,
+        'Tried to use entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User in persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
     );
 });
 
@@ -49,8 +49,8 @@ test('Trying to update entity without ID set leads exception', function () {
     $user = new User();
     $user->name = 'Name';
     expect(fn() => UserPersistence::update($user))->toThrow(
-        MissingIdValueException::class,
-        'Must set ID column when updating'
+        PersistenceException::class,
+        'Must set ID column when updating entities.'
     );
 });
 
@@ -66,8 +66,8 @@ test('Attempting partial updates throws exception', function () {
 });
 
 test('Managed columns cannot be overridden', function () {
-    $createdAt = CarbonImmutable::parse('2023-01-01 12:00')->format(\AdventureTech\ORM\Tests\TestCase::DATETIME_FORMAT);
-    $updatedAt = CarbonImmutable::parse('2023-01-02 12:00')->format(\AdventureTech\ORM\Tests\TestCase::DATETIME_FORMAT);
+    $createdAt = CarbonImmutable::parse('2023-01-01 12:00')->format(TestCase::DATETIME_FORMAT);
+    $updatedAt = CarbonImmutable::parse('2023-01-02 12:00')->format(TestCase::DATETIME_FORMAT);
     $id = DB::table('users')->insertGetId(['name' => 'Name', 'created_at' => $createdAt, 'updated_at' => $updatedAt]);
     $user = new User();
     $user->setIdentifier($id);
@@ -76,7 +76,7 @@ test('Managed columns cannot be overridden', function () {
     UserPersistence::update($user);
     expect(DB::table('users')->first())
         ->created_at->toStartWith($createdAt)
-        ->updated_at->toStartWith(now()->format(\AdventureTech\ORM\Tests\TestCase::DATETIME_FORMAT));
+        ->updated_at->toStartWith(now()->format(TestCase::DATETIME_FORMAT));
 });
 
 test('When updating entity managed columns are set on the object', function () {
@@ -175,9 +175,10 @@ test('Can set nullable owning relation to null', function () {
 test('Trying to update non-existing record leads to exception', function () {
     $user = new User();
     $user->setIdentifier(1);
+    $user->name = 'Foo';
     expect(fn() => UserPersistence::delete($user))->toThrow(
-        RecordNotFoundException::class,
-        'Could not delete entity'
+        PersistenceException::class,
+        'Could not update all entities. Updated 0 out of 1.'
     );
 });
 

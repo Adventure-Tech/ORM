@@ -7,5 +7,8 @@ use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 
 class PostPersistence extends PersistenceManager
 {
-    protected static string $entity = Post::class;
+    protected function getEntityClassName(): string
+    {
+        return Post::class;
+    }
 }

@@ -7,5 +7,8 @@ use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 
 class PersonalDetailPersistence extends PersistenceManager
 {
-    protected static string $entity = PersonalDetails::class;
+    protected function getEntityClassName(): string
+    {
+        return PersonalDetails::class;
+    }
 }

@@ -1,6 +1,5 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
@@ -15,8 +14,8 @@ use Illuminate\Support\Facades\DB;
 test('Cannot use base persistence manager to delete entities', function () {
     $user = new User();
     expect(fn() => PersistenceManager::delete($user))->toThrow(
-        BadlyConfiguredPersistenceManagerException::class,
-        'Need to set $entity when extending'
+        Error::class,
+        'Cannot instantiate abstract class AdventureTech\ORM\Persistence\PersistenceManager'
     );
 });
 

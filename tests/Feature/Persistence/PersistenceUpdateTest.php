@@ -1,6 +1,5 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Exceptions\PersistenceException;
@@ -19,8 +18,8 @@ use Illuminate\Support\Facades\DB;
 test('Cannot use base persistence manager to update entities', function () {
     $user = new User();
     expect(fn() => PersistenceManager::update($user))->toThrow(
-        BadlyConfiguredPersistenceManagerException::class,
-        'Need to set $entity when extending'
+        Error::class,
+        'Cannot instantiate abstract class AdventureTech\ORM\Persistence\PersistenceManager'
     );
 });
 

@@ -13,7 +13,6 @@ use Carbon\CarbonImmutable;
 use Faker\Generator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
 
@@ -285,11 +284,23 @@ class Factory
      */
     private function getPersistenceManager(): PersistenceManager
     {
-        // some reflection dark magic, but it's okay as factories are for test only
-        $reflectionClass = new ReflectionClass(PersistenceManager::class);
-        $persistenceManager = ($reflectionClass)->newInstanceWithoutConstructor();
-        (new ReflectionProperty($persistenceManager, 'entity'))->setValue($this->entityReflection->getClass());
-        $reflectionClass->getConstructor()?->invoke($persistenceManager);
-        return $persistenceManager;
+        // some anonymous class dark magic, but it's okay as factories are for test only
+        return new class ($this->entityReflection->getClass()) extends PersistenceManager
+        {
+            // need this to be static, so that new() static method works (calls constructor without argument)
+            private static string $factorySetEntityClassName;
+            public function __construct(string $entity = null)
+            {
+                if (isset($entity)) {
+                    self::$factorySetEntityClassName = $entity;
+                }
+                parent::__construct();
+            }
+
+            protected function getEntityClassName(): string
+            {
+                return self::$factorySetEntityClassName;
+            }
+        };
     }
 }

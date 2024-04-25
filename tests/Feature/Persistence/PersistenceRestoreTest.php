@@ -1,6 +1,5 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
 use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
@@ -13,8 +12,8 @@ use Illuminate\Support\Facades\DB;
 test('Cannot use base persistence manager to restore entities', function () {
     $user = new User();
     expect(fn() => PersistenceManager::restore($user))->toThrow(
-        BadlyConfiguredPersistenceManagerException::class,
-        'Need to set $entity when extending'
+        Error::class,
+        'Cannot instantiate abstract class AdventureTech\ORM\Persistence\PersistenceManager'
     );
 });
 

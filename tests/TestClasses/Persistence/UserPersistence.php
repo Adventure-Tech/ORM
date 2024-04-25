@@ -8,7 +8,10 @@ use Carbon\CarbonImmutable;
 
 class UserPersistence extends PersistenceManager
 {
-    protected static string $entity = User::class;
+    protected function getEntityClassName(): string
+    {
+        return User::class;
+    }
 
     public static function customDelete(User $user, CarbonImmutable $deletedAt): void
     {

@@ -183,6 +183,9 @@ class Factory
         return $entity;
     }
 
+    /**
+     * @throws ReflectionException
+     */
     private function defaults(string $property): mixed
     {
         $default = $this->entityReflection->getDefaultValue($property);
@@ -195,8 +198,7 @@ class Factory
 
         $type = $this->entityReflection->getPropertyType($property);
 
-        $property = new ReflectionProperty($this->entityReflection->getClass(), $property);
-        if (ColumnPropertyService::isEnum($property)) {
+        if (ColumnPropertyService::isEnum(new ReflectionProperty($this->entityReflection->getClass(), $property))) {
             return $this->faker->randomElement($type::cases());
         }
         return match ($type) {
@@ -218,7 +220,7 @@ class Factory
     private function addMissingProperties(array &$state): void
     {
         foreach ($this->entityReflection->getMappers() as $property => $mapper) {
-            if ($property !== $this->entityReflection->getIdProperty() && !key_exists($property, $state)) {
+            if (!array_key_exists($property, $state) && $property !== $this->entityReflection->getIdProperty()) {
                 $state[$property] = $this->defaults($property);
             }
         }
@@ -231,7 +233,7 @@ class Factory
     private function addMissingLinkedFactories(array &$state): void
     {
         foreach ($this->entityReflection->getLinkers() as $property => $linker) {
-            if ($linker instanceof OwningLinker && !key_exists($property, $state)) {
+            if ($linker instanceof OwningLinker && !array_key_exists($property, $state)) {
                 $state[$property] = $this->entityReflection->allowsNull($property)
                     ? null
                     : Factory::new($linker->getTargetEntity());
@@ -287,20 +289,7 @@ class Factory
         $reflectionClass = new ReflectionClass(PersistenceManager::class);
         $persistenceManager = ($reflectionClass)->newInstanceWithoutConstructor();
         (new ReflectionProperty($persistenceManager, 'entity'))->setValue($this->entityReflection->getClass());
-        $reflectionClass->getConstructor()->invoke($persistenceManager);
-
-//        /** @var NewPersistenceManager<T> $persistenceManager */
-//        $persistenceManager = new class ($this->entityReflection->getClass()) extends NewPersistenceManager {
-//            protected static string $entity;
-//            /**
-//             * @param  class-string<T>  $entityClassName
-//             */
-//            public function __construct(string $entityClassName)
-//            {
-//                self::$entity = $entityClassName;
-//                parent::__construct();
-//            }
-//        };
+        $reflectionClass->getConstructor()?->invoke($persistenceManager);
         return $persistenceManager;
     }
 }

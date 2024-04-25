@@ -1,8 +1,6 @@
 <?php
 
 use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
-use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
@@ -90,7 +88,7 @@ test('Trying to hard-delete non-existing record leads to exception', function ()
     $personalDetails = new PersonalDetails();
     $personalDetails->id = 1;
     expect(fn() => PersonalDetailPersistence::delete($personalDetails))->toThrow(
-        RecordNotFoundException::class,
-        'Could not delete entity'
+        PersistenceException::class,
+        'Could not delete all entities. Deleted 0 out of 1.'
     );
 });

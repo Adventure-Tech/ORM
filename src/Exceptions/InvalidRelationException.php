@@ -5,6 +5,6 @@ namespace AdventureTech\ORM\Exceptions;
 use LogicException;
 use Throwable;
 
-class InvalidRelationException extends LogicException
+class InvalidRelationException extends LogicException // TODO
 {
 }

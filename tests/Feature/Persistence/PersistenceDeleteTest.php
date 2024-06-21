@@ -1,7 +1,6 @@
 <?php
 
 use AdventureTech\ORM\Exceptions\PersistenceException;
-use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
@@ -15,7 +14,7 @@ test('Cannot use base persistence manager to delete entities', function () {
     $user = new User();
     expect(fn() => PersistenceManager::delete($user))->toThrow(
         Error::class,
-        'Cannot instantiate abstract class AdventureTech\ORM\Persistence\PersistenceManager'
+        'Cannot call abstract method AdventureTech\ORM\Persistence\PersistenceManager::getEntityClassName()'
     );
 });
 
@@ -23,7 +22,7 @@ test('Cannot delete non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::delete($user))->toThrow(
         PersistenceException::class,
-        'Tried to use entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User in persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
+        'Cannot delete entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
     );
 });
 
@@ -70,16 +69,17 @@ test('Trying to delete entity without ID set leads exception', function () {
     $user->name = 'Name';
     expect(fn() => UserPersistence::delete($user))->toThrow(
         PersistenceException::class,
-        'Must set ID column when deleting'
+        'Must set ID column when deleting entities.'
     );
 });
 
 test('Trying to soft-delete non-existing record leads to exception', function () {
     $user = new User();
     $user->setIdentifier(1);
+    $user->name = 'I do not exist';
     expect(fn() => UserPersistence::delete($user))->toThrow(
-        RecordNotFoundException::class,
-        'Could not delete entity'
+        PersistenceException::class,
+        'Could not delete all entities. Deleted 0 out of 1.'
     );
 });
 

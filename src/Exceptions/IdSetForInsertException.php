@@ -5,7 +5,7 @@ namespace AdventureTech\ORM\Exceptions;
 use RuntimeException;
 use Throwable;
 
-class IdSetForInsertException extends RuntimeException
+class IdSetForInsertException extends RuntimeException // TODO
 {
     public function __construct(
         string $message = 'Must not set ID column for insert',

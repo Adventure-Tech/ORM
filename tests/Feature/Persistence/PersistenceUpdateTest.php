@@ -1,7 +1,5 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\MissingIdValueException;
-use AdventureTech\ORM\Exceptions\MissingValueForColumnException;
 use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Persistence\PersistenceManager;
@@ -19,7 +17,7 @@ test('Cannot use base persistence manager to update entities', function () {
     $user = new User();
     expect(fn() => PersistenceManager::update($user))->toThrow(
         Error::class,
-        'Cannot instantiate abstract class AdventureTech\ORM\Persistence\PersistenceManager'
+        'Cannot call abstract method AdventureTech\ORM\Persistence\PersistenceManager::getEntityClassName()'
     );
 });
 
@@ -27,7 +25,7 @@ test('Cannot update non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::update($user))->toThrow(
         PersistenceException::class,
-        'Tried to use entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User in persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
+        'Cannot update entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
     );
 });
 
@@ -59,8 +57,8 @@ test('Attempting partial updates throws exception', function () {
     $user->setIdentifier($id);
     $user->favouriteColor = null;
     expect(fn() => UserPersistence::update($user))->toThrow(
-        MissingValueForColumnException::class,
-        'Forgot to set non-nullable property "name"'
+        PersistenceException::class,
+        'Must set non-nullable property "name".'
     );
 });
 
@@ -147,8 +145,8 @@ test('Must set ID of non-nullable owning relation', function () {
     $post->author = $bob;
 
     expect(fn() => PostPersistence::update($post))->toThrow(
-        MissingIdValueException::class,
-        'Owned linked entity must have valid ID set'
+        PersistenceException::class,
+        'Owned linked entity must have valid ID set.'
     );
 });
 
@@ -175,7 +173,7 @@ test('Trying to update non-existing record leads to exception', function () {
     $user = new User();
     $user->setIdentifier(1);
     $user->name = 'Foo';
-    expect(fn() => UserPersistence::delete($user))->toThrow(
+    expect(fn() => UserPersistence::update($user))->toThrow(
         PersistenceException::class,
         'Could not update all entities. Updated 0 out of 1.'
     );

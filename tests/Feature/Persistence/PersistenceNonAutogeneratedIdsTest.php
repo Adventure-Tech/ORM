@@ -1,8 +1,6 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\MissingIdValueException;
 use AdventureTech\ORM\Exceptions\PersistenceException;
-use AdventureTech\ORM\Exceptions\RecordNotFoundException;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Account;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\AccountPersistence;
 use Illuminate\Database\UniqueConstraintViolationException;

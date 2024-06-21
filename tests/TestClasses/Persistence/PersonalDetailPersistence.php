@@ -7,7 +7,7 @@ use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 
 class PersonalDetailPersistence extends PersistenceManager
 {
-    protected function getEntityClassName(): string
+    protected static function getEntityClassName(): string
     {
         return PersonalDetails::class;
     }

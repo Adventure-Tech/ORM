@@ -1,9 +1,6 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\InconsistentEntitiesException;
-use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\InvalidRelationException;
-use AdventureTech\ORM\Exceptions\MissingIdValueException;
+use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
@@ -17,30 +14,30 @@ test('Cannot use base persistence manager to detach entities', function () {
     $user = new User();
     expect(fn() => PersistenceManager::detach($user, Collection::empty(), 'relation'))->toThrow(
         Error::class,
-        'Cannot instantiate abstract class AdventureTech\ORM\Persistence\PersistenceManager'
+        'Cannot call abstract method AdventureTech\ORM\Persistence\PersistenceManager::getEntityClassName()'
     );
 });
 
 test('Trying to detach to an entity not matching the persistence managers configuration leads to exception', function () {
     $user = new User();
     expect(fn() => PostPersistence::detach($user, Collection::empty(), 'relation'))->toThrow(
-        InvalidEntityTypeException::class,
-        'Invalid entity type used in persistence manager'
+        PersistenceException::class,
+        'Cannot detach from entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
     );
 });
 
 test('Trying to detach non-existing relation leads to exception', function () {
     $user = new User();
     expect(fn() => UserPersistence::detach($user, [], 'relation'))->toThrow(
-        InvalidRelationException::class,
-        'Can only detach pure many-to-many relations'
+        PersistenceException::class,
+        'Can only detach pure many-to-many relations.'
     );
 });
 
 test('Cannot detach non-many-to-many relation', function () {
     $user = new User();
     expect(fn() => UserPersistence::detach($user, [], 'posts'))->toThrow(
-        InvalidRelationException::class,
+        PersistenceException::class,
         'Can only detach pure many-to-many relations'
     );
 });
@@ -53,8 +50,8 @@ test('Entities to be detached must be of correct type', function () {
     $user->name = 'name';
     UserPersistence::insert($user);
     expect(fn() => UserPersistence::detach($user, [$friend, new Post()], 'friends'))->toThrow(
-        InconsistentEntitiesException::class,
-        'All entities in collection must be of correct type'
+        PersistenceException::class,
+        'Cannot detach entity of type AdventureTech\ORM\Tests\TestClasses\Entities\Post from relation "friends" which links to entities of type AdventureTech\ORM\Tests\TestClasses\Entities\User.'
     );
 });
 
@@ -62,8 +59,8 @@ test('ID must be set on base entity when detaching', function () {
     $user = new User();
     $user->name = 'name';
     expect(fn() => UserPersistence::detach($user, [], 'friends'))->toThrow(
-        MissingIdValueException::class,
-        'Must set ID column on base entity when detaching'
+        PersistenceException::class,
+        'Must set ID columns when detaching entities.'
     );
 });
 
@@ -74,8 +71,8 @@ test('IDs must be set on entities to be detached', function () {
     $bob = new User();
     $bob->name = 'Bob';
     expect(fn() => UserPersistence::detach($alice, [$bob], 'friends'))->toThrow(
-        MissingIdValueException::class,
-        'Must set ID columns of all entities when attaching/detaching'
+        PersistenceException::class,
+        'Must set ID columns when detaching entities.'
     );
 });
 
@@ -150,8 +147,8 @@ test('Trying to detach entities without IDs set leads to exception', function ()
     $bob->name = 'Bob';
 
     expect(fn() => UserPersistence::detach($alice, [$bob], 'friends'))->toThrow(
-        MissingIdValueException::class,
-        'Must set ID columns of all entities when attaching/detaching'
+        PersistenceException::class,
+        'Must set ID columns when detaching entities.'
     );
 });
 

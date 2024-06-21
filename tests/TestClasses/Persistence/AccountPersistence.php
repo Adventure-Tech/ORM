@@ -7,7 +7,7 @@ use AdventureTech\ORM\Tests\TestClasses\Entities\Account;
 
 class AccountPersistence extends PersistenceManager
 {
-    protected function getEntityClassName(): string
+    protected static function getEntityClassName(): string
     {
         return Account::class;
     }

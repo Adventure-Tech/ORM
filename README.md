@@ -312,7 +312,7 @@ Where repositories enable reading of data from the database, persistence manager
 ```php
 class FooPersistenceManager extends PersistenceManager
 {
-    protected function getEntityClassName(): string
+    protected static function getEntityClassName(): string
     {
         return FooEntity::class;
     }

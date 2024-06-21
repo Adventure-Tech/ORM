@@ -8,7 +8,8 @@ use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\InvalidRelationException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
-use AdventureTech\ORM\Persistence\PersistenceManager;
+use AdventureTech\ORM\Persistence\Persistors\AttachPersistor;
+use AdventureTech\ORM\Persistence\Persistors\InsertPersistor;
 use Carbon\CarbonImmutable;
 use Faker\Generator;
 use Illuminate\Support\Collection;
@@ -17,7 +18,7 @@ use ReflectionException;
 use ReflectionProperty;
 
 /**
- * @template T of object
+ * @template Entity of object
  */
 class Factory
 {
@@ -72,7 +73,7 @@ class Factory
     }
 
     /**
-     * @param  EntityReflection<T>  $entityReflection
+     * @param  EntityReflection<Entity>  $entityReflection
      * @param  Generator  $faker
      */
     protected function __construct(
@@ -83,20 +84,20 @@ class Factory
 
     /**
      * @param  array<string,mixed>  $state
-     * @return T
+     * @return Entity
      */
     public function create(array $state = []): object
     {
         $entity = $this->createEntity($state);
-        $this->getPersistenceManager()->insert($entity);
-        $this->createdHasEntities($entity);
+        $this->insertViaPersistenceManager($entity);
+        $this->createHasEntities($entity);
         return $entity;
     }
 
     /**
      *
      * @param  array<string,mixed>  $state
-     * @return T
+     * @return Entity
      */
     public function make(array $state = []): object
     {
@@ -105,7 +106,7 @@ class Factory
 
     /**
      * @param  int  $count
-     * @return Collection<int|string,T>
+     * @return Collection<int|string,Entity>
      */
     public function createMultiple(int $count): Collection
     {
@@ -166,7 +167,7 @@ class Factory
 
     /**
      * @param  array<string,mixed>  $state
-     * @return T
+     * @return Entity
      */
     private function createEntity(array $state): object
     {
@@ -254,16 +255,16 @@ class Factory
     }
 
     /**
-     * @param  T  $entity
+     * @param  Entity  $entity
      */
-    private function createdHasEntities(object $entity): void
+    private function createHasEntities(object $entity): void
     {
         foreach ($this->withFactories as $relation => $factories) {
-            $toBeAttached = [];
+            $linkedEntities = [];
             foreach ($factories as $index => $factory) {
                 $linker = $this->entityReflection->getLinkers()[$relation];
                 if ($linker instanceof PivotLinker) {
-                    $toBeAttached[] = $factory->create();
+                    $linkedEntities[] = $factory->create();
                 } else {
                     $reverseRelation = $this->withReverseRelations[$relation][$index];
                     $linkedEntity = $factory->create([
@@ -272,35 +273,33 @@ class Factory
                     $linker->link($entity, $linkedEntity);
                 }
             }
-            if (count($toBeAttached) > 0) {
-                $this->getPersistenceManager()->attach($entity, $toBeAttached, $relation);
+            if (count($linkedEntities) > 0) {
+                $this->attachViaPersistenceManager($entity, $linkedEntities, $relation);
             }
         }
     }
 
     /**
-     * @return PersistenceManager<T>
-     * @throws ReflectionException
+     * @param Entity $entity
+     * @return void
      */
-    private function getPersistenceManager(): PersistenceManager
+    private function insertViaPersistenceManager(object $entity): void
     {
-        // some anonymous class dark magic, but it's okay as factories are for test only
-        return new class ($this->entityReflection->getClass()) extends PersistenceManager
-        {
-            // need this to be static, so that new() static method works (calls constructor without argument)
-            private static string $factorySetEntityClassName;
-            public function __construct(string $entity = null)
-            {
-                if (isset($entity)) {
-                    self::$factorySetEntityClassName = $entity;
-                }
-                parent::__construct();
-            }
+        (new InsertPersistor($this->entityReflection->getClass()))
+            ->add($entity, [])
+            ->persist();
+    }
 
-            protected function getEntityClassName(): string
-            {
-                return self::$factorySetEntityClassName;
-            }
-        };
+    /**
+     * @param  Entity  $entity
+     * @param array<int|string,object> $linkedEntities
+     * @param string $relation
+     * @return void
+     */
+    private function attachViaPersistenceManager(object $entity, array $linkedEntities, string $relation): void
+    {
+        (new AttachPersistor($this->entityReflection->getClass()))
+            ->add($entity, [$linkedEntities, $relation])
+            ->persist();
     }
 }

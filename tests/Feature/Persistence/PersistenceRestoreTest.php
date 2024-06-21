@@ -13,7 +13,7 @@ test('Cannot use base persistence manager to restore entities', function () {
     $user = new User();
     expect(fn() => PersistenceManager::restore($user))->toThrow(
         Error::class,
-        'Cannot instantiate abstract class AdventureTech\ORM\Persistence\PersistenceManager'
+        'Cannot call abstract method AdventureTech\ORM\Persistence\PersistenceManager::getEntityClassName()'
     );
 });
 
@@ -21,7 +21,7 @@ test('Cannot restore non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::restore($user))->toThrow(
         PersistenceException::class,
-        'Tried to use entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User in persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
+        'Cannot restore entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
     );
 });
 
@@ -32,7 +32,7 @@ test('Cannot restore entity without soft-deletes enables', function () {
     PersonalDetailPersistence::delete($info);
     expect(fn() => PersonalDetailPersistence::restore($info))->toThrow(
         PersistenceException::class,
-        'Cannot restore entity without soft-deletes'
+        'Cannot restore entity without soft-deletes.'
     );
 });
 
@@ -61,15 +61,16 @@ test('Trying to restore entity without ID set leads exception', function () {
     $user->name = 'Name';
     expect(fn() => UserPersistence::restore($user))->toThrow(
         PersistenceException::class,
-        'Must set ID column when restoring'
+        'Must set ID column when restoring entities.'
     );
 });
 
 test('Trying to restore non-existing record leads to exception', function () {
     $user = new User();
     $user->setIdentifier(1);
+    $user->name = 'I do not exist';
     expect(fn() => UserPersistence::restore($user))->toThrow(
         PersistenceException::class,
-        'Could not restore entity'
+        'Could not restore all entities. Restored 0 out of 1.'
     );
 });

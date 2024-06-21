@@ -6,15 +6,18 @@ use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use Carbon\CarbonImmutable;
 
+/**
+ * @extends PersistenceManager<User>
+ */
 class UserPersistence extends PersistenceManager
 {
-    protected function getEntityClassName(): string
+    protected static function getEntityClassName(): string
     {
         return User::class;
     }
 
     public static function customDelete(User $user, CarbonImmutable $deletedAt): void
     {
-        self::new()->registerDelete($user, deletedAt: $deletedAt)->persist();
+        (new CustomDelete(self::getEntityClassName(), $deletedAt))->add($user)->persist();
     }
 }

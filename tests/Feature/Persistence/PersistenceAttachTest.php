@@ -1,9 +1,6 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\InconsistentEntitiesException;
-use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\InvalidRelationException;
-use AdventureTech\ORM\Exceptions\MissingIdValueException;
+use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
@@ -16,31 +13,31 @@ test('Cannot use base persistence manager to attach entities', function () {
     $user = new User();
     expect(fn() => PersistenceManager::attach($user, [], 'relation'))->toThrow(
         Error::class,
-        'Cannot instantiate abstract class AdventureTech\ORM\Persistence\PersistenceManager'
+        'Cannot call abstract method AdventureTech\ORM\Persistence\PersistenceManager::getEntityClassName()'
     );
 });
 
 test('Trying to attach to an entity not matching the persistence managers configuration leads to exception', function () {
     $user = new User();
     expect(fn() => PostPersistence::attach($user, [], 'relation'))->toThrow(
-        InvalidEntityTypeException::class,
-        'Invalid entity type used in persistence manager'
+        PersistenceException::class,
+        'Cannot attach to entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
     );
 });
 
 test('Trying to attach non-existing relation leads to exception', function () {
     $user = new User();
     expect(fn() => UserPersistence::attach($user, [], 'relation'))->toThrow(
-        InvalidRelationException::class,
-        'Can only attach pure many-to-many relations'
+        PersistenceException::class,
+        'Can only attach pure many-to-many relations.'
     );
 });
 
 test('Cannot attach non-many-to-many relation', function () {
     $user = new User();
     expect(fn() => UserPersistence::attach($user, [], 'posts'))->toThrow(
-        InvalidRelationException::class,
-        'Can only attach pure many-to-many relations'
+        PersistenceException::class,
+        'Can only attach pure many-to-many relations.'
     );
 });
 
@@ -52,8 +49,8 @@ test('Entities to be attached must be of correct type', function () {
     $user->name = 'name';
     UserPersistence::insert($user);
     expect(fn() => UserPersistence::attach($user, [$friend, new Post()], 'friends'))->toThrow(
-        InconsistentEntitiesException::class,
-        'All entities in collection must be of correct type'
+        PersistenceException::class,
+        'Cannot attach entity of type AdventureTech\ORM\Tests\TestClasses\Entities\Post to relation "friends" which links to entities of type AdventureTech\ORM\Tests\TestClasses\Entities\User.'
     );
 });
 
@@ -61,8 +58,8 @@ test('ID must be set on base entity when attaching', function () {
     $user = new User();
     $user->name = 'name';
     expect(fn() => UserPersistence::attach($user, [], 'friends'))->toThrow(
-        MissingIdValueException::class,
-        'Must set ID column on base entity when attaching'
+        PersistenceException::class,
+        'Must set ID columns when attaching entities.'
     );
 });
 
@@ -73,8 +70,8 @@ test('IDs must be set on entities to be attached', function () {
     $bob = new User();
     $bob->name = 'Bob';
     expect(fn() => UserPersistence::attach($alice, [$bob], 'friends'))->toThrow(
-        MissingIdValueException::class,
-        'Must set ID columns of all entities when attaching/detaching'
+        PersistenceException::class,
+        'Must set ID columns when attaching entities.'
     );
 });
 
@@ -155,8 +152,8 @@ test('Trying to attach entities without IDs set leads to exception', function ()
     $bob->name = 'Bob';
 
     expect(fn() => UserPersistence::attach($alice, [$bob], 'friends'))->toThrow(
-        MissingIdValueException::class,
-        'Must set ID columns of all entities when attaching/detaching'
+        PersistenceException::class,
+        'Must set ID columns when attaching entities.'
     );
 });
 

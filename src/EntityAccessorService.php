@@ -22,7 +22,7 @@ class EntityAccessorService
     public static function getId(object $entity): int|string|null
     {
         // TODO: type check here? Other parts of the ORM rely on IDs being int|string...
-        /** @var int|string $id */
+        /** @var int|string|null $id */
         $id = self::get($entity, EntityReflection::new($entity::class)->getIdProperty());
         return $id;
     }

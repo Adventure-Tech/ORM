@@ -13,7 +13,7 @@ test('Cannot use base persistence manager to force-delete entities', function ()
     $user = new User();
     expect(fn() => PersistenceManager::forceDelete($user))->toThrow(
         Error::class,
-        'Cannot instantiate abstract class AdventureTech\ORM\Persistence\PersistenceManager'
+        'Cannot call abstract method AdventureTech\ORM\Persistence\PersistenceManager::getEntityClassName()'
     );
 });
 
@@ -21,7 +21,7 @@ test('Cannot delete non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::forceDelete($user))->toThrow(
         PersistenceException::class,
-        'Tried to use entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User in persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
+        'Cannot delete entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
     );
 });
 
@@ -46,7 +46,7 @@ test('Trying to force-delete entity without ID set leads exception', function ()
     $user->name = 'Name';
     expect(fn() => UserPersistence::forceDelete($user))->toThrow(
         PersistenceException::class,
-        'Must set ID column when deleting'
+        'Must set ID column when deleting entities.'
     );
 });
 

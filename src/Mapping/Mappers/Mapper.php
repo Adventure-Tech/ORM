@@ -17,7 +17,7 @@ interface Mapper
 
     /**
      * @param  mixed  $value
-     * @return array<string,string|null>
+     * @return array<string,mixed>
      */
     public function serialize(mixed $value): array;
 

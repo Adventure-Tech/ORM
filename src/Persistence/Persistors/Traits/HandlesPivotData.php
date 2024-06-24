@@ -10,12 +10,12 @@ use Illuminate\Support\Collection;
 use TypeError;
 
 /**
- * @template Entity of object
+ * @template TEntity of object
  */
 trait HandlesPivotData
 {
     /**
-     * @use ChecksEntityType<Entity>
+     * @use ChecksEntityType<TEntity>
      */
     use ChecksEntityType;
 
@@ -47,7 +47,7 @@ trait HandlesPivotData
 
         $this->checkType($entity);
 
-        $linker = $this->linkers->get($relation);
+        $linker = $this->entityReflection->getLinker($relation);
         if (!($linker instanceof PivotLinker)) {
             throw new PersistenceException($this->entityCheckMessages['checkPivotLinker'] ?? 'Can only handle pure many-to-many relations.');
         }
@@ -57,7 +57,7 @@ trait HandlesPivotData
         foreach ($linkedEntities as $linkedEntity) {
             if (get_class($linkedEntity) !== $linker->getTargetEntity()) {
                 throw new PersistenceException(sprintf(
-                    $this->entityCheckMessages['checkLinkedEntityType'] ?? 'Entity of type %s is incompatible with relation "%s" which links to entities of type %s.',
+                    $this->entityCheckMessages['checkLinkedEntityType'] ?? 'Entity of type "%s" is incompatible with relation "%s" which links to entities of type "%s".',
                     get_class($linkedEntity),
                     $relation,
                     $linker->getTargetEntity()

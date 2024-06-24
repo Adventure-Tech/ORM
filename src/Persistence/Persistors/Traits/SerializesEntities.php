@@ -6,8 +6,6 @@ use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 
-// TODO: remove two custom exceptions
-
 /**
  * @template T of object
  */
@@ -51,21 +49,19 @@ trait SerializesEntities
     private function resolveOwningRelations(object $entity): array
     {
         $data = [];
-        foreach ($this->entityReflection->getLinkers() as $property => $linker) {
-            if ($linker instanceof OwningLinker) {
-                if (!$this->entityReflection->allowsNull($property) && !EntityAccessorService::isset($entity, $property)) {
-                    throw new PersistenceException('Must set all non-nullable owning relations.');
+        foreach ($this->entityReflection->getOwningLinkers() as $property => $linker) {
+            if (!$this->entityReflection->allowsNull($property) && !EntityAccessorService::isset($entity, $property)) {
+                throw new PersistenceException('Must set all non-nullable owning relations.');
+            }
+            if (EntityAccessorService::isset($entity, $property)) {
+                /** @var object $linkedEntity */
+                $linkedEntity = EntityAccessorService::get($entity, $property);
+                if (!EntityAccessorService::issetId($linkedEntity)) {
+                    throw new PersistenceException('Owned linked entity must have valid ID set.');
                 }
-                if (EntityAccessorService::isset($entity, $property)) {
-                    /** @var object $linkedEntity */
-                    $linkedEntity = EntityAccessorService::get($entity, $property);
-                    if (!EntityAccessorService::issetId($linkedEntity)) {
-                        throw new PersistenceException('Owned linked entity must have valid ID set.');
-                    }
-                    $data[$linker->getForeignKey()] = EntityAccessorService::getId($linkedEntity);
-                } else {
-                    $data[$linker->getForeignKey()] = null;
-                }
+                $data[$linker->getForeignKey()] = EntityAccessorService::getId($linkedEntity);
+            } else {
+                $data[$linker->getForeignKey()] = null;
             }
         }
         return $data;

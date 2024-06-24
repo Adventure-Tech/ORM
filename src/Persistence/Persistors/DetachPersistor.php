@@ -4,20 +4,19 @@ namespace AdventureTech\ORM\Persistence\Persistors;
 
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
 use AdventureTech\ORM\Persistence\Persistors\Traits\HandlesPivotData;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * @template Entity of object
- * @implements Persistor<Entity>
+ * @template TEntity of object
+ * @implements Persistor<TEntity>
  */
 class DetachPersistor implements Persistor
 {
     /**
-     * @use HandlesPivotData<Entity>
+     * @use HandlesPivotData<TEntity>
      */
     use HandlesPivotData;
 
@@ -25,27 +24,22 @@ class DetachPersistor implements Persistor
      * @var array<string,string>
      */
     protected array $entityCheckMessages = [
-        'checkType' => 'Cannot detach from entity of type %s with persistence manager configured for entities of type %s.',
+        'checkType' => 'Cannot detach from entity of type "%s" with persistence manager configured for entities of type "%s".',
         'checkIdSet' => 'Must set ID columns when detaching entities.',
         'checkPivotLinker' => 'Can only detach pure many-to-many relations.',
-        'checkLinkedEntityType' => 'Cannot detach entity of type %s from relation "%s" which links to entities of type %s.',
+        'checkLinkedEntityType' => 'Cannot detach entity of type "%s" from relation "%s" which links to entities of type "%s".',
     ];
     /**
      * @var array<string,array<int,array<string,int|string>>>
      */
     protected array $data = [];
-    /**
-     * @var Collection<string,Linker<Entity,object>>
-     */
-    protected Collection $linkers;
 
     /**
-     * @param  class-string<Entity>  $entityClassName
+     * @param  class-string<TEntity>  $entityClassName
      */
     public function __construct(string $entityClassName)
     {
         $this->entityReflection = EntityReflection::new($entityClassName);
-        $this->linkers = $this->entityReflection->getLinkers();
     }
 
     /**

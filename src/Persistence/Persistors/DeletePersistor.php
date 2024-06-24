@@ -6,7 +6,6 @@ use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use AdventureTech\ORM\Persistence\Persistors\Traits\ChecksEntityType;
-use AdventureTech\ORM\Persistence\Persistors\Traits\ReflectsEntities;
 use AdventureTech\ORM\Persistence\Persistors\Traits\SerializesEntities;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -14,17 +13,17 @@ use Illuminate\Support\Facades\DB;
 use Override;
 
 /**
- * @template Entity of object
- * @implements Persistor<Entity>
+ * @template TEntity of object
+ * @implements Persistor<TEntity>
  */
 class DeletePersistor implements Persistor
 {
     /**
-     * @use SerializesEntities<Entity>
+     * @use SerializesEntities<TEntity>
      */
     use SerializesEntities;
     /**
-     * @use ChecksEntityType<Entity>
+     * @use ChecksEntityType<TEntity>
      */
     use ChecksEntityType;
 
@@ -32,7 +31,7 @@ class DeletePersistor implements Persistor
      * @var array<string,string>
      */
     protected array $entityCheckMessages = [
-        'checkType' => 'Cannot delete entity of type %s with persistence manager configured for entities of type %s.',
+        'checkType' => 'Cannot delete entity of type "%s" with persistence manager configured for entities of type "%s".',
         'checkCount' => 'Could not delete all entities. Deleted %d out of %d.',
         'checkIdSet' => 'Must set ID column when deleting entities.',
     ];
@@ -47,7 +46,7 @@ class DeletePersistor implements Persistor
     protected Collection $softDeleteDatetimes;
 
     /**
-     * @param  class-string<Entity>  $entityClassName
+     * @param  class-string<TEntity>  $entityClassName
      * @param  bool  $force
      */
     #[Override]
@@ -60,7 +59,7 @@ class DeletePersistor implements Persistor
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @param  array<int,mixed>  $args
      * @return $this
      */

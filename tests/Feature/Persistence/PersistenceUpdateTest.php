@@ -25,7 +25,7 @@ test('Cannot update non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::update($user))->toThrow(
         PersistenceException::class,
-        'Cannot update entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
+        'Cannot update entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" with persistence manager configured for entities of type "AdventureTech\ORM\Tests\TestClasses\Entities\Post".'
     );
 });
 

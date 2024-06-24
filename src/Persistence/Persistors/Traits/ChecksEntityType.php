@@ -6,12 +6,12 @@ use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\Exceptions\PersistenceException;
 
 /**
- * @template Entity of object
+ * @template TEntity of object
  */
 trait ChecksEntityType
 {
     /**
-     * @use ReflectsEntities<Entity>
+     * @use ReflectsEntities<TEntity>
      */
     use ReflectsEntities;
 
@@ -23,7 +23,7 @@ trait ChecksEntityType
     {
         if (get_class($entity) !== $this->entityReflection->getClass()) {
             throw new PersistenceException(sprintf(
-                $this->entityCheckMessages[__FUNCTION__] ?? 'Cannot handle entity of type %s with persistence manager configured for entities of type %s.',
+                $this->entityCheckMessages[__FUNCTION__] ?? 'Cannot handle entity of type "%s" with persistence manager configured for entities of type "%s".',
                 get_class($entity),
                 $this->entityReflection->getClass()
             ));

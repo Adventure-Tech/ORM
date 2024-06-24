@@ -1,6 +1,6 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\InvalidRelationException;
+use AdventureTech\ORM\Exceptions\EntityReflectionException;
 use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use AdventureTech\ORM\Tests\TestClasses\Repositories\PostRepository;
@@ -42,8 +42,8 @@ test('Can load relations within relations', function () {
 test('Trying to load invalid relation leads to exception', function () {
     expect(fn() => Repository::new(User::class)->with('invalid'))
         ->toThrow(
-            InvalidRelationException::class,
-            'Invalid relation used in with clause [tried to load relation "invalid"]'
+            EntityReflectionException::class,
+            'Missing mapping for relation "invalid" on "AdventureTech\ORM\Tests\TestClasses\Entities\User". Mapped relations are: "posts", "comments", "personalDetails", "friends".'
         );
 });
 

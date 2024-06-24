@@ -39,7 +39,10 @@ test('Trying to find a non-existing record results in null', function () {
 test('Trying to findOrFail a non-existing record results in exception', function () {
     $id = 1;
     $repo = Repository::new(User::class);
-    expect(fn() => $repo->findOrFail($id))->toThrow(EntityNotFoundException::class);
+    expect(fn() => $repo->findOrFail($id))->toThrow(
+        EntityNotFoundException::class,
+        'Failed to find entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" with id "1".'
+    );
 });
 
 test('Repositories can get multiple records', function () {
@@ -87,5 +90,8 @@ test('Trying get the first of a non-existing record set results in null', functi
 
 test('Trying get the firstOrFail of a non-existing record set results in exception', function () {
     $repo = Repository::new(User::class);
-    expect(fn() => $repo->firstOrFail())->toThrow(EntityNotFoundException::class);
+    expect(fn() => $repo->firstOrFail())->toThrow(
+        EntityNotFoundException::class,
+        'Failed to load any entities of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" matching the filter criteria.'
+    );
 });

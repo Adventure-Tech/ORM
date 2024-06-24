@@ -1,5 +1,6 @@
 <?php
 
+use AdventureTech\ORM\Exceptions\EntityReflectionException;
 use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Repository\Repository;
@@ -22,15 +23,15 @@ test('Trying to detach to an entity not matching the persistence managers config
     $user = new User();
     expect(fn() => PostPersistence::detach($user, Collection::empty(), 'relation'))->toThrow(
         PersistenceException::class,
-        'Cannot detach from entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
+        'Cannot detach from entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" with persistence manager configured for entities of type "AdventureTech\ORM\Tests\TestClasses\Entities\Post".'
     );
 });
 
 test('Trying to detach non-existing relation leads to exception', function () {
     $user = new User();
     expect(fn() => UserPersistence::detach($user, [], 'relation'))->toThrow(
-        PersistenceException::class,
-        'Can only detach pure many-to-many relations.'
+        EntityReflectionException::class,
+        'Missing mapping for relation "relation" on "AdventureTech\ORM\Tests\TestClasses\Entities\User". Mapped relations are: "posts", "comments", "personalDetails", "friends".'
     );
 });
 
@@ -51,7 +52,7 @@ test('Entities to be detached must be of correct type', function () {
     UserPersistence::insert($user);
     expect(fn() => UserPersistence::detach($user, [$friend, new Post()], 'friends'))->toThrow(
         PersistenceException::class,
-        'Cannot detach entity of type AdventureTech\ORM\Tests\TestClasses\Entities\Post from relation "friends" which links to entities of type AdventureTech\ORM\Tests\TestClasses\Entities\User.'
+        'Cannot detach entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\Post" from relation "friends" which links to entities of type "AdventureTech\ORM\Tests\TestClasses\Entities\User".'
     );
 });
 
@@ -162,10 +163,10 @@ test('When detaching relations the count of detached entities is returned correc
         ['id' => 3, 'name' => 'Claire'],
         ['id' => 4, 'name' => 'Ted'],
     ]);
-    $alice = Repository::new(User::class)->find(1);
-    $bob = Repository::new(User::class)->find(2);
-    $claire = Repository::new(User::class)->find(3);
-    $ted = Repository::new(User::class)->find(4);
+    $alice = Repository::new(User::class)->findOrFail(1);
+    $bob = Repository::new(User::class)->findOrFail(2);
+    $claire = Repository::new(User::class)->findOrFail(3);
+    $ted = Repository::new(User::class)->findOrFail(4);
 
     DB::table('friends')->insert($friends);
 

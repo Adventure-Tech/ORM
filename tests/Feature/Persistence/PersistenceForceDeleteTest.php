@@ -21,7 +21,7 @@ test('Cannot delete non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::forceDelete($user))->toThrow(
         PersistenceException::class,
-        'Cannot delete entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
+        'Cannot delete entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" with persistence manager configured for entities of type "AdventureTech\ORM\Tests\TestClasses\Entities\Post".'
     );
 });
 

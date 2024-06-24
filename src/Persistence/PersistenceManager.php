@@ -11,12 +11,12 @@ use AdventureTech\ORM\Persistence\Persistors\UpdatePersistor;
 use Illuminate\Support\Collection;
 
 /**
- * @template Entity of object
+ * @template TEntity of object
  */
 abstract class PersistenceManager
 {
     /**
-     * @return class-string<Entity>
+     * @return class-string<TEntity>
      */
     abstract protected static function getEntityClassName(): string;
 
@@ -25,7 +25,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @return void
      */
     public static function insert(object $entity): void
@@ -34,7 +34,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  iterable<int|string,Entity>  $entities
+     * @param  iterable<int|string,TEntity>  $entities
      * @return void
      */
     public static function insertMultiple(iterable $entities): void
@@ -47,7 +47,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @return void
      */
     public static function update(object $entity): void
@@ -56,7 +56,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  iterable<int|string,Entity>  $entities
+     * @param  iterable<int|string,TEntity>  $entities
      * @return void
      */
     public static function updateMultiple(iterable $entities): void
@@ -69,7 +69,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @return void
      */
     public static function delete(object $entity): void
@@ -78,7 +78,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  iterable<int|string,Entity>  $entities
+     * @param  iterable<int|string,TEntity>  $entities
      * @return void
      */
     public static function deleteMultiple(iterable $entities): void
@@ -91,7 +91,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @return void
      */
     public static function restore(object $entity): void
@@ -100,7 +100,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  iterable<int|string,Entity>  $entities
+     * @param  iterable<int|string,TEntity>  $entities
      * @return void
      */
     public static function restoreMultiple(iterable $entities): void
@@ -113,7 +113,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @return void
      */
     public static function forceDelete(object $entity): void
@@ -122,7 +122,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  iterable<int|string,Entity>  $entities
+     * @param  iterable<int|string,TEntity>  $entities
      * @return void
      */
     public static function forceDeleteMultiple(iterable $entities): void
@@ -135,7 +135,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @param  Collection<int|string,object>|array<int|string,object>  $linkedEntities
      * @param  string  $relation
      * @return int
@@ -146,7 +146,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  iterable<int|string,Entity>  $entities
+     * @param  iterable<int|string,TEntity>  $entities
      * @param  Collection<int|string,object>|array<int|string,object>  $linkedEntities
      * @param  string  $relation
      * @return int
@@ -161,7 +161,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @param  Collection<int|string,object>|array<int|string,object>  $linkedEntities
      * @param  string  $relation
      * @return int
@@ -172,7 +172,7 @@ abstract class PersistenceManager
     }
 
     /**
-     * @param  iterable<int|string,Entity>  $entities
+     * @param  iterable<int|string,TEntity>  $entities
      * @param  Collection<int|string,object>|array<int|string,object>  $linkedEntities
      * @param  string  $relation
      * @return int

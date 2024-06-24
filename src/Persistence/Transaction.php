@@ -29,7 +29,7 @@ final class Transaction
 
     public static function rollback(?int $toLevel = null): void
     {
-        DB::rollBack();
+        DB::rollBack($toLevel);
     }
 
     public static function level(): int

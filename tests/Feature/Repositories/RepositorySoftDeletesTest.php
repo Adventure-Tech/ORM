@@ -15,7 +15,10 @@ test('Trying to find a soft-deleted record results in null', function () {
 test('Trying to findOrFail a soft-deleted record results in exception', function () {
     $id = DB::table('users')->insertGetId(['name' => 'Name', 'deleted_at' => now()]);
     $repo = Repository::new(User::class);
-    expect(fn() => $repo->findOrFail($id))->toThrow(EntityNotFoundException::class);
+    expect(fn() => $repo->findOrFail($id))->toThrow(
+        EntityNotFoundException::class,
+        'Failed to find entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" with id "1".'
+    );
 });
 
 test('Getting records via the repository ignores soft deletes', function () {

@@ -5,7 +5,6 @@ namespace AdventureTech\ORM\Factories;
 use AdventureTech\ORM\ColumnPropertyService;
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Exceptions\InvalidRelationException;
 use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
 use AdventureTech\ORM\Persistence\Persistors\AttachPersistor;
@@ -18,7 +17,7 @@ use ReflectionException;
 use ReflectionProperty;
 
 /**
- * @template Entity of object
+ * @template TEntity of object
  */
 class Factory
 {
@@ -73,7 +72,7 @@ class Factory
     }
 
     /**
-     * @param  EntityReflection<Entity>  $entityReflection
+     * @param  EntityReflection<TEntity>  $entityReflection
      * @param  Generator  $faker
      */
     protected function __construct(
@@ -84,7 +83,7 @@ class Factory
 
     /**
      * @param  array<string,mixed>  $state
-     * @return Entity
+     * @return TEntity
      */
     public function create(array $state = []): object
     {
@@ -97,7 +96,7 @@ class Factory
     /**
      *
      * @param  array<string,mixed>  $state
-     * @return Entity
+     * @return TEntity
      */
     public function make(array $state = []): object
     {
@@ -106,7 +105,7 @@ class Factory
 
     /**
      * @param  int  $count
-     * @return Collection<int|string,Entity>
+     * @return Collection<int|string,TEntity>
      */
     public function createMultiple(int $count): Collection
     {
@@ -135,14 +134,9 @@ class Factory
     public function with(string $relation, string $reverseRelation, Factory $factory = null): static
     {
         if (!isset($factory)) {
-            $linkers = $this->entityReflection->getLinkers();
-            if (!$linkers->has($relation)) {
-                throw new InvalidRelationException('Invalid relation used in "with" method [' . $relation . ']');
-            }
-            $factory = Factory::new($linkers[$relation]->getTargetEntity());
-            if (!$factory->entityReflection->getLinkers()->has($reverseRelation)) {
-                throw new InvalidRelationException('Invalid reverse relation used in "with" method [' . $reverseRelation . ']');
-            }
+            $linker = $this->entityReflection->getLinker($relation);
+            $factory = self::new($linker->getTargetEntity());
+            $factory->entityReflection->getLinker($reverseRelation); // checks existence of $reverseRelation
         }
         // always incrementing arrays at same time => can rely on indexes to be synced
         $this->withFactories[$relation][] = $factory;
@@ -167,7 +161,7 @@ class Factory
 
     /**
      * @param  array<string,mixed>  $state
-     * @return Entity
+     * @return TEntity
      */
     private function createEntity(array $state): object
     {
@@ -232,11 +226,11 @@ class Factory
      */
     private function addMissingLinkedFactories(array &$state): void
     {
-        foreach ($this->entityReflection->getLinkers() as $property => $linker) {
-            if ($linker instanceof OwningLinker && !array_key_exists($property, $state)) {
+        foreach ($this->entityReflection->getOwningLinkers() as $property => $linker) {
+            if (!array_key_exists($property, $state)) {
                 $state[$property] = $this->entityReflection->allowsNull($property)
                     ? null
-                    : Factory::new($linker->getTargetEntity());
+                    : self::new($linker->getTargetEntity());
             }
         }
     }
@@ -255,14 +249,14 @@ class Factory
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      */
     private function createHasEntities(object $entity): void
     {
         foreach ($this->withFactories as $relation => $factories) {
             $linkedEntities = [];
             foreach ($factories as $index => $factory) {
-                $linker = $this->entityReflection->getLinkers()[$relation];
+                $linker = $this->entityReflection->getLinker($relation);
                 if ($linker instanceof PivotLinker) {
                     $linkedEntities[] = $factory->create();
                 } else {
@@ -280,7 +274,7 @@ class Factory
     }
 
     /**
-     * @param Entity $entity
+     * @param TEntity $entity
      * @return void
      */
     private function insertViaPersistenceManager(object $entity): void
@@ -291,7 +285,7 @@ class Factory
     }
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @param array<int|string,object> $linkedEntities
      * @param string $relation
      * @return void

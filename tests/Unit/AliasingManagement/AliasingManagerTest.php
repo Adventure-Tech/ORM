@@ -1,7 +1,7 @@
 <?php
 
 use AdventureTech\ORM\AliasingManagement\AliasingManager;
-use AdventureTech\ORM\Exceptions\InvalidColumnExpressionException;
+use AdventureTech\ORM\Exceptions\AliasingException;
 
 test('Can get the aliased table name', function (AliasingManager $manager, string $expected, string $localRoot) {
     expect($manager->getAliasedTableName($localRoot))->toBe($expected);
@@ -72,10 +72,10 @@ test('Can get individual column names for select clause', function (AliasingMana
 test('Can correctly add relation', function () {
     $manager = new AliasingManager('foo', ['foo_a', 'foo_b']);
     expect(fn () => $manager->getAliasedTableName('foo/bar'))
-        ->toThrow(InvalidColumnExpressionException::class, 'Tried to access relation which was not added');
+        ->toThrow(AliasingException::class, 'Failed to resolve key "bar". No keys available.');
     $manager->addRelation('foo/bar', ['bar_a', 'bar_b']);
     expect(fn () => $manager->getAliasedTableName('foo/bar'))
-        ->not->toThrow(InvalidColumnExpressionException::class, 'Tried to access relation which was not added');
+        ->not->toThrow(AliasingException::class, 'Failed to resolve key "bar". No keys available.');
 });
 
 dataset('manager', function () {

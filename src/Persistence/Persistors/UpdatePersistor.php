@@ -32,7 +32,7 @@ class UpdatePersistor implements Persistor
      * @var array<string,string>
      */
     protected array $entityCheckMessages = [
-        'checkType' => 'Cannot update entity of type %s with persistence manager configured for entities of type %s.',
+        'checkType' => 'Cannot update entity of type "%s" with persistence manager configured for entities of type "%s".',
         'checkCount' => 'Could not update all entities. Updated %d out of %d.',
         'checkIdSet' => 'Must set ID column when updating entities.',
     ];

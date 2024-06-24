@@ -34,6 +34,6 @@ test('Loading an empty BelongsTo relationship', function () {
         ->get()
         ->first())->toThrow(
             EntityNotFoundException::class,
-            'Entity not found on the DB [class: "AdventureTech\ORM\Tests\TestClasses\Entities\Post"", id: "1"] - Could not load relation "author"'
+            'Failed to load relation "author" of entity "AdventureTech\ORM\Tests\TestClasses\Entities\Post" with id "1".'
         );
 });

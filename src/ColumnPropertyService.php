@@ -2,7 +2,7 @@
 
 namespace AdventureTech\ORM;
 
-use AdventureTech\ORM\Exceptions\UnsupportedReflectionTypeException;
+use AdventureTech\ORM\Exceptions\EntityReflectionException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -59,16 +59,14 @@ class ColumnPropertyService
 
         /** @var class-string $className */
         $className = $type->getName();
-        $reflectionClass = new ReflectionClass($className);
-
-        return $reflectionClass->isEnum();
+        return (new ReflectionClass($className))->isEnum();
     }
 
     private static function getReflectionType(ReflectionProperty $property): ReflectionNamedType
     {
         $type = $property->getType();
         if (!($type instanceof ReflectionNamedType)) {
-            throw new UnsupportedReflectionTypeException();
+            throw new EntityReflectionException('Type hints are mandatory and must not be union or intersection types.');
         }
         return $type;
     }

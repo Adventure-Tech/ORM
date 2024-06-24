@@ -21,7 +21,7 @@ test('Cannot restore non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::restore($user))->toThrow(
         PersistenceException::class,
-        'Cannot restore entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
+        'Cannot restore entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" with persistence manager configured for entities of type "AdventureTech\ORM\Tests\TestClasses\Entities\Post".'
     );
 });
 

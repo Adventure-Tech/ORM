@@ -23,7 +23,7 @@ test('Cannot insert non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::insert($user))->toThrow(
         PersistenceException::class,
-        'Cannot insert entity of type AdventureTech\ORM\Tests\TestClasses\Entities\User with persistence manager configured for entities of type AdventureTech\ORM\Tests\TestClasses\Entities\Post.'
+        'Cannot insert entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" with persistence manager configured for entities of type "AdventureTech\ORM\Tests\TestClasses\Entities\Post".'
     );
 });
 

@@ -11,13 +11,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * @template Entity of object
- * @implements Persistor<Entity>
+ * @template TEntity of object
+ * @implements Persistor<TEntity>
  */
 class RestorePersistor implements Persistor
 {
     /**
-     * @use ChecksEntityType<Entity>
+     * @use ChecksEntityType<TEntity>
      */
     use ChecksEntityType;
 
@@ -25,7 +25,7 @@ class RestorePersistor implements Persistor
      * @var array<string,string>
      */
     protected array $entityCheckMessages = [
-        'checkType' => 'Cannot restore entity of type %s with persistence manager configured for entities of type %s.',
+        'checkType' => 'Cannot restore entity of type "%s" with persistence manager configured for entities of type "%s".',
         'checkCount' => 'Could not restore all entities. Restored %d out of %d.',
         'checkIdSet' => 'Must set ID column when restoring entities.',
     ];
@@ -39,7 +39,7 @@ class RestorePersistor implements Persistor
     protected Collection $softDeletes;
 
     /**
-     * @param  class-string<Entity> $entityClassName
+     * @param  class-string<TEntity> $entityClassName
      */
     public function __construct(string $entityClassName)
     {
@@ -52,7 +52,7 @@ class RestorePersistor implements Persistor
 
 
     /**
-     * @param  Entity  $entity
+     * @param  TEntity  $entity
      * @param  array<int,mixed>  $args
      * @return $this
      */

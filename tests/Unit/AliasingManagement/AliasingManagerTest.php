@@ -74,8 +74,10 @@ test('Can correctly add relation', function () {
     expect(fn () => $manager->getAliasedTableName('foo/bar'))
         ->toThrow(AliasingException::class, 'Failed to resolve key "bar". No keys available.');
     $manager->addRelation('foo/bar', ['bar_a', 'bar_b']);
-    expect(fn () => $manager->getAliasedTableName('foo/bar'))
-        ->not->toThrow(AliasingException::class, 'Failed to resolve key "bar". No keys available.');
+    expect(fn() => $manager->getAliasedTableName('foo/baz'))
+        ->toThrow(AliasingException::class, 'Failed to resolve key "baz". Available keys are: "bar".')
+        ->and(fn() => $manager->getAliasedTableName('foo/bar'))
+        ->not->toThrow(AliasingException::class);
 });
 
 dataset('manager', function () {

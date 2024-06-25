@@ -373,11 +373,9 @@ class Repository
     {
         if (!$this->includeDeleted) {
             foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
-                /** @var Mapper<mixed> $mapper */
-                $mapper = $this->entityReflection->getMappers()->get($property);
-                // TODO: remove this from mapper
-                $columnName = $mapper->getColumnNames()[0];
-                $this->filters[] = new WhereNull($columnName);
+                foreach ($this->entityReflection->getMappers()[$property]->getColumnNames() as $columnName) {
+                    $this->filters[] = new WhereNull($columnName);
+                }
             }
         }
     }
@@ -387,11 +385,11 @@ class Repository
      */
     private function getOrderBys(): array
     {
-        $orderBys = $this->orderBys;
+        $orderBys = [];
         foreach ($this->with as $linkedRepository) {
-            $orderBys = array_merge($orderBys, $linkedRepository->repository->getOrderBys());
+            $orderBys[] = $linkedRepository->repository->getOrderBys();
         }
-        return $orderBys;
+        return array_merge($this->orderBys, ... $orderBys);
     }
 
     private function applyLimitAndOffset(Builder $query, ?int $limit, ?int $offset): Builder

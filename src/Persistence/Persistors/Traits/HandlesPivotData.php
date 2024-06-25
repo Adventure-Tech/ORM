@@ -5,9 +5,7 @@ namespace AdventureTech\ORM\Persistence\Persistors\Traits;
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Mapping\Linkers\PivotLinker;
-use AdventureTech\ORM\Persistence\Persistors\Dtos\AttachArgsDto;
 use Illuminate\Support\Collection;
-use TypeError;
 
 /**
  * @template TEntity of object
@@ -21,30 +19,13 @@ trait HandlesPivotData
 
 
     /**
-     * @param  object  $entity
-     * @param  mixed  $args
-     * @return AttachArgsDto
+     * @param  TEntity  $entity
+     * @param  Collection<int|string,object>  $linkedEntities
+     * @param  string  $relation
+     * @return array<string,array<int,array<string,int|string>>>
      */
-    private function asd(object $entity, mixed $args): AttachArgsDto
+    private function getPivotData(object $entity, Collection $linkedEntities, string $relation): array
     {
-        if (
-            !is_array($args)
-            || count($args) !== 2
-            || !(($args[0] instanceof Collection) || (is_array($args[0])))
-            || !is_string($args[1])
-        ) {
-            // TODO
-//            dump(
-//                $args,
-//                !is_array($args),
-//                count($args) !== 2,
-//                !(($args[0] instanceof Collection) || (is_array($args[0]))),
-//                is_string($args[1] ?? null)
-//            );
-            throw new TypeError('...');
-        }
-        [$linkedEntities, $relation] = $args;
-
         $this->checkType($entity);
 
         $linker = $this->entityReflection->getLinker($relation);
@@ -54,6 +35,7 @@ trait HandlesPivotData
 
         $this->checkIdSet($entity);
 
+        $data = [];
         foreach ($linkedEntities as $linkedEntity) {
             if (get_class($linkedEntity) !== $linker->getTargetEntity()) {
                 throw new PersistenceException(sprintf(
@@ -68,11 +50,11 @@ trait HandlesPivotData
             $id = EntityAccessorService::getId($entity);
             /** @var int|string $linkedId */
             $linkedId = EntityAccessorService::getId($linkedEntity);
-            $this->data[$linker->getPivotTable()][] = [
+            $data[$linker->getPivotTable()][] = [
                 $linker->getOriginForeignKey() => $id,
                 $linker->getTargetForeignKey() => $linkedId,
             ];
         }
-        return new AttachArgsDto(linkedEntities: $linkedEntities, relation: $relation);
+        return $data;
     }
 }

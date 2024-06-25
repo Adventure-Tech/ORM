@@ -90,7 +90,7 @@ class AliasingManager
                 throw new  AliasingException(
                     'Failed to resolve key "' . $key . '". ' . (
                         count($dto->children) > 0
-                            ? 'Available keys are : "' . implode('", "', array_keys($dto->children)) . '".'
+                            ? 'Available keys are: "' . implode('", "', array_keys($dto->children)) . '".'
                             : 'No keys available.')
                 );
             }

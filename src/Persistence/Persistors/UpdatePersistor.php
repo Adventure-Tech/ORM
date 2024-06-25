@@ -81,7 +81,7 @@ class UpdatePersistor implements Persistor
 
     private function getUpdateSql(): string
     {
-        $tmpTableName = 'tmp';
+        $tmpTableName = '_tmp_';
         $columns = collect(array_keys($this->values[0]));
         $columnTypes = $this->getColumnTypes();
         $placeholders = [];
@@ -108,7 +108,15 @@ class UpdatePersistor implements Persistor
         $valuesClause = implode('), (', $placeholders);
         $columnsSpec = $columns->implode(', ');
         $idColumn = $this->entityReflection->getIdColumn();
-        return "UPDATE $tableName SET $setClause FROM (VALUES ($valuesClause)) AS $tmpTableName ($columnsSpec) WHERE $tableName.$idColumn = $tmpTableName.$idColumn";
+        $sql = "UPDATE " . $tableName . " SET " . $setClause
+            . " FROM (VALUES (" . $valuesClause . ")) AS " . $tmpTableName . " (" . $columnsSpec . ") WHERE "
+            . $tableName . "." . $idColumn . " = " . $tmpTableName . "." . $idColumn;
+        foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
+            foreach ($this->entityReflection->getMappers()[$property]->getColumnNames() as $columnName) {
+                $sql .= ' AND ' . $tableName . '.' . $columnName . ' IS NULL';
+            }
+        }
+        return $sql;
     }
 
     /**

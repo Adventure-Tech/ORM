@@ -4,9 +4,9 @@ namespace AdventureTech\ORM\Persistence\Persistors;
 
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Mapping\Linkers\Linker;
+use AdventureTech\ORM\Persistence\Persistors\Dtos\PivotArgsDto;
+use AdventureTech\ORM\Persistence\Persistors\Dtos\AttachArgsDtoNew;
 use AdventureTech\ORM\Persistence\Persistors\Traits\HandlesPivotData;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -43,13 +43,18 @@ class AttachPersistor implements Persistor
     }
 
     /**
-     * @param  object  $entity
+     * @param  TEntity  $entity
      * @param  array<int,mixed>  $args
      * @return $this
      */
     public function add(object $entity, array $args = null): self
     {
-        $argsDto = $this->asd($entity, $args);
+        $argsDto = PivotArgsDto::parse($args);
+        foreach ($this->getPivotData($entity, $argsDto->linkedEntities, $argsDto->relation) as $tableName => $items) {
+            foreach ($items as $item) {
+                $this->data[$tableName][] = $item;
+            }
+        }
         EntityAccessorService::set($entity, $argsDto->relation, $argsDto->linkedEntities);
         return $this;
     }

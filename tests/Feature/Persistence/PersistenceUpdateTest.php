@@ -188,3 +188,16 @@ test('Updating nullable column to null', function () {
     $user = Repository::new(User::class)->get()->first();
     expect($user->favouriteColor)->toBeNull();
 });
+
+test('Updating skips soft-deleted entities', function () {
+    $user = Factory::new(User::class)->create(['name' => 'OLD']);
+    $userSoftDeleted = Factory::new(User::class)->create(['name' => 'OLD']);
+    UserPersistence::delete($userSoftDeleted);
+    $user->name = 'NEW';
+    $userSoftDeleted->name = 'NEW';
+    expect(fn() => UserPersistence::updateMultiple([$user, $userSoftDeleted]))->toThrow(
+        PersistenceException::class,
+        'Could not update all entities. Updated 1 out of 2.'
+    )
+        ->and(DB::table('users')->where('name', 'NEW')->count())->toBe(1);
+});

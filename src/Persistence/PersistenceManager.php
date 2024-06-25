@@ -20,7 +20,10 @@ abstract class PersistenceManager
      */
     abstract protected static function getEntityClassName(): string;
 
-    final protected function __construct()
+    /**
+     * @codeCoverageIgnore
+     */
+    final private function __construct()
     {
     }
 

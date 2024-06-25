@@ -4,7 +4,7 @@ namespace AdventureTech\ORM\Persistence\Persistors;
 
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Mapping\Linkers\Linker;
+use AdventureTech\ORM\Persistence\Persistors\Dtos\PivotArgsDto;
 use AdventureTech\ORM\Persistence\Persistors\Traits\HandlesPivotData;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -43,13 +43,18 @@ class DetachPersistor implements Persistor
     }
 
     /**
-     * @param  object  $entity
+     * @param  TEntity  $entity
      * @param  array<int,mixed>  $args
      * @return $this
      */
     public function add(object $entity, array $args = null): Persistor
     {
-        $argsDto = $this->asd($entity, $args);
+        $argsDto = PivotArgsDto::parse($args);
+        foreach ($this->getPivotData($entity, $argsDto->linkedEntities, $argsDto->relation) as $tableName => $items) {
+            foreach ($items as $item) {
+                $this->data[$tableName][] = $item;
+            }
+        }
         if (EntityAccessorService::isset($entity, $argsDto->relation)) {
             $linkedEntityIds = $argsDto->linkedEntities->mapWithKeys(fn ($entity) => [
                 EntityAccessorService::getId($entity) => EntityAccessorService::getId($entity)
@@ -68,7 +73,6 @@ class DetachPersistor implements Persistor
         $count = 0;
         foreach ($this->data as $table => $records) {
             foreach ($records as $record) {
-                // TODO: do we need to optimise this by somehow compiling a single DB statement per table?
                 $count += DB::table($table)->where($record)->delete();
             }
         }

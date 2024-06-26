@@ -55,7 +55,7 @@ readonly class DatetimeTZMapper implements Mapper
     public function deserialize(stdClass $item, LocalAliasingManager $aliasingManager): ?CarbonImmutable
     {
         $datetimeString = $item->{$aliasingManager->getSelectedColumnName($this->name)};
-        $tz = $item->{$aliasingManager->getSelectedColumnName($this->tzName)};
+        $tz = $item->{$aliasingManager->getSelectedColumnName($this->tzName)} ?? 'UTC';
         return is_null($datetimeString)
             ? null
             : CarbonImmutable::parse($datetimeString)->setTimezone($tz);

@@ -5,7 +5,6 @@ namespace AdventureTech\ORM\Persistence\Persistors;
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Persistence\Persistors\Dtos\PivotArgsDto;
-use AdventureTech\ORM\Persistence\Persistors\Dtos\AttachArgsDtoNew;
 use AdventureTech\ORM\Persistence\Persistors\Traits\HandlesPivotData;
 use Illuminate\Support\Facades\DB;
 

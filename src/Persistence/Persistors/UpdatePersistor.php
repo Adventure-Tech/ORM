@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Persistence\Persistors;
 
+use AdventureTech\ORM\Caching\ColumnTypeCache;
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\Persistence\Persistors\Traits\ChecksEntityType;
 use AdventureTech\ORM\Persistence\Persistors\Traits\SerializesEntities;
@@ -83,7 +84,7 @@ class UpdatePersistor implements Persistor
     {
         $tmpTableName = '_tmp_';
         $columns = collect(array_keys($this->values[0]));
-        $columnTypes = $this->getColumnTypes();
+        $columnTypes = ColumnTypeCache::get($this->entityReflection->getTableName());
         $placeholders = [];
         $placeholders[] = $columns->implode(static fn($column) => '?::' . $columnTypes[$column], ', ');
         $placeholderRow = $columns->implode(static fn($column) => '?', ', ');
@@ -117,28 +118,5 @@ class UpdatePersistor implements Persistor
             }
         }
         return $sql;
-    }
-
-    /**
-     * @return Collection<string,string>
-     * @throws JsonException
-     */
-    private function getColumnTypes(): Collection
-    {
-        // TODO: cache column types & flush cache when migration occurs
-        /** @var Collection<string,string> $columnTypes */
-        $columnTypes = DB::table('information_schema.columns')
-            ->select(['column_name', 'data_type'])
-            ->where('table_name', $this->entityReflection->getTableName())
-            ->orderBy('ordinal_position')
-            ->get()
-            ->pluck('data_type', 'column_name');
-        return $columnTypes;
-//        return collect(json_decode(
-//            '{"id":"bigint","name":"character varying","favourite_color":"character varying","created_at":"timestamp with time zone","updated_at":"timestamp with time zone","deleted_at":"timestamp with time zone"}',
-//            true,
-//            512,
-//            JSON_THROW_ON_ERROR
-//        ));
     }
 }

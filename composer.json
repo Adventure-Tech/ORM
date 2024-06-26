@@ -18,13 +18,13 @@
   ],
   "require": {
     "php": "^8.2",
-    "laravel/framework": "^10.0|^11.0"
+    "laravel/framework": "^11.0"
   },
   "require-dev": {
     "ext-pdo": "*",
     "jetbrains/phpstorm-attributes": "^1.0",
     "larastan/larastan": "^2.7",
-    "orchestra/testbench": "^8.5",
+    "orchestra/testbench": "^9.0",
     "pestphp/pest": "^2.0",
     "phpunit/phpunit": "^10.0",
     "squizlabs/php_codesniffer": "^3.7"
@@ -47,6 +47,13 @@
     "sort-packages": true,
     "allow-plugins": {
       "pestphp/pest-plugin": true
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "AdventureTech\\ORM\\Caching\\EventServiceProvider"
+      ]
     }
   }
 }

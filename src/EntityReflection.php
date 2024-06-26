@@ -16,6 +16,7 @@ use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use AdventureTech\ORM\Repository\Repository;
 use ArgumentCountError;
 use Illuminate\Support\Collection;
+use Mockery\LegacyMockInterface;
 use Mockery\Mock;
 use ReflectionClass;
 use ReflectionException;
@@ -72,14 +73,14 @@ class EntityReflection
     }
 
     /**
-     * @var Mock|EntityReflection<object>|null
+     * @var LegacyMockInterface|null
      */
-    private static Mock|EntityReflection|null $fake;
+    private static LegacyMockInterface|null $fake;
 
     /**
-     * @return Mock|EntityReflection<object>
+     * @return LegacyMockInterface|EntityReflection<object>
      */
-    public static function fake(): Mock|EntityReflection
+    public static function fake(): LegacyMockInterface|EntityReflection
     {
         self::$fake = mock(self::class)->makePartial();
         return self::$fake;

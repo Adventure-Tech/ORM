@@ -11,6 +11,7 @@ use AdventureTech\ORM\Mapping\Relations\HasMany;
 use AdventureTech\ORM\Mapping\Relations\HasOne;
 use AdventureTech\ORM\Mapping\SoftDeletes\WithSoftDeletes;
 use Illuminate\Support\Collection;
+use JetBrains\PhpStorm\Deprecated;
 
 #[Entity]
 class User
@@ -26,6 +27,7 @@ class User
     public string $name;
 
     #[Column]
+    #[Deprecated]
     public ?string $favouriteColor;
 
     /**
@@ -53,11 +55,11 @@ class User
 
     public function getIdentifier(): ?int
     {
-        return $this->id ?? null;
+        return $this->identifier ?? null;
     }
 
     public function setIdentifier(int $id): void
     {
-        $this->id = $id;
+        $this->identifier = $id;
     }
 }

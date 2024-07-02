@@ -8,7 +8,7 @@ namespace AdventureTech\ORM\Mapping\Mappers;
 
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\ColumnPropertyService;
-use AdventureTech\ORM\Exceptions\EnumSerializationException;
+use AdventureTech\ORM\Exceptions\MapperException;
 use ReflectionProperty;
 use stdClass;
 use UnitEnum;
@@ -39,7 +39,9 @@ readonly class EnumMapper implements Mapper
     public function serialize(mixed $value): array
     {
         if (!is_null($value) && !($value instanceof UnitEnum)) {
-            throw new EnumSerializationException();
+            throw new MapperException('Only native Enum can be serialized. Attempted serialization of type "'
+                . (is_object($value) ? get_class($value) : gettype($value))
+                . '".');
         }
         return [$this->name => $value->name ?? null];
     }

@@ -1,10 +1,6 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\BadlyConfiguredPersistenceManagerException;
-use AdventureTech\ORM\Exceptions\CannotRestoreHardDeletedRecordException;
-use AdventureTech\ORM\Exceptions\InvalidEntityTypeException;
-use AdventureTech\ORM\Exceptions\MissingIdValueException;
-use AdventureTech\ORM\Exceptions\RecordNotFoundException;
+use AdventureTech\ORM\Exceptions\PersistenceException;
 use AdventureTech\ORM\Persistence\PersistenceManager;
 use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
@@ -16,16 +12,16 @@ use Illuminate\Support\Facades\DB;
 test('Cannot use base persistence manager to restore entities', function () {
     $user = new User();
     expect(fn() => PersistenceManager::restore($user))->toThrow(
-        BadlyConfiguredPersistenceManagerException::class,
-        'Need to set $entity when extending'
+        Error::class,
+        'Cannot call abstract method AdventureTech\ORM\Persistence\PersistenceManager::getEntityClassName()'
     );
 });
 
 test('Cannot restore non-matching entity', function () {
     $user = new User();
     expect(fn() => PostPersistence::restore($user))->toThrow(
-        InvalidEntityTypeException::class,
-        'Invalid entity type used in persistence manager'
+        PersistenceException::class,
+        'Cannot restore entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" with persistence manager configured for entities of type "AdventureTech\ORM\Tests\TestClasses\Entities\Post".'
     );
 });
 
@@ -35,8 +31,8 @@ test('Cannot restore entity without soft-deletes enables', function () {
     PersonalDetailPersistence::insert($info);
     PersonalDetailPersistence::delete($info);
     expect(fn() => PersonalDetailPersistence::restore($info))->toThrow(
-        CannotRestoreHardDeletedRecordException::class,
-        'Cannot restore entity without soft-deletes'
+        PersistenceException::class,
+        'Cannot restore entity without soft-deletes.'
     );
 });
 
@@ -64,16 +60,17 @@ test('Trying to restore entity without ID set leads exception', function () {
     $user = new User();
     $user->name = 'Name';
     expect(fn() => UserPersistence::restore($user))->toThrow(
-        MissingIdValueException::class,
-        'Must set ID column when restoring'
+        PersistenceException::class,
+        'Must set ID column when restoring entities.'
     );
 });
 
 test('Trying to restore non-existing record leads to exception', function () {
     $user = new User();
     $user->setIdentifier(1);
+    $user->name = 'I do not exist';
     expect(fn() => UserPersistence::restore($user))->toThrow(
-        RecordNotFoundException::class,
-        'Could not restore entity'
+        PersistenceException::class,
+        'Could not restore all entities. Restored 0 out of 1.'
     );
 });

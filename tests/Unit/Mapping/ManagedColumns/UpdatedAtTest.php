@@ -1,6 +1,5 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\InvalidTypeException;
 use AdventureTech\ORM\Mapping\ManagedColumns\UpdatedAt;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;

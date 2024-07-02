@@ -20,7 +20,10 @@ test('Trying to findOrFail a filtered-out record results in exception', function
     $id = DB::table('users')->insertGetId(['name' => 'Name']);
     $filter = new Where('name', IS::NOT_EQUAL, 'Name');
     $repo = Repository::new(User::class)->filter($filter);
-    expect(fn() => $repo->findOrFail($id))->toThrow(EntityNotFoundException::class);
+    expect(fn() => $repo->findOrFail($id))->toThrow(
+        EntityNotFoundException::class,
+        'Failed to find entity of type "AdventureTech\ORM\Tests\TestClasses\Entities\User" with id "1".'
+    );
 });
 
 test('Repositories allow filtering of the results', function () {

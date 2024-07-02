@@ -1,11 +1,19 @@
 <?php
 
 use AdventureTech\ORM\Factories\Factory;
+use AdventureTech\ORM\Mapping\Columns\Column;
+use AdventureTech\ORM\Mapping\Entity;
+use AdventureTech\ORM\Mapping\Id;
 use AdventureTech\ORM\Tests\TestClasses\BackedEnum;
-use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+
+beforeEach(function () {
+    Factory::resetFakers(Post::class);
+});
 
 test('Can create single entity', function () {
     $user = Factory::new(User::class)->create();
@@ -98,7 +106,6 @@ test('Can reuse factories', function () {
 });
 
 test('Can generate unique values via faker in factories', function () {
-    Factory::resetFakers(Post::class);
     $underLimit = fn() => Factory::new(Post::class)->createMultiple(91);
     $overLimit = fn() => Factory::new(Post::class)->createMultiple(1);
     expect($underLimit)->not->toThrow(OverflowException::class)
@@ -110,7 +117,45 @@ test('Can generate unique values via faker in factories', function () {
 });
 
 test('Factories uses default values if set in the entity', function () {
-    $entities = Factory::new(PersonalDetails::class)->createMultiple(10);
+    $fooEntityClass = new  #[Entity] class ()
+    {
+        #[Id]
+        #[Column]
+        public int $id;
+        #[Column]
+        public string $string;
+        #[Column]
+        public int $int;
+        #[Column]
+        public array $array;
+        #[Column]
+        public float $float;
+        #[Column]
+        public bool $bool;
+        #[Column]
+        public CarbonImmutable $carbonImmutable;
+    };
+    $entity = Factory::new($fooEntityClass::class)->make();
+    expect($entity)
+        ->int->toBeInt()
+        ->string->toBeString()
+        ->bool->toBeBool()
+        ->float->toBeFloat()
+        ->array->toBeArray()
+        ->carbonImmutable->toBeInstanceOf(CarbonImmutable::class);
+});
 
-    expect($entities->pluck('country'))->each->toBe('NOR');
+test('Factories throws exception if no default provided for a given type', function () {
+    $fooEntityClass = new  #[Entity] class ()
+    {
+        #[Id]
+        #[Column]
+        public int $id;
+        #[Column]
+        public Carbon $bar;
+    };
+    expect(fn() => Factory::new($fooEntityClass::class)->make())->toThrow(
+        \AdventureTech\ORM\Exceptions\FactoryException::class,
+        'No default for type "Carbon\Carbon" of property "bar". Make sure to register a value in a custom factory class.'
+    );
 });

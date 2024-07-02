@@ -7,7 +7,7 @@
 namespace AdventureTech\ORM\Mapping\Mappers;
 
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
-use AdventureTech\ORM\Exceptions\JSONDeserializationException;
+use AdventureTech\ORM\Exceptions\MapperException;
 use JsonException;
 use stdClass;
 
@@ -15,7 +15,7 @@ use stdClass;
  * @implements SimpleMapper<array>
  */
 
-readonly class JSONMapper implements SimpleMapper
+readonly class JsonMapper implements SimpleMapper
 {
     use WithDefaultMapperMethods;
 
@@ -39,7 +39,7 @@ readonly class JSONMapper implements SimpleMapper
     {
         $json = json_decode($item->{$aliasingManager->getSelectedColumnName($this->name)}, true);
         if (!is_array($json) && !is_null($json)) {
-            throw new JSONDeserializationException();
+            throw new MapperException(sprintf('Failed to deserialize "%s" to JSON.', $item->{$aliasingManager->getSelectedColumnName($this->name)}));
         }
         return $json;
     }

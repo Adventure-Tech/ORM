@@ -2,10 +2,10 @@
 
 namespace AdventureTech\ORM\AliasingManagement;
 
-class TableAliasingDTO
+class TableAliasingDto
 {
     /**
-     * @var array<string,TableAliasingDTO>
+     * @var array<string,TableAliasingDto>
      */
     public array $children = [];
     /**
@@ -25,7 +25,7 @@ class TableAliasingDTO
         }
         $this->columns = $array;
     }
-    public function addChild(string $key, TableAliasingDTO $child): void
+    public function addChild(string $key, TableAliasingDto $child): void
     {
         $this->children[$key] = $child;
     }

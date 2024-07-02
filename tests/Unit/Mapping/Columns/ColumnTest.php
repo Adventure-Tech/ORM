@@ -4,7 +4,7 @@ use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Mappers\DatetimeMapper;
 use AdventureTech\ORM\Mapping\Mappers\DefaultMapper;
-use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
+use AdventureTech\ORM\Mapping\Mappers\JsonMapper;
 use AdventureTech\ORM\Mapping\Mappers\SimpleMapper;
 use AdventureTech\ORM\Mapping\Mappers\EnumMapper;
 use AdventureTech\ORM\Mapping\Mappers\WithDefaultMapperMethods;
@@ -22,7 +22,7 @@ it('returns the correct mappers', function (string $propertyName, string $mapper
     ['stringProperty', DefaultMapper::class],
     ['intProperty', DefaultMapper::class],
     ['datetimeProperty', DatetimeMapper::class],
-    ['jsonProperty', JSONMapper::class],
+    ['jsonProperty', JsonMapper::class],
 ]);
 
 it('correctly infers the DB column name from the property name', function () {

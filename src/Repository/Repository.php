@@ -11,8 +11,7 @@ use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
 use AdventureTech\ORM\EntityAccessorService;
 use AdventureTech\ORM\EntityReflection;
 use AdventureTech\ORM\Exceptions\EntityNotFoundException;
-use AdventureTech\ORM\Exceptions\InvalidRelationException;
-use AdventureTech\ORM\Mapping\Linkers\Linker;
+use AdventureTech\ORM\Exceptions\EntityReflectionException;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Repository\Filters\Filter;
 use AdventureTech\ORM\Repository\Filters\WhereNull;
@@ -23,7 +22,7 @@ use JetBrains\PhpStorm\NoReturn;
 use stdClass;
 
 /**
- * @template T of object
+ * @template TEntity of object
  */
 class Repository
 {
@@ -32,7 +31,7 @@ class Repository
     public readonly string $entity;
     private int|string|null $resolvingId = null;
     /**
-     * @var T
+     * @var TEntity
      */
     private object $resolvingEntity;
     private bool $includeDeleted = false;
@@ -42,7 +41,7 @@ class Repository
      */
     private array $filters = [];
     /**
-     * @var array<string,LinkedRepository<T,object>>
+     * @var array<string,LinkedRepository<TEntity,object>>
      */
     private array $with = [];
 
@@ -88,7 +87,7 @@ class Repository
     }
 
     /**
-     * @param  EntityReflection<T>  $entityReflection
+     * @param  EntityReflection<TEntity>  $entityReflection
      * @param  AliasingManager  $aliasingManager
      * @param  string  $localRoot
      */
@@ -102,7 +101,7 @@ class Repository
     }
 
     /**
-     * @return Collection<int|string,T>
+     * @return Collection<int|string,TEntity>
      */
     public function get(): Collection
     {
@@ -112,7 +111,7 @@ class Repository
     /**
      * @param  int|string  $id
      *
-     * @return T|null
+     * @return TEntity|null
      */
     public function find(int|string $id)
     {
@@ -127,19 +126,19 @@ class Repository
     /**
      * @param  int|string  $id
      *
-     * @return T
+     * @return TEntity
      */
     public function findOrFail(int|string $id)
     {
         $entity = $this->find($id);
         if (is_null($entity)) {
-            throw new EntityNotFoundException($this->entityReflection->getClass(), $id);
+            throw new EntityNotFoundException('Failed to find entity of type "' . $this->entityReflection->getClass() . '" with id "' . $id . '".');
         }
         return $entity;
     }
 
     /**
-     * @return T|null
+     * @return TEntity|null
      */
     public function first()
     {
@@ -148,13 +147,13 @@ class Repository
     }
 
     /**
-     * @return T
+     * @return TEntity
      */
     public function firstOrFail()
     {
         $entity = $this->first();
         if (is_null($entity)) {
-            throw new EntityNotFoundException($this->entityReflection->getClass());
+            throw new EntityNotFoundException('Failed to load any entities of type "' . $this->entityReflection->getClass() . '" matching the filter criteria.');
         }
         return $entity;
     }
@@ -182,7 +181,7 @@ class Repository
      * @param  string         $relation
      * @param  callable|null  $callable
      *
-     * @return $this<T>
+     * @return $this
      */
     public function with(string $relation, callable $callable = null): static
     {
@@ -197,16 +196,11 @@ class Repository
                 return $this;
             }
             if (isset($relations[1])) {
-                $callable = fn(self $repository) => $repository->with($relations[1]);
+                $callable = static fn(self $repository) => $repository->with($relations[1]);
             }
         }
 
-        if (!$this->entityReflection->getLinkers()->has($relation)) {
-            throw new InvalidRelationException('Invalid relation used in with clause [tried to load relation "' . $relation . '"]');
-        }
-
-        /** @var Linker<T,object> $linker */
-        $linker = $this->entityReflection->getLinkers()->get($relation);
+        $linker = $this->entityReflection->getLinker($relation);
 
         $repository = self::internalNew(
             $linker->getTargetEntity(),
@@ -316,7 +310,7 @@ class Repository
 
     /**
      * @param  Collection<int|string,stdClass>  $data
-     * @return Collection<int|string,T>
+     * @return Collection<int|string,TEntity>
      */
     private function mapToEntities(Collection $data): Collection
     {
@@ -329,14 +323,14 @@ class Repository
     }
 
     /**
-     * @var array<int|string,T>
+     * @var array<int|string,TEntity>
      */
     private array $resolved = [];
 
     /**
      * @param  stdClass  $item
      * @param  bool  $reset
-     * @return T|null
+     * @return TEntity|null
      */
     private function resolve(stdClass $item, bool $reset = false): ?object
     {
@@ -379,11 +373,9 @@ class Repository
     {
         if (!$this->includeDeleted) {
             foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
-                /** @var Mapper<mixed> $mapper */
-                $mapper = $this->entityReflection->getMappers()->get($property);
-                // TODO: remove this from mapper
-                $columnName = $mapper->getColumnNames()[0];
-                $this->filters[] = new WhereNull($columnName);
+                foreach ($this->entityReflection->getMappers()[$property]->getColumnNames() as $columnName) {
+                    $this->filters[] = new WhereNull($columnName);
+                }
             }
         }
     }
@@ -393,11 +385,11 @@ class Repository
      */
     private function getOrderBys(): array
     {
-        $orderBys = $this->orderBys;
+        $orderBys = [];
         foreach ($this->with as $linkedRepository) {
-            $orderBys = array_merge($orderBys, $linkedRepository->repository->getOrderBys());
+            $orderBys[] = $linkedRepository->repository->getOrderBys();
         }
-        return $orderBys;
+        return array_merge($this->orderBys, ... $orderBys);
     }
 
     private function applyLimitAndOffset(Builder $query, ?int $limit, ?int $offset): Builder

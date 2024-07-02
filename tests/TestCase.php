@@ -2,6 +2,7 @@
 
 namespace AdventureTech\ORM\Tests;
 
+use AdventureTech\ORM\Caching\EventServiceProvider;
 use Carbon\CarbonTimeZone;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -23,5 +24,12 @@ abstract class TestCase extends Orchestra
         $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
         DB::statement(sprintf("set timezone TO '%s';", self::TIMEZONE));
         self::setAppTimezone(self::TIMEZONE);
+    }
+
+    protected function getPackageProviders($app): array
+    {
+        return [
+            EventServiceProvider::class,
+        ];
     }
 }

@@ -2,10 +2,7 @@
 
 namespace AdventureTech\ORM;
 
-use AdventureTech\ORM\Exceptions\EntityInstantiationException;
-use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
-use AdventureTech\ORM\Exceptions\MissingIdException;
-use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
+use AdventureTech\ORM\Exceptions\EntityReflectionException;
 use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Mapping\Columns\ColumnAnnotation;
 use AdventureTech\ORM\Mapping\Entity;
@@ -19,18 +16,19 @@ use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
 use AdventureTech\ORM\Repository\Repository;
 use ArgumentCountError;
 use Illuminate\Support\Collection;
+use Mockery\LegacyMockInterface;
 use Mockery\Mock;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
 
 /**
- * @template T of object
+ * @template TEntity of object
  */
 class EntityReflection
 {
     /**
-     * @var ReflectionClass<T>
+     * @var ReflectionClass<TEntity>
      */
     private ReflectionClass $reflectionClass;
 
@@ -40,11 +38,11 @@ class EntityReflection
     private Collection $mappers;
 
     /**
-     * @var Collection<string, Linker<T,object>>
+     * @var Collection<string, Linker<TEntity,object>>
      */
     private Collection $linkers;
     /**
-     * @var Entity<T>
+     * @var Entity<TEntity>
      */
     private Entity $entityAttribute;
     private string $id;
@@ -75,14 +73,14 @@ class EntityReflection
     }
 
     /**
-     * @var Mock|EntityReflection<object>|null
+     * @var LegacyMockInterface|null
      */
-    private static Mock|EntityReflection|null $fake;
+    private static LegacyMockInterface|null $fake;
 
     /**
-     * @return Mock|EntityReflection<object>
+     * @return LegacyMockInterface|EntityReflection<object>
      */
-    public static function fake(): Mock|EntityReflection
+    public static function fake(): LegacyMockInterface|EntityReflection
     {
         self::$fake = mock(self::class)->makePartial();
         return self::$fake;
@@ -94,19 +92,19 @@ class EntityReflection
     }
 
     /**
-     * @param  class-string<T>  $class
+     * @param  class-string<TEntity>  $class
      */
     private function __construct(private readonly string $class)
     {
         try {
             /** @throws ReflectionException */
-            $this->reflectionClass = new RefLectionClass($class);
-        } catch (ReflectionException) {
-            throw new EntityReflectionInstantiationException($class);
+            $this->reflectionClass = new ReflectionClass($class);
+        } catch (ReflectionException $reflectionException) {
+            throw new EntityReflectionException(sprintf('Failed to reflect "%s".', $class), previous: $reflectionException);
         }
         $entityAttributes = $this->reflectionClass->getAttributes(Entity::class);
         if (count($entityAttributes) !== 1) {
-            throw new EntityReflectionInstantiationException($class);
+            throw new EntityReflectionException(sprintf('Missing #[Entity] attribute annotation on "%s".', $class));
         }
 
         $this->entityAttribute = $entityAttributes[0]->newInstance();
@@ -118,36 +116,36 @@ class EntityReflection
         foreach ($this->reflectionClass->getProperties() as $property) {
             foreach ($property->getAttributes() as $attribute) {
                 $attributeInstance = $attribute->newInstance();
-                if ($attributeInstance instanceof Id) {
-                    $this->setId($property->getName(), $attributeInstance);
-                } elseif ($attributeInstance instanceof ColumnAnnotation) {
-                    $this->registerMapper($attributeInstance, $property);
-                } elseif ($attributeInstance instanceof RelationAnnotation) {
-                    $this->registerLinker($attributeInstance, $property);
-                } elseif ($attributeInstance instanceof ManagedColumnAnnotation) {
-                    $this->managedColumns->put($property->getName(), $attributeInstance);
-                } elseif ($attributeInstance instanceof SoftDeleteAnnotation) {
-                    $this->softDeletes->put($property->getName(), $attributeInstance);
-                }
+                match (true) {
+                    $attributeInstance instanceof Id => $this->setId($property->getName(), $attributeInstance),
+                    $attributeInstance instanceof ColumnAnnotation => $this->registerMapper($property, $attributeInstance),
+                    $attributeInstance instanceof RelationAnnotation => $this->registerLinker($property, $attributeInstance),
+                    $attributeInstance instanceof ManagedColumnAnnotation => $this->managedColumns->put($property->getName(), $attributeInstance),
+                    $attributeInstance instanceof SoftDeleteAnnotation => $this->softDeletes->put($property->getName(), $attributeInstance),
+                    default => true,
+                };
             }
         }
         if (!isset($this->id)) {
-            throw new MissingIdException('Entity must have an ID column');
+            throw new EntityReflectionException(sprintf(
+                'ID column missing on "%s". Annotate a property with the #[Id] attribute.',
+                $this->class
+            ));
         }
         if (!$this->mappers->has($this->id)) {
-            throw new MissingIdException('ID column of an entity must be mapper via a column mapper annotation');
+            throw new EntityReflectionException(sprintf('Missing mapper annotation for the ID column "%s" on "%s"', $this->id, $this->class));
         }
     }
 
     /**
-     * @return T
+     * @return TEntity
      */
     public function newInstance()
     {
         try {
             return $this->reflectionClass->newInstance();
         } catch (ReflectionException | ArgumentCountError $e) {
-            throw new EntityInstantiationException($this->class, $e);
+            throw new EntityReflectionException(sprintf('Failed to instantiate entity of type "%s".', $this->class), previous: $e);
         }
     }
 
@@ -185,15 +183,34 @@ class EntityReflection
     }
 
     /**
-     * @return Collection<string,Linker<T,object>>
+     * @return Collection<string,Linker<TEntity,object>&OwningLinker>
      */
-    public function getLinkers(): Collection
+    public function getOwningLinkers(): Collection
     {
-        return $this->linkers;
+        /** @var Collection<string,Linker<TEntity,object>&OwningLinker> $owningLinkers */
+        $owningLinkers = $this->linkers->filter(fn(Linker $linker) => $linker instanceof OwningLinker);
+        return $owningLinkers;
     }
 
     /**
-     * @return class-string<T>
+     * @param  string  $relation
+     * @return Linker<TEntity,object>
+     */
+    public function getLinker(string $relation): Linker
+    {
+        if (!$this->linkers->has($relation)) {
+            throw new EntityReflectionException(sprintf(
+                'Missing mapping for relation "%s" on "%s". Mapped relations are: "%s".',
+                $relation,
+                $this->class,
+                $this->linkers->keys()->implode('", "')
+            ));
+        }
+        return $this->linkers[$relation];
+    }
+
+    /**
+     * @return class-string<TEntity>
      */
     public function getClass(): string
     {
@@ -254,11 +271,10 @@ class EntityReflection
     private function setId(string $property, Id $attribute): void
     {
         if (isset($this->id)) {
-            throw new MultipleIdColumnsException();
+            throw new EntityReflectionException(sprintf('Multiple ID columns defined on "%s" which is not supported.', $this->class));
         }
         $this->id = $property;
         $this->hasAutogeneratedId = $attribute->autogenerated;
-        // TODO: what if ID column has no column annotation?
     }
 
     /**
@@ -266,7 +282,7 @@ class EntityReflection
      * @param  ReflectionProperty  $property
      * @return void
      */
-    private function registerMapper(ColumnAnnotation $column, ReflectionProperty $property): void
+    private function registerMapper(ReflectionProperty $property, ColumnAnnotation $column): void
     {
         $this->mappers->put(
             $property->getName(),
@@ -275,11 +291,11 @@ class EntityReflection
     }
 
     /**
-     * @param  RelationAnnotation<T,object>  $relationAnnotation
+     * @param  RelationAnnotation<TEntity,object>  $relationAnnotation
      * @param  ReflectionProperty  $property
      * @return void
      */
-    private function registerLinker(RelationAnnotation $relationAnnotation, ReflectionProperty $property): void
+    private function registerLinker(ReflectionProperty $property, RelationAnnotation $relationAnnotation): void
     {
         $propertyName = $property->getName();
         /** @var class-string $propertyType */

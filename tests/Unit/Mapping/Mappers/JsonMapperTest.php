@@ -4,21 +4,21 @@ namespace AdventureTech\ORM\Tests\Unit\Mapping\Mappers;
 
 use AdventureTech\ORM\AliasingManagement\AliasingManager;
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
-use AdventureTech\ORM\Exceptions\JSONDeserializationException;
-use AdventureTech\ORM\Mapping\Mappers\JSONMapper;
+use AdventureTech\ORM\Exceptions\MapperException;
+use AdventureTech\ORM\Mapping\Mappers\JsonMapper;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 use Mockery;
 use ReflectionProperty;
 use stdClass;
 
-test('The json mapper has a single column', function (JSONMapper $mapper) {
+test('The json mapper has a single column', function (JsonMapper $mapper) {
     expect($mapper->getColumnNames())
         ->toBeArray()
         ->toEqualCanonicalizing(['db_column_name']);
 })->with('mapper');
 
 test('The json mapper can serialize an entity', function (
-    JSONMapper $mapper,
+    JsonMapper $mapper,
     ?array $value,
     array $expected
 ) {
@@ -35,7 +35,7 @@ test('The json mapper can serialize an entity', function (
     ]);
 
 test('The json mapper can deserialize an item with a null value', function (
-    JSONMapper $mapper,
+    JsonMapper $mapper,
     LocalAliasingManager $manager,
     stdClass $item,
 ) {
@@ -49,7 +49,7 @@ test('The json mapper can deserialize an item with a null value', function (
     ]);
 
 test('The json mapper can deserialize an item with a non-null value', function (
-    JSONMapper $mapper,
+    JsonMapper $mapper,
     LocalAliasingManager $manager,
     stdClass $item,
     array $result
@@ -67,26 +67,27 @@ test('The json mapper can deserialize an item with a non-null value', function (
     ]);
 
 test('The json mapper throws an exception if the item cannot be deserialized to a php array', function (
-    JSONMapper $mapper,
+    JsonMapper $mapper,
     LocalAliasingManager $manager,
-    stdClass $item
+    stdClass $item,
+    string $message
 ) {
-    expect(fn() =>$mapper->deserialize($item, $manager))->toThrow(
-        JSONDeserializationException::class,
-        'Invalid JSON deserialized'
+    expect(fn() => $mapper->deserialize($item, $manager))->toThrow(
+        MapperException::class,
+        $message
     );
 })
     ->with('mapper')
     ->with('aliasing manager')
     ->with([
-        'true' => [(object) ['db_column_name' => 'true']],
-        'false' => [(object) ['db_column_name' => 'false']],
+        'true' => [(object) ['db_column_name' => 'true'], 'Failed to deserialize "true" to JSON.'],
+        'false' => [(object) ['db_column_name' => 'false'], 'Failed to deserialize "false" to JSON.'],
     ]);
 
 
 dataset('mapper', function () {
     $property = new ReflectionProperty(MapperTestClass::class, 'jsonProperty');
-    yield new JSONMapper('db_column_name', $property);
+    yield new JsonMapper('db_column_name', $property);
 });
 
 dataset('aliasing manager', function () {

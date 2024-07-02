@@ -13,9 +13,12 @@ trait ToOne
         // skip if received null for non-nullable loaded entity
         if (is_null($relatedEntity) && !EntityReflection::new($currentEntity::class)->allowsNull($this->relation)) {
             throw new EntityNotFoundException(
-                $currentEntity::class,
-                EntityAccessorService::getId($currentEntity),
-                'Could not load relation "' . $this->relation . '"'
+                sprintf(
+                    'Failed to load relation "%s" of entity "%s" with id "%s".',
+                    $this->relation,
+                    get_class($currentEntity),
+                    EntityAccessorService::getId($currentEntity)
+                )
             );
         }
         EntityAccessorService::set($currentEntity, $this->relation, $relatedEntity);

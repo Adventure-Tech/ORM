@@ -2,14 +2,14 @@
 
 namespace AdventureTech\ORM\AliasingManagement;
 
-use AdventureTech\ORM\Exceptions\InvalidColumnExpressionException;
+use AdventureTech\ORM\Exceptions\AliasingException;
 
 class AliasingManager
 {
     public const SEPARATOR = '/';
     public const PARENT_SIGNIFIER = '..';
 
-    private TableAliasingDTO $dto;
+    private TableAliasingDto $dto;
     private int $aliasCounter = 0;
 
     /**
@@ -18,7 +18,7 @@ class AliasingManager
      */
     public function __construct(string $rootTableName, array $columns)
     {
-        $this->dto = new TableAliasingDTO($rootTableName, $columns);
+        $this->dto = new TableAliasingDto($rootTableName, $columns);
     }
 
     /**
@@ -28,7 +28,7 @@ class AliasingManager
      */
     public function addRelation(string $newRoot, array $columns): void
     {
-        $newDto = new TableAliasingDTO('_' . $this->aliasCounter++ . '_', $columns);
+        $newDto = new TableAliasingDto('_' . $this->aliasCounter++ . '_', $columns);
 
         $path = explode(self::SEPARATOR, $newRoot);
         $newRelation = array_pop($path);
@@ -61,32 +61,38 @@ class AliasingManager
     }
 
     /**
-     * @param  TableAliasingDTO  $dto
+     * @param  TableAliasingDto  $dto
      * @return array<int,string>
      */
-    private function extractColumnNames(TableAliasingDTO $dto): array
+    private function extractColumnNames(TableAliasingDto $dto): array
     {
         $columns = [];
         foreach ($dto->columns as $column) {
             $columns[] = $dto->alias . '.' . $column . ' as ' . $dto->alias . $column;
         }
+        $childrenColumns = [];
         foreach ($dto->children as $item) {
-            $columns = array_merge($columns, $this->extractColumnNames($item));
+            $childrenColumns[] = $this->extractColumnNames($item);
         }
-        return $columns;
+        return array_merge($columns, ...$childrenColumns);
     }
 
     /**
      * @param  array<int,string>  $path
-     * @return TableAliasingDTO
+     * @return TableAliasingDto
      */
-    private function resolvePath(array $path): TableAliasingDTO
+    private function resolvePath(array $path): TableAliasingDto
     {
         $dto = $this->dto;
         array_shift($path);
         foreach ($path as $key) {
             if (!isset($dto->children[$key])) {
-                throw new  InvalidColumnExpressionException('Tried to access relation which was not added');
+                throw new  AliasingException(
+                    'Failed to resolve key "' . $key . '". ' . (
+                        count($dto->children) > 0
+                            ? 'Available keys are: "' . implode('", "', array_keys($dto->children)) . '".'
+                            : 'No keys available.')
+                );
             }
             $dto = $dto->children[$key];
         }

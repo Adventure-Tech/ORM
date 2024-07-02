@@ -2,7 +2,6 @@
 
 namespace AdventureTech\ORM\Mapping\ManagedColumns;
 
-use AdventureTech\ORM\Exceptions\InvalidTypeException;
 use Attribute;
 use Carbon\CarbonImmutable;
 

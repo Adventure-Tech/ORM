@@ -12,13 +12,13 @@ return new class () extends Migration {
             $table->id();
             $table->string('title');
             $table->text('content');
+            $table->enum('number', ['ONE', 'TWO']);
             $table->timestampTz('published_at')->nullable();
             $table->string('published_tz')->nullable();
-            $table->enum('number', ['ONE', 'TWO']);
-            $table->foreignId('author')->constrained('users');
-            $table->foreignId('editor')->nullable()->constrained('users');
             $table->timestampsTz();
             $table->softDeletesTz();
+            $table->foreignId('author')->constrained('users');
+            $table->foreignId('editor')->nullable()->constrained('users');
         });
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-use AdventureTech\ORM\Exceptions\InvalidRelationException;
+use AdventureTech\ORM\Exceptions\EntityReflectionException;
 use AdventureTech\ORM\Factories\Factory;
 use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Comment;
@@ -94,10 +94,10 @@ test('Factory with method guards against invalid relations', function (
     string $message
 ) {
     expect(fn() => Factory::new(User::class)->with($relation, $reverseRelations))
-        ->toThrow(InvalidRelationException::class, $message);
+        ->toThrow(EntityReflectionException::class, $message);
 })->with([
-    ['invalid', 'user', 'Invalid relation used in "with" method [invalid]'],
-    ['comments', 'user', 'Invalid reverse relation used in "with" method [user]'],
+    ['invalid', 'user', 'Missing mapping for relation "invalid" on "AdventureTech\ORM\Tests\TestClasses\Entities\User". Mapped relations are: "posts", "comments", "personalDetails", "friends".'],
+    ['comments', 'user', 'Missing mapping for relation "user" on "AdventureTech\ORM\Tests\TestClasses\Entities\Comment". Mapped relations are: "author", "post".'],
 ]);
 
 test('Factories allow resetting of with method', function () {

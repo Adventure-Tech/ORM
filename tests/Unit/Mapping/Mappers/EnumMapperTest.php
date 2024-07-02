@@ -2,7 +2,7 @@
 
 use AdventureTech\ORM\AliasingManagement\AliasingManager;
 use AdventureTech\ORM\AliasingManagement\LocalAliasingManager;
-use AdventureTech\ORM\Exceptions\EnumSerializationException;
+use AdventureTech\ORM\Exceptions\MapperException;
 use AdventureTech\ORM\Mapping\Mappers\EnumMapper;
 use AdventureTech\ORM\Tests\TestClasses\MapperTestClass;
 use AdventureTech\ORM\Tests\TestClasses\UnitEnum;
@@ -31,17 +31,16 @@ it('can serialize an entity', function (
 it('throws error when trying to serialize value that is not backed enum', function (
     EnumMapper $mapper,
     mixed $value,
-    array $expected
+    string $message,
 ) {
-    expect($mapper->serialize($value))
-        ->toBeArray()
-        ->toEqualCanonicalizing($expected);
+    expect(fn() => $mapper->serialize($value))
+        ->toThrow(MapperException::class, $message);
 })
     ->with('mapper')
     ->with([
-        'string value' => ['foo', ['db_column_name' => null]],
-        'object value' => [(object) ['foo' => 'bar'], ['db_column_name' => null]],
-    ])->throws(EnumSerializationException::class);
+        'string value' => ['foo', 'Only native Enum can be serialized. Attempted serialization of type "string".'],
+        'object value' => [(object) ['foo' => 'bar'], 'Only native Enum can be serialized. Attempted serialization of type "stdClass".'],
+    ]);
 
 it('can deserialize an item with a null value', function (
     EnumMapper $mapper,

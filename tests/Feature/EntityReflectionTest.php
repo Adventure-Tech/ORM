@@ -1,19 +1,19 @@
 <?php
 
 use AdventureTech\ORM\EntityReflection;
-use AdventureTech\ORM\Exceptions\EntityInstantiationException;
-use AdventureTech\ORM\Exceptions\EntityReflectionInstantiationException;
-use AdventureTech\ORM\Exceptions\MissingIdException;
-use AdventureTech\ORM\Exceptions\MultipleIdColumnsException;
-use AdventureTech\ORM\Exceptions\UnsupportedReflectionTypeException;
+use AdventureTech\ORM\Exceptions\EntityReflectionException;
 use AdventureTech\ORM\Mapping\Columns\Column;
 use AdventureTech\ORM\Mapping\Entity;
 use AdventureTech\ORM\Mapping\Id;
+use AdventureTech\ORM\Mapping\Linkers\BelongsToLinker;
 use AdventureTech\ORM\Mapping\Linkers\Linker;
+use AdventureTech\ORM\Mapping\Linkers\OwningLinker;
 use AdventureTech\ORM\Mapping\ManagedColumns\ManagedColumnAnnotation;
 use AdventureTech\ORM\Mapping\Mappers\Mapper;
 use AdventureTech\ORM\Mapping\Relations\BelongsTo;
 use AdventureTech\ORM\Mapping\SoftDeletes\SoftDeleteAnnotation;
+use AdventureTech\ORM\Tests\TestClasses\Entities\Account;
+use AdventureTech\ORM\Tests\TestClasses\Entities\PersonalDetails;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use AdventureTech\ORM\Tests\TestClasses\Factories\PostFactory;
@@ -35,16 +35,16 @@ test('Entity reflection supports faking', function () {
 test('invalid class name throws exception', function () {
     expect(fn() => EntityReflection::new('invalid'))
         ->toThrow(
-            EntityReflectionInstantiationException::class,
-            'EntityReflection class can only be instantiated for a valid entity [attempted instantiation for "invalid"]'
+            EntityReflectionException::class,
+            'Failed to reflect "invalid".'
         );
 });
 
 test('class without entity annotation throws exception', function () {
     expect(fn() => EntityReflection::new(stdClass::class))
         ->toThrow(
-            EntityReflectionInstantiationException::class,
-            'EntityReflection class can only be instantiated for a valid entity [attempted instantiation for "stdClass"]'
+            EntityReflectionException::class,
+            'Missing #[Entity] attribute annotation on "stdClass".'
         );
 });
 
@@ -76,12 +76,28 @@ test('Can get list of mappers correctly', function () {
         ->each->toBeInstanceOf(Mapper::class);
 });
 
-test('Can get list of linkers correctly', function () {
-    $entityReflection = EntityReflection::new(User::class);
-    expect($entityReflection->getLinkers())
+test('Can get list of owning linkers correctly', function () {
+    $entityReflection = EntityReflection::new(Post::class);
+    expect($entityReflection->getOwningLinkers())
         ->toBeInstanceOf(Collection::class)
-        ->toHaveCount(4)
-        ->each->toBeInstanceOf(Linker::class);
+        ->toHaveCount(2)
+        ->each->toBeInstanceOf(Linker::class)->toBeInstanceOf(OwningLinker::class);
+});
+
+test('Can get the linker for a given relation correctly', function () {
+    $entityReflection = EntityReflection::new(Post::class);
+    expect($entityReflection->getLinker('author'))
+        ->toBeInstanceOf(BelongsToLinker::class)
+        ->getTargetEntity()->toBe(User::class)
+        ->getForeignKey()->toBe('author');
+});
+
+test('Throws exception if no linker exists for a given relation', function () {
+    $entityReflection = EntityReflection::new(Post::class);
+    expect(fn() => $entityReflection->getLinker('invalid'))->toThrow(
+        EntityReflectionException::class,
+        'Missing mapping for relation "invalid" on "AdventureTech\ORM\Tests\TestClasses\Entities\Post". Mapped relations are: "author", "editor", "comments".'
+    );
 });
 
 test('Can get class name correctly', function () {
@@ -161,7 +177,10 @@ test('Entity with multiple id columns leads to exception', function () {
         public string $b;
     };
     expect(fn() => EntityReflection::new($class::class))
-        ->toThrow(MultipleIdColumnsException::class, 'Cannot have multiple ID columns');
+        ->toThrow(
+            EntityReflectionException::class,
+            'Multiple ID columns defined on "' . $class::class . '" which is not supported.'
+        );
 });
 
 test('Properties annotated as relations must have type set', function () {
@@ -170,7 +189,7 @@ test('Properties annotated as relations must have type set', function () {
         public $a;
     };
     expect(fn() => EntityReflection::new($class::class))
-        ->toThrow(UnsupportedReflectionTypeException::class, 'Type hints are mandatory and must not be union or intersection types');
+        ->toThrow(EntityReflectionException::class, 'Type hints are mandatory and must not be union or intersection types');
 });
 
 
@@ -183,8 +202,7 @@ test('If entity instantiation fails an appropriate exception is thrown', functio
         }
     };
     $entityReflection = EntityReflection::new($class::class);
-    expect(fn () =>$entityReflection->newInstance())
-    ->toThrow(EntityInstantiationException::class);
+    expect(fn () => $entityReflection->newInstance())->toThrow(EntityReflectionException::class);
 });
 
 test('Entity reflection can check if property is nullable', function () {
@@ -213,7 +231,7 @@ test('Entity reflection null-check throws exception for property without type', 
     };
     $entityReflection = EntityReflection::new($class::class);
     expect(fn () => $entityReflection->allowsNull('a'))->toThrow(
-        UnsupportedReflectionTypeException::class,
+        EntityReflectionException::class,
         'Type hints are mandatory and must not be union or intersection types'
     );
 });
@@ -221,9 +239,9 @@ test('Entity reflection null-check throws exception for property without type', 
 test('Entity reflection requires ID annotation', function () {
     $class = new #[Entity] class {
     };
-    expect(fn () => EntityReflection::new($class::class))->toThrow(
-        MissingIdException::class,
-        'Entity must have an ID column'
+    expect(fn() => EntityReflection::new($class::class))->toThrow(
+        EntityReflectionException::class,
+        'ID column missing on "' . $class::class . '". Annotate a property with the #[Id] attribute.'
     );
 });
 
@@ -232,7 +250,23 @@ test('Entity reflection requires the ID column to be mapped', function () {
         #[ID] public int $id;
     };
     expect(fn () => EntityReflection::new($class::class))->toThrow(
-        MissingIdException::class,
-        'ID column of an entity must be mapper via a column mapper annotation'
+        EntityReflectionException::class,
+        'Missing mapper annotation for the ID column "id" on "' . $class::class . '"'
     );
 });
+
+test('Entity reflection exposes default value for property', function () {
+    $entityReflection = EntityReflection::new(PersonalDetails::class);
+    expect($entityReflection)
+        ->getDefaultValue('country')->toBe('NOR')
+        ->getDefaultValue('email')->toBeNull()
+        ->getDefaultValue('phone')->toBeNull();
+});
+
+test('Entity reflection has helper method to check for autogenerated ID', function (string $entity, bool $expected) {
+    $entityReflection = EntityReflection::new($entity);
+    expect($entityReflection)->hasAutogeneratedId()->toBe($expected);
+})->with([
+    [User::class, true],
+    [Account::class, false],
+]);

@@ -21,11 +21,11 @@ class ColumnTypeCache
         $cached =  Cache::get(self::getColumnTypesCacheKey(), []);
         if (!isset($cached[$table])) {
             $cached[$table] = DB::table('information_schema.columns')
-                ->select(['column_name', 'data_type'])
+                ->select(['column_name', 'udt_name'])
                 ->where('table_name', $table)
                 ->orderBy('ordinal_position')
                 ->get()
-                ->pluck('data_type', 'column_name')
+                ->pluck('udt_name', 'column_name')
                 ->toArray();
         }
         Cache::set(self::getColumnTypesCacheKey(), $cached);

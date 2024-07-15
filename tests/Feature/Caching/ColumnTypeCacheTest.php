@@ -15,22 +15,22 @@ test('Getting works correctly', function () {
     expect(Cache::get('adventure-tech.orm.cache.column-types'))->toBeNull()
         ->and($dbCount)->toBe(0)
         ->and(ColumnTypeCache::get('users'))->toEqual([
-            'id' => 'bigint',
-            'name' => 'character varying',
-            'favourite_color' => 'character varying',
-            'created_at' => 'timestamp with time zone',
-            'updated_at' => 'timestamp with time zone',
-            'deleted_at' => 'timestamp with time zone',
+            'id' => 'int8',
+            'name' => 'varchar',
+            'favourite_color' => 'varchar',
+            'created_at' => 'timestamptz',
+            'updated_at' => 'timestamptz',
+            'deleted_at' => 'timestamptz',
         ])
         ->and($dbCount)->toBe(1)
         ->and(Cache::get('adventure-tech.orm.cache.column-types'))->toHaveCount(1)->toHaveKey('users')
         ->and(ColumnTypeCache::get('users'))->toEqual([
-            'id' => 'bigint',
-            'name' => 'character varying',
-            'favourite_color' => 'character varying',
-            'created_at' => 'timestamp with time zone',
-            'updated_at' => 'timestamp with time zone',
-            'deleted_at' => 'timestamp with time zone',
+            'id' => 'int8',
+            'name' => 'varchar',
+            'favourite_color' => 'varchar',
+            'created_at' => 'timestamptz',
+            'updated_at' => 'timestamptz',
+            'deleted_at' => 'timestamptz',
         ])
         ->and($dbCount)->toBe(1);
 });

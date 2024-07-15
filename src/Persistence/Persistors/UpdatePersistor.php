@@ -9,7 +9,6 @@ use AdventureTech\ORM\Persistence\Persistors\Traits\SerializesEntities;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use JsonException;
 
 use function array_keys;
 use function collect;
@@ -104,7 +103,8 @@ class UpdatePersistor implements Persistor
         $sql = sprintf(
             "UPDATE \"%s\" SET %s FROM (VALUES (%s)) AS %s (\"%s\") WHERE \"%s\".\"%s\" = \"%s\".\"%s\"",
             $tableName,
-            $columns->filter(fn($column) => $column !== $this->entityReflection->getIdColumn())
+            $columns
+                ->filter(fn($column) => $column !== $this->entityReflection->getIdColumn())
                 ->implode(fn ($column) => array_key_exists($column, $managedColumns)
                     ? "\"$column\" = COALESCE(\"$tmpTableName\".\"$column\", \"$tableName\".\"$column\")"
                     : "\"$column\" = \"$tmpTableName\".\"$column\"", ', '),

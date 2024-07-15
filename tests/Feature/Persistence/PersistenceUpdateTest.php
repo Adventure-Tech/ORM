@@ -7,11 +7,14 @@ use AdventureTech\ORM\Repository\Repository;
 use AdventureTech\ORM\Tests\TestCase;
 use AdventureTech\ORM\Tests\TestClasses\BackedEnum;
 use AdventureTech\ORM\Tests\TestClasses\Entities\Post;
+use AdventureTech\ORM\Tests\TestClasses\Entities\Select;
 use AdventureTech\ORM\Tests\TestClasses\Entities\User;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\PostPersistence;
+use AdventureTech\ORM\Tests\TestClasses\Persistence\SelectPersistence;
 use AdventureTech\ORM\Tests\TestClasses\Persistence\UserPersistence;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 test('Cannot use base persistence manager to update entities', function () {
     $user = new User();
@@ -200,4 +203,22 @@ test('Updating skips soft-deleted entities', function () {
         'Could not update all entities. Updated 1 out of 2.'
     )
         ->and(DB::table('users')->where('name', 'NEW')->count())->toBe(1);
+});
+
+test('updating works with table and column names equal to SQL keywords', function () {
+    DB::table('select')->insert([
+        'id' => 1,
+        'end' => Str::ulid(),
+    ]);
+    $ulid = Str::ulid();
+    $entity = new Select();
+    $entity->id = 1;
+    $entity->end = $ulid;
+
+    SelectPersistence::update($entity);
+
+    $this->assertDatabaseHas('select', [
+        'id' => 1,
+        'end' => $ulid,
+    ]);
 });

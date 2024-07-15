@@ -9,7 +9,6 @@ use AdventureTech\ORM\Persistence\Persistors\Traits\SerializesEntities;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use JsonException;
 
 use function array_keys;
 use function collect;
@@ -90,7 +89,6 @@ class UpdatePersistor implements Persistor
         $placeholderRow = $columns->implode(static fn($column) => '?', ', ');
         array_push($placeholders, ...Collection::times(count($this->values) - 1, static fn() => $placeholderRow));
 
-
         // get DB column names for managed columns
         $managedColumns = [];
         $mappers = $this->entityReflection->getMappers();
@@ -101,20 +99,26 @@ class UpdatePersistor implements Persistor
         }
 
         $tableName = $this->entityReflection->getTableName();
-        $setClause = $columns->implode(function ($column) use ($tableName, $managedColumns, $tmpTableName) {
-            return array_key_exists($column, $managedColumns)
-                ? "$column = COALESCE($tmpTableName.$column, $tableName.$column)"
-                : "$column = $tmpTableName.$column";
-        }, ', ');
-        $valuesClause = implode('), (', $placeholders);
-        $columnsSpec = $columns->implode(', ');
         $idColumn = $this->entityReflection->getIdColumn();
-        $sql = "UPDATE " . $tableName . " SET " . $setClause
-            . " FROM (VALUES (" . $valuesClause . ")) AS " . $tmpTableName . " (" . $columnsSpec . ") WHERE "
-            . $tableName . "." . $idColumn . " = " . $tmpTableName . "." . $idColumn;
+        $sql = sprintf(
+            "UPDATE \"%s\" SET %s FROM (VALUES (%s)) AS %s (\"%s\") WHERE \"%s\".\"%s\" = \"%s\".\"%s\"",
+            $tableName,
+            $columns
+                ->filter(fn($column) => $column !== $this->entityReflection->getIdColumn())
+                ->implode(fn ($column) => array_key_exists($column, $managedColumns)
+                    ? "\"$column\" = COALESCE(\"$tmpTableName\".\"$column\", \"$tableName\".\"$column\")"
+                    : "\"$column\" = \"$tmpTableName\".\"$column\"", ', '),
+            implode('), (', $placeholders),
+            $tmpTableName,
+            $columns->implode('", "'),
+            $tableName,
+            $idColumn,
+            $tmpTableName,
+            $idColumn
+        );
         foreach ($this->entityReflection->getSoftDeletes() as $property => $softDelete) {
             foreach ($this->entityReflection->getMappers()[$property]->getColumnNames() as $columnName) {
-                $sql .= ' AND ' . $tableName . '.' . $columnName . ' IS NULL';
+                $sql .= " AND \"$tableName\".\"$columnName\" IS NULL";
             }
         }
         return $sql;

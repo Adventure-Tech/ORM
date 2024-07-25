@@ -75,6 +75,11 @@ class Factory
         private readonly EntityReflection $entityReflection,
         protected readonly Generator $faker
     ) {
+        /** @var array<mixed,string> $providers */
+        $providers = config('orm.factory.providers', []);
+        foreach ($providers as $provider) {
+            $this->faker->addProvider(new $provider($this->faker));
+        }
     }
 
     /**
@@ -193,6 +198,7 @@ class Factory
     /**
      * @param  array<string,mixed>  $state
      * @return void
+     * @throws ReflectionException
      */
     private function addMissingProperties(array &$state): void
     {
@@ -234,7 +240,7 @@ class Factory
     /**
      * @param  TEntity  $entity
      */
-    private function createHasEntities(object $entity): void
+    protected function createHasEntities(object $entity): void
     {
         foreach ($this->with as $relation => $items) {
             $linkedEntities = [];
@@ -260,7 +266,7 @@ class Factory
      * @param TEntity $entity
      * @return void
      */
-    private function insertViaPersistenceManager(object $entity): void
+    protected function insertViaPersistenceManager(object $entity): void
     {
         (new InsertPersistor($this->entityReflection->getClass()))
             ->add($entity, [])
@@ -273,7 +279,7 @@ class Factory
      * @param string $relation
      * @return void
      */
-    private function attachViaPersistenceManager(object $entity, array $linkedEntities, string $relation): void
+    protected function attachViaPersistenceManager(object $entity, array $linkedEntities, string $relation): void
     {
         (new AttachPersistor($this->entityReflection->getClass()))
             ->add($entity, [$linkedEntities, $relation])
